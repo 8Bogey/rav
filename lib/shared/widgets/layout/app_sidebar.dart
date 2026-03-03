@@ -66,13 +66,13 @@ class AppSidebar extends StatelessWidget {
                     ),
                     
                     // Main navigation items
-                    _buildNavItem('لوحة التحكم', Icons.dashboard_outlined, true), // Active item
-                    _buildNavItem('المشتركون', Icons.people_outline, false),
-                    _buildNavItem('الكابينات', Icons.apps_outlined, false),
-                    _buildNavItem('التحصيل', Icons.account_balance_wallet_outlined, false),
-                    _buildNavItem('العمال', Icons.engineering_outlined, false),
-                    _buildNavItem('التقارير', Icons.bar_chart_outlined, false),
-                    _buildNavItem('واتساب', Icons.chat_outlined, false),
+                    _buildNavItem('لوحة التحكم', Icons.dashboard_outlined, true, context), // Active item
+                    _buildNavItem('المشتركون', Icons.people_outline, false, context),
+                    _buildNavItem('الكابينات', Icons.apps_outlined, false, context),
+                    _buildNavItem('التحصيل', Icons.account_balance_wallet_outlined, false, context),
+                    _buildNavItem('العمال', Icons.engineering_outlined, false, context),
+                    _buildNavItem('التقارير', Icons.bar_chart_outlined, false, context),
+                    _buildNavItem('واتساب', Icons.chat_outlined, false, context),
                     
                     // Tools section header
                     Padding(
