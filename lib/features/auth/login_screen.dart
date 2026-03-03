@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
-import 'package:mawlid_al_dhaki/shared/widgets/layout/app_shell.dart';
-import 'package:mawlid_al_dhaki/features/dashboard/dashboard_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -42,25 +40,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (mounted) {
           Navigator.of(context).pushReplacementNamed('/dashboard');
         }
-      }
-    } catch (e) {
-      // Handle any unexpected errors
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('حدث خطأ غير متخصص. يرجى المحاولة مرة أخرى.'),
-            backgroundColor: AppColors.statusDanger,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
       }
     } catch (e) {
       // Handle any unexpected errors
