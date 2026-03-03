@@ -88,8 +88,8 @@ class AppSidebar extends StatelessWidget {
                     ),
                     
                     // Secondary navigation items
-                    _buildNavItem('الإعدادات', Icons.settings_outlined, false),
-                    _buildNavItem('سجل التدقيق', Icons.history_outlined, false),
+                    _buildNavItem('الإعدادات', Icons.settings_outlined, false, context),
+                    _buildNavItem('سجل التدقيق', Icons.history_outlined, false, context),
                   ],
                 ),
               ),
@@ -145,7 +145,10 @@ class AppSidebar extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Logout functionality
+                      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                    },
                     icon: const Icon(
                       Icons.logout,
                       color: Colors.white,
