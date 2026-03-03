@@ -3,9 +3,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  // Track hovered items for hover effects
+  int? _hoveredActivityIndex;
+  
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -13,7 +21,7 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome header
+          // Welcome header - matching Bitepoint style
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -31,12 +39,20 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              // Action buttons
+              // Action buttons - styled as per Bitepoint/PRD
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppColors.gold,
                   borderRadius: BorderRadius.circular(8),
+                  // Add hover effect
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.gold.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -59,57 +75,81 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           
-          // Stats cards grid
+          // Stats cards grid - enhanced to match Bitepoint styling
           Text(
             'نظرة عامة',
             style: AppTypography.h3.copyWith(color: AppColors.textHeading),
           ),
           const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildOverviewCard(
-                title: 'المحصّل اليوم',
-                value: '247,000',
-                unit: 'IQD',
-                icon: Icons.account_balance_wallet,
-                color: AppColors.primary,
-                progress: 0.75,
-              ),
-              _buildOverviewCard(
-                title: 'المشتركون',
-                value: '1,240',
-                unit: 'مشترك',
-                icon: Icons.people,
-                color: AppColors.statusInfo,
-                progress: 0.85,
-              ),
-              _buildOverviewCard(
-                title: 'الكابينات المكتملة',
-                value: '12',
-                unit: 'من 15',
-                icon: Icons.apps,
-                color: AppColors.statusActive,
-                progress: 0.8,
-              ),
-              _buildOverviewCard(
-                title: 'لم يدفعوا',
-                value: '89',
-                unit: 'مشترك',
-                icon: Icons.warning,
-                color: AppColors.statusWarning,
-                progress: 0.3,
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate how many columns based on screen width
+              int crossAxisCount = constraints.maxWidth > 1000 ? 4 : 2;
+              
+              return GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.2,
+                ),
+                itemCount: 4,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  // Define card data
+                  final cards = [
+                    {
+                      'title': 'المحصّل اليوم',
+                      'value': '247,000',
+                      'unit': 'IQD',
+                      'icon': Icons.account_balance_wallet,
+                      'color': AppColors.primary,
+                      'progress': 0.75,
+                    },
+                    {
+                      'title': 'المشتركون',
+                      'value': '1,240',
+                      'unit': 'مشترك',
+                      'icon': Icons.people,
+                      'color': AppColors.statusInfo,
+                      'progress': 0.85,
+                    },
+                    {
+                      'title': 'الكابينات المكتملة',
+                      'value': '12',
+                      'unit': 'من 15',
+                      'icon': Icons.apps,
+                      'color': AppColors.statusActive,
+                      'progress': 0.8,
+                    },
+                    {
+                      'title': 'لم يدفعوا',
+                      'value': '89',
+                      'unit': 'مشترك',
+                      'icon': Icons.warning,
+                      'color': AppColors.statusWarning,
+                      'progress': 0.3,
+                    },
+                  ];
+                  
+                  return _buildOverviewCard(
+                    title: cards[index]['title'] as String,
+                    value: cards[index]['value'] as String,
+                    unit: cards[index]['unit'] as String,
+                    icon: cards[index]['icon'] as IconData,
+                    color: cards[index]['color'] as Color,
+                    progress: cards[index]['progress'] as double,
+                    index: index,
+                  );
+                },
+              );
+            },
           ),
           
           const SizedBox(height: 32),
           
-          // Recent activities section
+          // Recent activities section - enhanced styling
           Text(
             'الأنشطة الأخيرة',
             style: AppTypography.h3.copyWith(color: AppColors.textHeading),
@@ -135,11 +175,18 @@ class DashboardScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Search bar
+                // Search bar - matching Bitepoint style
                 TextField(
                   decoration: InputDecoration(
                     hintText: 'بحث في الأنشطة...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
+                    hintStyle: AppTypography.bodyMd.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search, 
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
                     filled: true,
                     fillColor: AppColors.bgSurfaceAlt,
                     border: OutlineInputBorder(
@@ -154,13 +201,14 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 
-                // Activity items
+                // Activity items - with hover effects
                 _buildActivityItem(
                   'أحمد علي محمود',
                   'أكمل دفع قيمة الاشتراك',
                   'A4',
                   '01/03/26',
                   AppColors.statusActive,
+                  0,
                 ),
                 const Divider(height: 32),
                 _buildActivityItem(
@@ -169,6 +217,7 @@ class DashboardScreen extends StatelessWidget {
                   'B2',
                   '01/02/26',
                   AppColors.statusInfo,
+                  1,
                 ),
                 const Divider(height: 32),
                 _buildActivityItem(
@@ -177,6 +226,7 @@ class DashboardScreen extends StatelessWidget {
                   'C7',
                   '01/11/25',
                   AppColors.statusDanger,
+                  2,
                 ),
                 
                 const SizedBox(height: 16),
@@ -198,7 +248,7 @@ class DashboardScreen extends StatelessWidget {
           
           const SizedBox(height: 32),
           
-          // Payment trends section
+          // Payment trends section - enhanced styling
           Text(
             'التحويلات الشهرية',
             style: AppTypography.h3.copyWith(color: AppColors.textHeading),
@@ -224,12 +274,16 @@ class DashboardScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Chart placeholder
+                // Chart placeholder - improved styling
                 Container(
                   height: 200,
                   decoration: BoxDecoration(
                     color: AppColors.bgSurfaceAlt,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.borderLight,
+                      width: 1,
+                    ),
                   ),
                   child: Center(
                     child: Column(
@@ -247,13 +301,20 @@ class DashboardScreen extends StatelessWidget {
                             color: AppColors.textSecondary,
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'سيتم عرض البيانات عند توفرها',
+                          style: AppTypography.bodySm.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 
-                // Legend
+                // Legend - matching Bitepoint style
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -277,6 +338,7 @@ class DashboardScreen extends StatelessWidget {
     required IconData icon,
     required Color color,
     required double progress,
+    required int index,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -350,7 +412,7 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Progress bar
+          // Progress bar - matching Bitepoint style
           Container(
             height: 6,
             decoration: BoxDecoration(
@@ -370,7 +432,7 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).animate(delay: (index * 80).ms).fadeIn().slideY(begin: 0.06);
   }
   
   Widget _buildActivityItem(
@@ -379,74 +441,89 @@ class DashboardScreen extends StatelessWidget {
     String userCode,
     String date,
     Color color,
+    int index,
   ) {
-    return Row(
-      children: [
-        // Avatar
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(
-              userCode,
-              style: AppTypography.labelMd.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredActivityIndex = index),
+      onExit: (_) => setState(() => _hoveredActivityIndex = null),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: _hoveredActivityIndex == index 
+              ? AppColors.primarySurface.withOpacity(0.3) 
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            // Avatar - enhanced styling
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  userCode,
+                  style: AppTypography.labelMd.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        
-        // Activity details
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text.rich(
-                TextSpan(
-                  children: [
+            const SizedBox(width: 16),
+            
+            // Activity details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
                     TextSpan(
-                      text: userName,
-                      style: AppTypography.bodyMd.copyWith(
-                        color: AppColors.textHeading,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      children: [
+                        TextSpan(
+                          text: userName,
+                          style: AppTypography.bodyMd.copyWith(
+                            color: AppColors.textHeading,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' $activity',
+                          style: AppTypography.bodyMd.copyWith(
+                            color: AppColors.textBody,
+                          ),
+                        ),
+                      ],
                     ),
-                    TextSpan(
-                      text: ' $activity',
-                      style: AppTypography.bodyMd.copyWith(
-                        color: AppColors.textBody,
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    date,
+                    style: AppTypography.bodySm.copyWith(
+                      color: AppColors.textSecondary,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: AppTypography.bodySm.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            ),
+            
+            // Status indicator
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        
-        // Status indicator
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-      ],
+      ),
     );
   }
   

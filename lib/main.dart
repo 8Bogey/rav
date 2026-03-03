@@ -6,6 +6,7 @@ import 'package:mawlid_al_dhaki/features/auth/login_screen.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/subscribers_screen.dart';
 import 'package:mawlid_al_dhaki/shared/widgets/layout/app_shell.dart';
 import 'package:mawlid_al_dhaki/features/dashboard/dashboard_screen.dart';
+import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +46,23 @@ class AppRoot extends StatelessWidget {
       title: 'المولد الذكي',
       theme: ThemeData(
         primarySwatch: Colors.green,
+        // Apply the color scheme from PRD
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+        ),
+        // Apply text theme from PRD
+        textTheme: const TextTheme(
+          headlineLarge: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          headlineSmall: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+          titleMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          bodyLarge: TextStyle(fontSize: 15),
+          bodyMedium: TextStyle(fontSize: 13),
+          bodySmall: TextStyle(fontSize: 12),
+          labelLarge: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          labelMedium: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        ),
       ),
       home: const LoginScreen(),
       routes: {
