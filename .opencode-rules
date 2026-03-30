@@ -1,0 +1,19 @@
+# [CORE PROTOCOL: FLUTTER-BEADS-OS]
+
+## 1. التكوين الهرمي (Hierarchy)
+- [A] Core/Architecture | [B] Data/API | [C] Logic/State | [D] UI/Screens
+- التسمية: A01, B05... (ID ثابت لا يتغير).
+
+## 2. بروتوكول توفير التوكنات (Token Efficiency)
+- ممنوع قراءة الملفات الكاملة؛ استخدم `grep` للبحث و`sed` للتعديل الموضعي.
+- شغل `bd compact` تلقائياً كل 5 مهام منجزة لتفريغ سياق الذاكرة.
+- استخدم `bd ready --json` دائماً للحصول على بيانات مهيكلة سريعة المعالجة.
+
+## 3. دورة العمل الآلية (Self-Correction Loop)
+1. `bd start <ID>` قبل أي حرف كود.
+2. عند الخطأ: `bd create "[BUG] Desc" --blocked-by <ID>`.
+3. عند الإغلاق: (Check Tests -> `bd close` -> `git commit` مع ID المهمة -> `bd compact`).
+
+## 4. تكامل MCP (Model Context Protocol)
+- استخدم `Sequential Thinking MCP` لتخطيط خطوات الحل قبل لمس الكود.
+- استخدم `Filesystem MCP` للوصول المباشر لملفات .beads لتقليل الهذيان (Hallucination).

@@ -231,6 +231,7 @@ class SupabaseService {
         final data = {
           'id': cabinet.id,
           'name': cabinet.name,
+          'letter': cabinet.letter,
           'total_subscribers': cabinet.totalSubscribers,
           'current_subscribers': cabinet.currentSubscribers,
           'collected_amount': cabinet.collectedAmount,
@@ -545,6 +546,7 @@ class SupabaseService {
         final cabinet = Cabinet(
           id: data['id'] as int,
           name: data['name'] as String,
+          letter: data['letter'] as String? ?? '',
           totalSubscribers: data['total_subscribers'] as int,
           currentSubscribers: data['current_subscribers'] as int,
           collectedAmount: (data['collected_amount'] as num?)?.toDouble() ?? 0.0,
@@ -1180,6 +1182,7 @@ class SupabaseService {
           final cabinet = Cabinet(
             id: cloudData['id'] as int,
             name: cloudData['name'] as String,
+            letter: cloudData['letter'] as String? ?? '',
             totalSubscribers: cloudData['total_subscribers'] as int,
             currentSubscribers: cloudData['current_subscribers'] as int,
             collectedAmount: (cloudData['collected_amount'] as num?)?.toDouble() ?? 0.0,

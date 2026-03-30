@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 import 'package:mawlid_al_dhaki/core/services/settings_service.dart';
 import 'package:mawlid_al_dhaki/core/services/print_service.dart';
@@ -12,7 +12,8 @@ import 'package:mawlid_al_dhaki/core/supabase/supabase_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Settings section provider
-final settingsSectionProvider = StateProvider<String>((ref) => 'معلومات المولد');
+final settingsSectionProvider =
+    StateProvider<String>((ref) => 'معلومات المولد');
 
 // Logo path provider
 final logoPathProvider = StateProvider<String>((ref) => '');
@@ -20,7 +21,8 @@ final logoPathProvider = StateProvider<String>((ref) => '');
 // Generator info providers (for persistent editing)
 final generatorNameProvider = StateProvider<String>((ref) => 'المولد الذكي');
 final generatorPhoneProvider = StateProvider<String>((ref) => '07701234567');
-final generatorAddressProvider = StateProvider<String>((ref) => 'بغداد - المنصور - شارع الحرية');
+final generatorAddressProvider =
+    StateProvider<String>((ref) => 'بغداد - المنصور - شارع الحرية');
 
 // Settings loading state
 final settingsLoadingProvider = StateProvider<bool>((ref) => false);
@@ -28,7 +30,8 @@ final settingsLoadingProvider = StateProvider<bool>((ref) => false);
 // Printer settings providers
 final printerNameProvider = StateProvider<String>((ref) => 'default');
 final paperSizeProvider = StateProvider<String>((ref) => 'a4');
-final documentTitleProvider = StateProvider<String>((ref) => 'مولد الدين الإسلامي');
+final documentTitleProvider =
+    StateProvider<String>((ref) => 'مولد الدين الإسلامي');
 final documentPhoneProvider = StateProvider<String>((ref) => '07701234567');
 
 // Notification settings providers
@@ -52,12 +55,19 @@ final imagePickerProvider = Provider<ImagePicker>((ref) => ImagePicker());
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
+  void _playSectionChangeSound() {
+    // Best-effort: system click sound. Ignore failures on unsupported platforms.
+    try {
+      SystemSound.play(SystemSoundType.click);
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
     final syncState = ref.watch(syncProvider);
-    
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -70,13 +80,16 @@ class SettingsScreen extends ConsumerWidget {
               Text(
                 'الإعدادات',
                 style: AppTypography.h2.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                 ),
-              ).animate().fadeIn(duration: 300.ms),
+              ),
               GestureDetector(
                 onTap: () => _saveAllSettings(context, ref),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.gold,
                     borderRadius: BorderRadius.circular(8),
@@ -105,9 +118,9 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-              ).animate(delay: 100.ms).scaleXY(begin: 0.95, end: 1.0, duration: 400.ms),
+              ),
             ],
-          ).animate().fadeIn(duration: 300.ms),
+          ),
           const SizedBox(height: 24),
 
           // Two-column layout - matching PRD requirements
@@ -119,7 +132,11 @@ class SettingsScreen extends ConsumerWidget {
                 _buildSettingsSidebar(isDarkMode: isDarkMode, ref: ref),
                 const SizedBox(width: 16),
                 // Content area
-                _buildContentArea(context: context, isDarkMode: isDarkMode, syncState: syncState, ref: ref),
+                _buildContentArea(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    syncState: syncState,
+                    ref: ref),
               ],
             ),
           ),
@@ -128,9 +145,10 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSettingsSidebar({required bool isDarkMode, required WidgetRef ref}) {
+  Widget _buildSettingsSidebar(
+      {required bool isDarkMode, required WidgetRef ref}) {
     final selectedSection = ref.watch(settingsSectionProvider);
-    
+
     return Container(
       width: 200,
       decoration: BoxDecoration(
@@ -143,13 +161,17 @@ class SettingsScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              color: isDarkMode
+                  ? AppColors.darkBgSurfaceAlt
+                  : AppColors.bgSurfaceAlt,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Text(
               'الإعدادات',
               style: AppTypography.h3.copyWith(
-                color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                color:
+                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
               ),
             ),
           ),
@@ -158,39 +180,75 @@ class SettingsScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(8),
               children: [
-                _buildMenuItem('معلومات المولد', selectedSection == 'معلومات المولد', isDarkMode: isDarkMode, onTap: () => ref.read(settingsSectionProvider.notifier).state = 'معلومات المولد'),
-                _buildMenuItem('المظهر', selectedSection == 'المظهر', isDarkMode: isDarkMode, onTap: () => ref.read(settingsSectionProvider.notifier).state = 'المظهر'),
-                _buildMenuItem('الطباعة', selectedSection == 'الطباعة', isDarkMode: isDarkMode, onTap: () => ref.read(settingsSectionProvider.notifier).state = 'الطباعة'),
-                _buildMenuItem('الأمان', selectedSection == 'الأمان', isDarkMode: isDarkMode, onTap: () => ref.read(settingsSectionProvider.notifier).state = 'الأمان'),
-                _buildMenuItem('المزامنة', selectedSection == 'المزامنة', isDarkMode: isDarkMode, onTap: () => ref.read(settingsSectionProvider.notifier).state = 'المزامنة'),
-                _buildMenuItem('الإشعارات', selectedSection == 'الإشعارات', isDarkMode: isDarkMode, onTap: () => ref.read(settingsSectionProvider.notifier).state = 'الإشعارات'),
-                _buildMenuItem('النسخ الاحتياطي', selectedSection == 'النسخ الاحتياطي', isDarkMode: isDarkMode, onTap: () => ref.read(settingsSectionProvider.notifier).state = 'النسخ الاحتياطي'),
-                _buildMenuItem('الترخيص', selectedSection == 'الترخيص', isDarkMode: isDarkMode, onTap: () => ref.read(settingsSectionProvider.notifier).state = 'الترخيص'),
+                _buildMenuItem(
+                    'معلومات المولد', selectedSection == 'معلومات المولد',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'معلومات المولد'),
+                _buildMenuItem('المظهر', selectedSection == 'المظهر',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'المظهر'),
+                _buildMenuItem('الطباعة', selectedSection == 'الطباعة',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'الطباعة'),
+                _buildMenuItem('الأمان', selectedSection == 'الأمان',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'الأمان'),
+                _buildMenuItem('المزامنة', selectedSection == 'المزامنة',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'المزامنة'),
+                _buildMenuItem('الإشعارات', selectedSection == 'الإشعارات',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'الإشعارات'),
+                _buildMenuItem(
+                    'النسخ الاحتياطي', selectedSection == 'النسخ الاحتياطي',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'النسخ الاحتياطي'),
+                _buildMenuItem('الترخيص', selectedSection == 'الترخيص',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'الترخيص'),
               ],
             ),
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 400.ms);
+    );
   }
 
-  Widget _buildMenuItem(String title, bool isSelected, {required bool isDarkMode, required VoidCallback onTap}) {
+  Widget _buildMenuItem(String title, bool isSelected,
+      {required bool isDarkMode, required VoidCallback onTap}) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        _playSectionChangeSound();
+        onTap();
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? AppColors.primary 
-              : Colors.transparent,
+          color: isSelected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           title,
           style: AppTypography.bodyMd.copyWith(
-            color: isSelected 
-                ? AppColors.textOnGold 
+            color: isSelected
+                ? AppColors.textOnPrimary
                 : (isDarkMode ? AppColors.darkTextBody : AppColors.textBody),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
@@ -199,9 +257,13 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContentArea({required BuildContext context, required bool isDarkMode, required SyncState syncState, required WidgetRef ref}) {
+  Widget _buildContentArea(
+      {required BuildContext context,
+      required bool isDarkMode,
+      required SyncState syncState,
+      required WidgetRef ref}) {
     final selectedSection = ref.watch(settingsSectionProvider);
-    
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(24),
@@ -222,40 +284,83 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ),
         child: SingleChildScrollView(
-          child: _buildSectionContent(selectedSection, isDarkMode: isDarkMode, syncState: syncState, ref: ref, context: context),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 140),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) {
+              final fade = FadeTransition(opacity: animation, child: child);
+              final slide = Tween<Offset>(
+                begin: const Offset(0, 0.02),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              ));
+              return SlideTransition(position: slide, child: fade);
+            },
+            child: KeyedSubtree(
+              key: ValueKey(selectedSection),
+              child: _buildSectionContent(
+                selectedSection,
+                isDarkMode: isDarkMode,
+                syncState: syncState,
+                ref: ref,
+                context: context,
+              ),
+            ),
+          ),
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms);
+    );
   }
-  
-  Widget _buildSectionContent(String section, {required bool isDarkMode, required SyncState syncState, required WidgetRef ref, required BuildContext context}) {
+
+  Widget _buildSectionContent(String section,
+      {required bool isDarkMode,
+      required SyncState syncState,
+      required WidgetRef ref,
+      required BuildContext context}) {
     switch (section) {
       case 'معلومات المولد':
-        return _buildGeneratorInfoSection(isDarkMode: isDarkMode, context: context, ref: ref);
+        return _buildGeneratorInfoSection(
+            isDarkMode: isDarkMode, context: context, ref: ref);
       case 'المظهر':
-        return _buildAppearanceSection(isDarkMode: isDarkMode, ref: ref, context: context);
+        return _buildAppearanceSection(
+            isDarkMode: isDarkMode, ref: ref, context: context);
       case 'الطباعة':
-        return _buildPrintingSection(isDarkMode: isDarkMode, context: context, ref: ref);
+        return _buildPrintingSection(
+            isDarkMode: isDarkMode, context: context, ref: ref);
       case 'الأمان':
-        return _buildSecuritySection(isDarkMode: isDarkMode, context: context, ref: ref);
+        return _buildSecuritySection(
+            isDarkMode: isDarkMode, context: context, ref: ref);
       case 'المزامنة':
-        return _buildSyncSection(isDarkMode: isDarkMode, syncState: syncState, ref: ref, context: context);
+        return _buildSyncSection(
+            isDarkMode: isDarkMode,
+            syncState: syncState,
+            ref: ref,
+            context: context);
       case 'الإشعارات':
-        return _buildNotificationsSection(isDarkMode: isDarkMode, context: context, ref: ref);
+        return _buildNotificationsSection(
+            isDarkMode: isDarkMode, context: context, ref: ref);
       case 'النسخ الاحتياطي':
-        return _buildBackupSection(isDarkMode: isDarkMode, context: context, ref: ref);
+        return _buildBackupSection(
+            isDarkMode: isDarkMode, context: context, ref: ref);
       case 'الترخيص':
         return _buildLicenseSection(isDarkMode: isDarkMode);
       default:
-        return _buildGeneratorInfoSection(isDarkMode: isDarkMode, context: context, ref: ref);
+        return _buildGeneratorInfoSection(
+            isDarkMode: isDarkMode, context: context, ref: ref);
     }
   }
-  
-  Widget _buildGeneratorInfoSection({required bool isDarkMode, required BuildContext context, required WidgetRef ref}) {
+
+  Widget _buildGeneratorInfoSection(
+      {required bool isDarkMode,
+      required BuildContext context,
+      required WidgetRef ref}) {
     final name = ref.watch(generatorNameProvider);
     final phone = ref.watch(generatorPhoneProvider);
     final address = ref.watch(generatorAddressProvider);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -266,14 +371,21 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        
-        _buildTextField('اسم المولد', name, isDarkMode: isDarkMode, onChanged: (v) => ref.read(generatorNameProvider.notifier).state = v),
+        _buildTextField('اسم المولد', name,
+            isDarkMode: isDarkMode,
+            onChanged: (v) =>
+                ref.read(generatorNameProvider.notifier).state = v),
         const SizedBox(height: 16),
-        _buildTextField('رقم الهاتف', phone, isDarkMode: isDarkMode, onChanged: (v) => ref.read(generatorPhoneProvider.notifier).state = v),
+        _buildTextField('رقم الهاتف', phone,
+            isDarkMode: isDarkMode,
+            onChanged: (v) =>
+                ref.read(generatorPhoneProvider.notifier).state = v),
         const SizedBox(height: 16),
-        _buildTextField('العنوان', address, isDarkMode: isDarkMode, onChanged: (v) => ref.read(generatorAddressProvider.notifier).state = v),
+        _buildTextField('العنوان', address,
+            isDarkMode: isDarkMode,
+            onChanged: (v) =>
+                ref.read(generatorAddressProvider.notifier).state = v),
         const SizedBox(height: 16),
-        
         Text(
           'الشعار:',
           style: AppTypography.bodyMd.copyWith(
@@ -284,7 +396,9 @@ class SettingsScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -313,13 +427,17 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       'شعار المولد',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                        color: isDarkMode
+                            ? AppColors.darkTextHead
+                            : AppColors.textHeading,
                       ),
                     ),
                     Text(
                       'PNG, JPG حتى 2MB',
                       style: AppTypography.bodySm.copyWith(
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -328,7 +446,7 @@ class SettingsScreen extends ConsumerWidget {
               OutlinedButton(
                 onPressed: () async {
                   final picker = ref.read(imagePickerProvider);
-                  
+
                   // Show options: camera or gallery
                   final source = await showModalBottomSheet<ImageSource>(
                     context: context,
@@ -339,20 +457,22 @@ class SettingsScreen extends ConsumerWidget {
                           ListTile(
                             leading: const Icon(Icons.camera_alt),
                             title: const Text('الكاميرا'),
-                            onTap: () => Navigator.pop(context, ImageSource.camera),
+                            onTap: () =>
+                                Navigator.pop(context, ImageSource.camera),
                           ),
                           ListTile(
                             leading: const Icon(Icons.photo_library),
                             title: const Text('معرض الصور'),
-                            onTap: () => Navigator.pop(context, ImageSource.gallery),
+                            onTap: () =>
+                                Navigator.pop(context, ImageSource.gallery),
                           ),
                         ],
                       ),
                     ),
                   );
-                  
+
                   if (source == null) return;
-                  
+
                   try {
                     final pickedFile = await picker.pickImage(
                       source: source,
@@ -360,13 +480,15 @@ class SettingsScreen extends ConsumerWidget {
                       maxHeight: 512,
                       imageQuality: 85,
                     );
-                    
+
                     if (pickedFile != null) {
                       // Save path to provider and SharedPreferences
                       final prefs = await SharedPreferences.getInstance();
-                      await prefs.setString('generator_logo_path', pickedFile.path);
-                      ref.read(logoPathProvider.notifier).state = pickedFile.path;
-                      
+                      await prefs.setString(
+                          'generator_logo_path', pickedFile.path);
+                      ref.read(logoPathProvider.notifier).state =
+                          pickedFile.path;
+
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('تم رفع الشعار بنجاح')),
@@ -384,7 +506,9 @@ class SettingsScreen extends ConsumerWidget {
                 child: Text(
                   '📎 رفع صورة',
                   style: AppTypography.labelLg.copyWith(
-                    color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                    color: isDarkMode
+                        ? AppColors.darkTextBody
+                        : AppColors.textBody,
                   ),
                 ),
               ),
@@ -394,8 +518,11 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
-  
-  Widget _buildAppearanceSection({required bool isDarkMode, required WidgetRef ref, required BuildContext context}) {
+
+  Widget _buildAppearanceSection(
+      {required bool isDarkMode,
+      required WidgetRef ref,
+      required BuildContext context}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -406,12 +533,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        
         _buildSettingRow(
           'الوضع الليلي',
           Switch(
             value: isDarkMode,
-            onChanged: (v) => ref.read(themeModeProvider.notifier).setThemeMode(v ? ThemeMode.dark : ThemeMode.light),
+            onChanged: (v) => ref
+                .read(themeModeProvider.notifier)
+                .setThemeMode(v ? ThemeMode.dark : ThemeMode.light),
             activeColor: AppColors.primary,
           ),
           isDarkMode: isDarkMode,
@@ -419,8 +547,11 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
-  
-  Widget _buildPrintingSection({required bool isDarkMode, required BuildContext context, required WidgetRef ref}) {
+
+  Widget _buildPrintingSection(
+      {required bool isDarkMode,
+      required BuildContext context,
+      required WidgetRef ref}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -431,7 +562,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // Printer connection status
         _buildSettingRow(
           'حالة الطابعة',
@@ -465,7 +596,7 @@ class SettingsScreen extends ConsumerWidget {
           isDarkMode: isDarkMode,
         ),
         const SizedBox(height: 16),
-        
+
         // Printer selection
         _buildSettingRow(
           'الطابعة',
@@ -477,13 +608,14 @@ class SettingsScreen extends ConsumerWidget {
               DropdownMenuItem(value: 'thermal', child: Text('طابعة حرارية')),
             ],
             onChanged: (value) {
-              if (value != null) ref.read(printerNameProvider.notifier).state = value;
+              if (value != null)
+                ref.read(printerNameProvider.notifier).state = value;
             },
           ),
           isDarkMode: isDarkMode,
         ),
         const SizedBox(height: 16),
-        
+
         // Paper size
         _buildSettingRow(
           'حجم الورق',
@@ -496,13 +628,14 @@ class SettingsScreen extends ConsumerWidget {
               DropdownMenuItem(value: 'thermal', child: Text('حراري 80mm')),
             ],
             onChanged: (value) {
-              if (value != null) ref.read(paperSizeProvider.notifier).state = value;
+              if (value != null)
+                ref.read(paperSizeProvider.notifier).state = value;
             },
           ),
           isDarkMode: isDarkMode,
         ),
         const SizedBox(height: 24),
-        
+
         // Receipt header
         Text(
           '头部 المستند',
@@ -512,14 +645,18 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 8),
-        _buildTextField('عنوان المستند', ref.watch(documentTitleProvider), isDarkMode: isDarkMode, 
-          onChanged: (v) => ref.read(documentTitleProvider.notifier).state = v),
+        _buildTextField('عنوان المستند', ref.watch(documentTitleProvider),
+            isDarkMode: isDarkMode,
+            onChanged: (v) =>
+                ref.read(documentTitleProvider.notifier).state = v),
         const SizedBox(height: 8),
-        _buildTextField('رقم الهاتف', ref.watch(documentPhoneProvider), isDarkMode: isDarkMode, 
-          onChanged: (v) => ref.read(documentPhoneProvider.notifier).state = v),
-        
+        _buildTextField('رقم الهاتف', ref.watch(documentPhoneProvider),
+            isDarkMode: isDarkMode,
+            onChanged: (v) =>
+                ref.read(documentPhoneProvider.notifier).state = v),
+
         const SizedBox(height: 24),
-        
+
         // Test print button
         OutlinedButton.icon(
           onPressed: () async {
@@ -558,8 +695,11 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
-  
-  Widget _buildSecuritySection({required bool isDarkMode, required BuildContext context, required WidgetRef ref}) {
+
+  Widget _buildSecuritySection(
+      {required bool isDarkMode,
+      required BuildContext context,
+      required WidgetRef ref}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -570,12 +710,14 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // Password change section
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -587,16 +729,21 @@ class SettingsScreen extends ConsumerWidget {
               Text(
                 'تغيير كلمة المرور',
                 style: AppTypography.bodyMd.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 16),
-              _buildTextField('كلمة المرور الحالية', '', isDarkMode: isDarkMode, obscure: true),
+              _buildTextField('كلمة المرور الحالية', '',
+                  isDarkMode: isDarkMode, obscure: true),
               const SizedBox(height: 12),
-              _buildTextField('كلمة المرور الجديدة', '', isDarkMode: isDarkMode, obscure: true),
+              _buildTextField('كلمة المرور الجديدة', '',
+                  isDarkMode: isDarkMode, obscure: true),
               const SizedBox(height: 12),
-              _buildTextField('تأكيد كلمة المرور', '', isDarkMode: isDarkMode, obscure: true),
+              _buildTextField('تأكيد كلمة المرور', '',
+                  isDarkMode: isDarkMode, obscure: true),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () async {
@@ -612,14 +759,16 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Session management
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -631,7 +780,9 @@ class SettingsScreen extends ConsumerWidget {
               Text(
                 'إدارة الجلسات',
                 style: AppTypography.bodyMd.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -639,7 +790,8 @@ class SettingsScreen extends ConsumerWidget {
               _buildSettingRow(
                 'الجلسة الحالية',
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.statusActiveS,
                     borderRadius: BorderRadius.circular(20),
@@ -671,7 +823,9 @@ class SettingsScreen extends ConsumerWidget {
               Text(
                 'آخر تسجيل دخول: اليوم - 10:30 صباحاً',
                 style: AppTypography.bodySm.copyWith(
-                  color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                  color: isDarkMode
+                      ? AppColors.darkTextMuted
+                      : AppColors.textMuted,
                 ),
               ),
               const SizedBox(height: 16),
@@ -686,15 +840,16 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Auto lock
         _buildSettingRow(
           'القفل التلقائي',
           Switch(
             value: ref.watch(autoLockProvider),
-            onChanged: (value) => ref.read(autoLockProvider.notifier).state = value,
+            onChanged: (value) =>
+                ref.read(autoLockProvider.notifier).state = value,
             activeColor: AppColors.primary,
           ),
           isDarkMode: isDarkMode,
@@ -709,8 +864,11 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
-  
-  Widget _buildNotificationsSection({required bool isDarkMode, required BuildContext context, required WidgetRef ref}) {
+
+  Widget _buildNotificationsSection(
+      {required bool isDarkMode,
+      required BuildContext context,
+      required WidgetRef ref}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -721,12 +879,14 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // Payment reminders
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -746,14 +906,18 @@ class SettingsScreen extends ConsumerWidget {
                         Text(
                           'تذكيرات الدفع',
                           style: AppTypography.bodyMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                            color: isDarkMode
+                                ? AppColors.darkTextHead
+                                : AppColors.textHeading,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
                           'إشعار عند اقتراب موعد الدفع',
                           style: AppTypography.bodySm.copyWith(
-                            color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                            color: isDarkMode
+                                ? AppColors.darkTextMuted
+                                : AppColors.textMuted,
                           ),
                         ),
                       ],
@@ -761,7 +925,9 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   Switch(
                     value: ref.watch(paymentRemindersProvider),
-                    onChanged: (value) => ref.read(paymentRemindersProvider.notifier).state = value,
+                    onChanged: (value) => ref
+                        .read(paymentRemindersProvider.notifier)
+                        .state = value,
                     activeColor: AppColors.primary,
                   ),
                 ],
@@ -773,7 +939,9 @@ class SettingsScreen extends ConsumerWidget {
                   Text(
                     'قبل ${ref.watch(reminderDaysProvider)} يوم${ref.watch(reminderDaysProvider) > 1 ? '' : ''}',
                     style: AppTypography.bodySm.copyWith(
-                      color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                      color: isDarkMode
+                          ? AppColors.darkTextBody
+                          : AppColors.textBody,
                     ),
                   ),
                 ],
@@ -781,14 +949,16 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Sync notifications
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -805,14 +975,18 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       'إشعارات المزامنة',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                        color: isDarkMode
+                            ? AppColors.darkTextHead
+                            : AppColors.textHeading,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       'إشعار عند اكتمال المزامنة',
                       style: AppTypography.bodySm.copyWith(
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -820,20 +994,23 @@ class SettingsScreen extends ConsumerWidget {
               ),
               Switch(
                 value: ref.watch(syncNotificationsProvider),
-                onChanged: (value) => ref.read(syncNotificationsProvider.notifier).state = value,
+                onChanged: (value) =>
+                    ref.read(syncNotificationsProvider.notifier).state = value,
                 activeColor: AppColors.primary,
               ),
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // System alerts
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -850,14 +1027,18 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       'تنبيهات النظام',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                        color: isDarkMode
+                            ? AppColors.darkTextHead
+                            : AppColors.textHeading,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       'تحذيرات انخفاض الرصيد والأخطاء',
                       style: AppTypography.bodySm.copyWith(
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -865,20 +1046,23 @@ class SettingsScreen extends ConsumerWidget {
               ),
               Switch(
                 value: ref.watch(systemAlertsProvider),
-                onChanged: (value) => ref.read(systemAlertsProvider.notifier).state = value,
+                onChanged: (value) =>
+                    ref.read(systemAlertsProvider.notifier).state = value,
                 activeColor: AppColors.primary,
               ),
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // WhatsApp notifications
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -895,14 +1079,18 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       'إشعارات واتساب',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                        color: isDarkMode
+                            ? AppColors.darkTextHead
+                            : AppColors.textHeading,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       'إشعار عند فشل إرسال الرسالة',
                       style: AppTypography.bodySm.copyWith(
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -910,7 +1098,9 @@ class SettingsScreen extends ConsumerWidget {
               ),
               Switch(
                 value: ref.watch(whatsappNotificationsProvider),
-                onChanged: (value) => ref.read(whatsappNotificationsProvider.notifier).state = value,
+                onChanged: (value) => ref
+                    .read(whatsappNotificationsProvider.notifier)
+                    .state = value,
                 activeColor: AppColors.primary,
               ),
             ],
@@ -919,8 +1109,11 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
-  
-  Widget _buildBackupSection({required bool isDarkMode, required BuildContext context, required WidgetRef ref}) {
+
+  Widget _buildBackupSection(
+      {required bool isDarkMode,
+      required BuildContext context,
+      required WidgetRef ref}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -931,12 +1124,14 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // Last backup info
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -963,21 +1158,26 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       'آخر نسخة احتياطية',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                        color: isDarkMode
+                            ? AppColors.darkTextHead
+                            : AppColors.textHeading,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       'اليوم - 10:30 صباحاً',
                       style: AppTypography.bodySm.copyWith(
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.statusActiveS,
                   borderRadius: BorderRadius.circular(20),
@@ -992,14 +1192,16 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Local backup
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -1015,7 +1217,9 @@ class SettingsScreen extends ConsumerWidget {
                   Text(
                     'نسخ احتياطي محلي',
                     style: AppTypography.bodyMd.copyWith(
-                      color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                      color: isDarkMode
+                          ? AppColors.darkTextHead
+                          : AppColors.textHeading,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1058,14 +1262,16 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Cloud backup
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -1085,14 +1291,18 @@ class SettingsScreen extends ConsumerWidget {
                         Text(
                           'نسخ احتياطي للسحابة',
                           style: AppTypography.bodyMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                            color: isDarkMode
+                                ? AppColors.darkTextHead
+                                : AppColors.textHeading,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
                           'مزامنة تلقائية مع Supabase',
                           style: AppTypography.bodySm.copyWith(
-                            color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                            color: isDarkMode
+                                ? AppColors.darkTextMuted
+                                : AppColors.textMuted,
                           ),
                         ),
                       ],
@@ -1100,7 +1310,9 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   Switch(
                     value: ref.watch(cloudBackupEnabledProvider),
-                    onChanged: (value) => ref.read(cloudBackupEnabledProvider.notifier).state = value,
+                    onChanged: (value) => ref
+                        .read(cloudBackupEnabledProvider.notifier)
+                        .state = value,
                     activeColor: AppColors.primary,
                   ),
                 ],
@@ -1117,7 +1329,9 @@ class SettingsScreen extends ConsumerWidget {
                     DropdownMenuItem(value: 'weekly', child: Text('أسبوعياً')),
                   ],
                   onChanged: (value) {
-                    if (value != null) ref.read(autoBackupFrequencyProvider.notifier).state = value;
+                    if (value != null)
+                      ref.read(autoBackupFrequencyProvider.notifier).state =
+                          value;
                   },
                 ),
                 isDarkMode: isDarkMode,
@@ -1125,9 +1339,9 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Auto backup schedule info
         Container(
           padding: const EdgeInsets.all(16),
@@ -1146,7 +1360,9 @@ class SettingsScreen extends ConsumerWidget {
                 child: Text(
                   'النسخ الاحتياطي التلقائي يتم كل يوم الساعة 2:00 صباحاً',
                   style: AppTypography.bodySm.copyWith(
-                    color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                    color: isDarkMode
+                        ? AppColors.darkTextBody
+                        : AppColors.textBody,
                   ),
                 ),
               ),
@@ -1156,7 +1372,7 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
-  
+
   Widget _buildLicenseSection({required bool isDarkMode}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1168,11 +1384,12 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -1182,21 +1399,26 @@ class SettingsScreen extends ConsumerWidget {
               Text(
                 'المولد الذكي',
                 style: AppTypography.h3.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'الإصدار 1.0.0',
                 style: AppTypography.bodyMd.copyWith(
-                  color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                  color:
+                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 '© 2026 جميع الحقوق محفوظة',
                 style: AppTypography.bodySm.copyWith(
-                  color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                  color: isDarkMode
+                      ? AppColors.darkTextMuted
+                      : AppColors.textMuted,
                 ),
               ),
             ],
@@ -1205,8 +1427,9 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
-  
-  Widget _buildSettingRow(String title, Widget trailing, {required bool isDarkMode}) {
+
+  Widget _buildSettingRow(String title, Widget trailing,
+      {required bool isDarkMode}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
@@ -1219,7 +1442,8 @@ class SettingsScreen extends ConsumerWidget {
           Text(
             title,
             style: AppTypography.bodyMd.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           trailing,
@@ -1227,25 +1451,25 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
-  
+
   Future<void> _saveAllSettings(BuildContext context, WidgetRef ref) async {
     final isLoading = ref.read(settingsLoadingProvider);
     if (isLoading) return;
-    
+
     // Get current values from providers
     final name = ref.read(generatorNameProvider);
     final phone = ref.read(generatorPhoneProvider);
     final address = ref.read(generatorAddressProvider);
     final logoPath = ref.read(logoPathProvider);
-    
+
     // Set loading state
     ref.read(settingsLoadingProvider.notifier).state = true;
-    
+
     try {
       // Import and use settings service
       final database = ref.read(databaseProvider);
       final settingsService = SettingsService(database);
-      
+
       // Save generator settings
       final settings = GeneratorSettings(
         id: 1,
@@ -1257,7 +1481,7 @@ class SettingsScreen extends ConsumerWidget {
         updatedAt: DateTime.now(),
       );
       await settingsService.updateGeneratorSettings(settings);
-      
+
       // Save printer settings
       await settingsService.setPrinterSettings({
         'printerName': ref.read(printerNameProvider),
@@ -1265,7 +1489,7 @@ class SettingsScreen extends ConsumerWidget {
         'documentTitle': ref.read(documentTitleProvider),
         'documentPhone': ref.read(documentPhoneProvider),
       });
-      
+
       // Save notification settings
       await settingsService.setNotificationSettings({
         'paymentReminders': ref.read(paymentRemindersProvider),
@@ -1274,19 +1498,19 @@ class SettingsScreen extends ConsumerWidget {
         'systemAlerts': ref.read(systemAlertsProvider),
         'whatsappNotifications': ref.read(whatsappNotificationsProvider),
       });
-      
+
       // Save security settings
       await settingsService.setSecuritySettings({
         'autoLock': ref.read(autoLockProvider),
         'autoLockMinutes': ref.read(autoLockMinutesProvider),
       });
-      
+
       // Save backup settings
       await settingsService.setBackupSettings({
         'cloudBackupEnabled': ref.read(cloudBackupEnabledProvider),
         'autoBackupFrequency': ref.read(autoBackupFrequencyProvider),
       });
-      
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1309,7 +1533,10 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Widget _buildTextField(String label, String value, {required bool isDarkMode, bool obscure = false, Function(String)? onChanged}) {
+  Widget _buildTextField(String label, String value,
+      {required bool isDarkMode,
+      bool obscure = false,
+      Function(String)? onChanged}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1327,17 +1554,21 @@ class SettingsScreen extends ConsumerWidget {
           onChanged: onChanged,
           decoration: InputDecoration(
             filled: true,
-            fillColor: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            fillColor: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                color:
+                    isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                color:
+                    isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -1354,8 +1585,12 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
-  
-  Widget _buildSyncSection({required bool isDarkMode, required SyncState syncState, required WidgetRef ref, required BuildContext context}) {
+
+  Widget _buildSyncSection(
+      {required bool isDarkMode,
+      required SyncState syncState,
+      required WidgetRef ref,
+      required BuildContext context}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1366,11 +1601,12 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
@@ -1385,7 +1621,9 @@ class SettingsScreen extends ConsumerWidget {
                   Text(
                     'حالة المزامنة',
                     style: AppTypography.bodyMd.copyWith(
-                      color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                      color: isDarkMode
+                          ? AppColors.darkTextHead
+                          : AppColors.textHeading,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1399,7 +1637,8 @@ class SettingsScreen extends ConsumerWidget {
                     )
                   else if (syncState.lastSyncTime != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppColors.statusActive.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -1414,15 +1653,15 @@ class SettingsScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              
               if (syncState.lastSyncTime != null)
                 Text(
                   'آخر مزامنة: ${_formatDateTime(syncState.lastSyncTime!)}',
                   style: AppTypography.bodySm.copyWith(
-                    color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                    color: isDarkMode
+                        ? AppColors.darkTextMuted
+                        : AppColors.textMuted,
                   ),
                 ),
-              
               if (syncState.errorMessage != null)
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -1438,7 +1677,6 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-
               if (syncState.lastConflictSummaryAr != null)
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -1459,16 +1697,16 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-              
               const SizedBox(height: 16),
-              
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: syncState.isSyncing ? null : () {
-                        ref.read(syncProvider.notifier).syncToCloud();
-                      },
+                      onPressed: syncState.isSyncing
+                          ? null
+                          : () {
+                              ref.read(syncProvider.notifier).syncToCloud();
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.textOnPrimary,
@@ -1488,12 +1726,16 @@ class SettingsScreen extends ConsumerWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: syncState.isSyncing ? null : () {
-                        ref.read(syncProvider.notifier).syncFromCloud();
-                      },
+                      onPressed: syncState.isSyncing
+                          ? null
+                          : () {
+                              ref.read(syncProvider.notifier).syncFromCloud();
+                            },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(
-                          color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                          color: isDarkMode
+                              ? AppColors.darkBorder
+                              : AppColors.borderLight,
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -1503,21 +1745,23 @@ class SettingsScreen extends ConsumerWidget {
                       child: Text(
                         'مزامنة من السحابة',
                         style: AppTypography.labelLg.copyWith(
-                          color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                          color: isDarkMode
+                              ? AppColors.darkTextBody
+                              : AppColors.textBody,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-              
               const SizedBox(height: 16),
-              
               Center(
                 child: TextButton(
-                  onPressed: syncState.isSyncing ? null : () {
-                    ref.read(syncProvider.notifier).syncBothDirections();
-                  },
+                  onPressed: syncState.isSyncing
+                      ? null
+                      : () {
+                          ref.read(syncProvider.notifier).syncBothDirections();
+                        },
                   child: Text(
                     'مزامنة ثنائي الاتجاه',
                     style: AppTypography.labelLg.copyWith(
@@ -1541,7 +1785,7 @@ class SettingsScreen extends ConsumerWidget {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -1581,7 +1825,8 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (newPasswordController.text != confirmPasswordController.text) {
+              if (newPasswordController.text !=
+                  confirmPasswordController.text) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('كلمات المرور غير متطابقة'),
@@ -1590,7 +1835,7 @@ class SettingsScreen extends ConsumerWidget {
                 );
                 return;
               }
-              
+
               if (newPasswordController.text.length < 4) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -1600,22 +1845,24 @@ class SettingsScreen extends ConsumerWidget {
                 );
                 return;
               }
-              
+
               final database = ref.read(databaseProvider);
               final settingsService = SettingsService(database);
               final success = await settingsService.changePassword(
                 currentPasswordController.text,
                 newPasswordController.text,
               );
-              
+
               if (dialogContext.mounted) {
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(success 
-                      ? 'تم تغيير كلمة المرور بنجاح' 
-                      : 'فشل تغيير كلمة المرور - كلمة المرور الحالية غير صحيحة'),
-                    backgroundColor: success ? AppColors.statusActive : AppColors.statusDanger,
+                    content: Text(success
+                        ? 'تم تغيير كلمة المرور بنجاح'
+                        : 'فشل تغيير كلمة المرور - كلمة المرور الحالية غير صحيحة'),
+                    backgroundColor: success
+                        ? AppColors.statusActive
+                        : AppColors.statusDanger,
                   ),
                 );
               }
@@ -1646,7 +1893,7 @@ class SettingsScreen extends ConsumerWidget {
               final database = ref.read(databaseProvider);
               final settingsService = SettingsService(database);
               await settingsService.logoutAllSessions();
-              
+
               if (dialogContext.mounted) {
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1678,12 +1925,12 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
-    
+
     try {
       final database = ref.read(databaseProvider);
       final settingsService = SettingsService(database);
       await settingsService.updateLastBackupTime();
-      
+
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(

@@ -1,0 +1,138 @@
+name: mawlid_al_dhaki
+description: "المولد الذكي — نظام إدارة مشتركي مولدات الكهرباء"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: ">=3.22.0"
+
+flutter:
+  uses-material-design: true
+  # Assets will be added as needed
+  # Currently no custom assets required
+  # fonts:
+  #   - family: Cairo
+  #     fonts:
+  #       - asset: assets/fonts/Cairo-Regular.ttf
+  #         weight: 400
+  #       - asset: assets/fonts/Cairo-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Cairo-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Cairo-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/Cairo-ExtraBold.ttf
+  #         weight: 800
+  #   - family: Nunito
+  #     fonts:
+  #       - asset: assets/fonts/Nunito-Regular.ttf
+  #         weight: 400
+  #       - asset: assets/fonts/Nunito-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Nunito-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/Nunito-ExtraBold.ttf
+  #         weight: 800
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── State Management ──────────────────────────────────────────
+  flutter_riverpod: ^2.6.1       # ✅ إدارة الحالة الرئيسية
+  riverpod_annotation: ^2.3.5    # ✅ code generation لـ Riverpod
+  freezed_annotation: ^2.4.4     # ✅ immutable models
+
+  # ── Navigation ────────────────────────────────────────────────
+  go_router: ^14.2.7             # ✅ التنقل بين الشاشات
+
+  # ── Database ──────────────────────────────────────────────────
+  drift: ^2.18.0                 # ✅ قاعدة البيانات المحلية (أفضل من Isar المهجور)
+  drift_flutter: ^0.1.0
+  sqlite3_flutter_libs: ^0.5.24
+
+  # ── Cloud Sync ────────────────────────────────────────────────
+  supabase_flutter: ^2.8.0       # ✅ مزامنة سحابية
+
+  # ── Icons & SVG ───────────────────────────────────────────────
+  phosphor_flutter: ^2.1.0       # ✅ أيقونات Outlined رفيقة 20px (مطابق Bitepoint)
+  flutter_svg: ^2.0.10+1         # ✅ شعار التطبيق + أيقونات SVG
+
+  # ── Animations ────────────────────────────────────────────────
+  flutter_animate: ^4.5.0        # ✅ micro-animations + sequential entry (Bitepoint style)
+  rive: ^0.14.4                 # 🔄 بديل Lottie — 60 FPS مقابل 17 FPS، حجم أصغر 10-15×
+  confetti: ^0.7.0               # ✅ احتفال اكتمال الكابينة
+
+  # ── Layout ────────────────────────────────────────────────────
+  gap: ^3.0.1                    # ✅ مسافات نظيفة
+
+  # ── Visual Effects ────────────────────────────────────────────
+  flutter_acrylic: ^1.1.4        # 🆕 تأثير Mica/Acrylic حقيقي من Windows 11
+  figma_squircle: ^0.5.3         # 🔄 بديل smooth_corner — squircle دقيق مطابق Figma
+
+  # ── Desktop DataGrid ──────────────────────────────────────────
+  pluto_grid_plus: ^8.4.0        # 🆕 جدول Desktop احترافي — keyboard navigation + sort + sticky headers
+  # data_table_2: ^2.5.14        # بديل أخف إذا لم تحتج pluto_grid
+
+  # ── Desktop UX ────────────────────────────────────────────────
+  context_menus: ^2.0.0          # ✅ right-click context menu
+  super_tooltip: ^2.0.4          # ✅ tooltips متقدمة
+
+  # ── Loading ───────────────────────────────────────────────────
+  shimmer: ^3.0.0                # ✅ skeleton loading
+
+  # ── Charts ────────────────────────────────────────────────────
+  fl_chart: ^0.68.0              # ✅ PieChart + BarChart + LineChart
+
+  # ── Toasts ────────────────────────────────────────────────────
+  toastification: ^2.1.0         # ✅ toast احترافي مع queue management
+
+  # ── Images ────────────────────────────────────────────────────
+  cached_network_image: ^3.3.1   # ✅ تحميل وكاش الصور
+  image_picker: ^1.1.2           # ✅ اختيار الصور من الكاميرا/المعرض
+
+  # ── Window Management ─────────────────────────────────────────
+  window_manager: ^0.4.2         # ✅ إدارة نافذة Windows
+  screen_retriever: ^0.1.9       # ✅ معلومات الشاشة للتمركز
+
+  # ── Print / PDF ───────────────────────────────────────────────
+  pdf: ^3.11.0                   # ✅ توليد PDF للتقارير
+  printing: ^5.13.1              # ✅ طباعة PDF
+  esc_pos_utils_plus: ^2.0.4     # ✅ طباعة إيصالات ESC/POS
+  # flutter_thermal_printer: ^0.3.2 # ✅ طابعة حرارية
+
+  # ── Files ─────────────────────────────────────────────────────
+  path_provider: ^2.1.4          # ✅ مسارات الملفات
+  open_file: ^3.3.2              # ✅ فتح ملفات PDF
+  process_run: ^1.1.1            # ✅ تشغيل Node.js (WhatsApp bridge)
+
+  # ── Logging & Debugging ───────────────────────────────────────
+  talker_flutter: ^4.4.1         # 🆕 logging احترافي + UI viewer + Riverpod integration
+  # يدعم: Riverpod logs، crash reports، history، share logs
+
+  # ── Utils ─────────────────────────────────────────────────────
+  intl: ^0.19.0                  # ✅ تنسيق التواريخ والأرقام العربية
+  shared_preferences: ^2.3.2     # ✅ إعدادات محلية
+  package_info_plus: ^8.0.2      # ✅ معلومات التطبيق
+  uuid: ^4.4.2                   # ✅ توليد UUIDs
+  collection: ^1.18.0            # ✅ عمليات Lists/Maps
+  rxdart: ^0.28.0                # ✅ search debounce 300ms
+  flutter_staggered_grid_view: ^0.7.0
+  connectivity_plus: ^6.0.3       # ✅ مراقبة حالة الشبكة
+
+  # ── Audio ─────────────────────────────────────────────────────
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.11
+  drift_dev: ^2.18.0
+  riverpod_generator: ^2.4.3
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  flutter_lints: ^4.0.0
+
+flutter_gen:
+  outputs:
+    package_parameter_enabled: true

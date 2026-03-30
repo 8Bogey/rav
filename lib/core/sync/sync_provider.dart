@@ -1,15 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
-import 'package:mawlid_al_dhaki/core/sync/sync_service.dart';
 import 'package:mawlid_al_dhaki/core/sync/enhanced_sync_service.dart';
 import 'package:mawlid_al_dhaki/core/supabase/supabase_provider.dart';
-
-/// Provider for the basic sync service
-final syncServiceProvider = Provider<SyncService>((ref) {
-  final database = ref.watch(databaseProvider);
-  final supabaseService = ref.watch(supabaseServiceProvider);
-  return SyncService(database: database, supabaseService: supabaseService);
-});
 
 /// Provider for the enhanced sync service with retry logic and real-time status
 final enhancedSyncServiceProvider = Provider<EnhancedSyncService>((ref) {

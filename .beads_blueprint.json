@@ -1,0 +1,3 @@
+A (Core): lib/core/, lib/models/
+B (Logic): lib/blocs/, lib/providers/
+C (UI): lib/views/, lib/widgets/

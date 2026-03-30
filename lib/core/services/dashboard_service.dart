@@ -15,8 +15,12 @@ class DashboardService {
 
   // Get total number of subscribers
   Future<int> getTotalSubscribers() async {
-    final subscribers = await _subscribersService.getAllSubscribers();
-    return subscribers.length;
+    try {
+      final subscribers = await _subscribersService.getAllSubscribers();
+      return subscribers.length;
+    } catch (e) {
+      return 0;
+    }
   }
 
   // Get active subscribers (subscribers with no accumulated debt)
@@ -98,21 +102,29 @@ class DashboardService {
 
   // Get total number of cabinets
   Future<int> getTotalCabinets() async {
-    final cabinets = await _cabinetsService.getAllCabinets();
-    return cabinets.length;
+    try {
+      final cabinets = await _cabinetsService.getAllCabinets();
+      return cabinets.length;
+    } catch (e) {
+      return 0;
+    }
   }
 
   // Get completed cabinets (100% progress)
   Future<int> getCompletedCabinets() async {
-    final cabinets = await _cabinetsService.getAllCabinets();
-    int completed = 0;
-    for (var cabinet in cabinets) {
-      if (cabinet.totalSubscribers > 0 && 
-          cabinet.currentSubscribers >= cabinet.totalSubscribers) {
-        completed++;
+    try {
+      final cabinets = await _cabinetsService.getAllCabinets();
+      int completed = 0;
+      for (var cabinet in cabinets) {
+        if (cabinet.totalSubscribers > 0 && 
+            cabinet.currentSubscribers >= cabinet.totalSubscribers) {
+          completed++;
+        }
       }
+      return completed;
+    } catch (e) {
+      return 0;
     }
-    return completed;
   }
 
   // Get today's collected amount

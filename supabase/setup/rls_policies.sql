@@ -34,9 +34,9 @@ ON subscribers FOR SELECT USING (
     SELECT 1 FROM auth.users u
     JOIN workers w ON u.email = w.phone || '@example.com'  -- Assuming worker email mapping
     WHERE u.id = auth.uid() 
-    AND w.name = auth.jwt()->>'worker_name'
+    AND w.name = auth.jwt()->>'worker'
     AND subscribers.cabinet IN (
-      SELECT cabinet FROM workers WHERE name = auth.jwt()->>'worker_name'
+      SELECT cabinet FROM workers WHERE name = auth.jwt()->>'worker'
     )
   )
 );
@@ -59,7 +59,7 @@ ON cabinets FOR SELECT USING (
     SELECT c.id FROM cabinets c
     JOIN workers w ON c.name = w.name  -- Assuming cabinet name matches worker name for assignment
     WHERE w.phone IN (
-      SELECT phone FROM workers WHERE name = auth.jwt()->>'worker_name'
+      SELECT phone FROM workers WHERE name = auth.jwt()->>'worker'
     )
   )
 );
@@ -78,7 +78,7 @@ ON payments FOR ALL USING (
 -- Workers can access payments they've collected
 CREATE POLICY "Workers can access their payments" 
 ON payments FOR SELECT USING (
-  payments.worker = auth.jwt()->>'worker_name'
+  payments.worker = auth.jwt()->>'worker'
 );
 
 -- Workers Table Policies
@@ -121,7 +121,7 @@ ON whatsapp_templates FOR ALL USING (
 -- Users can view active templates
 CREATE POLICY "Users can view active templates" 
 ON whatsapp_templates FOR SELECT USING (
-  is_active = 1
+  isActive = true
 );
 
 -- Grant necessary permissions
