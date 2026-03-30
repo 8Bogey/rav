@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS cabinets (
   
   -- Business data fields
   name TEXT NOT NULL UNIQUE,
+  letter TEXT DEFAULT '',
   total_subscribers INTEGER NOT NULL DEFAULT 0,
   current_subscribers INTEGER NOT NULL DEFAULT 0,
   collected_amount REAL DEFAULT 0,
@@ -206,8 +207,8 @@ CREATE INDEX IF NOT EXISTS idx_subscribers_cabinet ON subscribers(cabinet);
 CREATE INDEX IF NOT EXISTS idx_subscribers_phone ON subscribers(phone);
 CREATE INDEX IF NOT EXISTS idx_subscribers_status ON subscribers(status);
 CREATE INDEX IF NOT EXISTS idx_workers_phone ON workers(phone);
-CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user);
-CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log("user");
+CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log("timestamp" DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_log_type ON audit_log(type);
 
 -- Add updated_at trigger function
