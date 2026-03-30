@@ -67,11 +67,11 @@ class AppRoot extends ConsumerWidget {
         primarySwatch: Colors.green,
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: _NoAnimationPageTransitionsBuilder(),
-            TargetPlatform.iOS: _NoAnimationPageTransitionsBuilder(),
-            TargetPlatform.macOS: _NoAnimationPageTransitionsBuilder(),
-            TargetPlatform.windows: _NoAnimationPageTransitionsBuilder(),
-            TargetPlatform.linux: _NoAnimationPageTransitionsBuilder(),
+            TargetPlatform.android: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.iOS: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.macOS: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.windows: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.linux: _SmoothPageTransitionsBuilder(),
           },
         ),
         // Apply the color scheme from PRD
@@ -96,11 +96,11 @@ class AppRoot extends ConsumerWidget {
         brightness: Brightness.dark,
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: _NoAnimationPageTransitionsBuilder(),
-            TargetPlatform.iOS: _NoAnimationPageTransitionsBuilder(),
-            TargetPlatform.macOS: _NoAnimationPageTransitionsBuilder(),
-            TargetPlatform.windows: _NoAnimationPageTransitionsBuilder(),
-            TargetPlatform.linux: _NoAnimationPageTransitionsBuilder(),
+            TargetPlatform.android: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.iOS: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.macOS: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.windows: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.linux: _SmoothPageTransitionsBuilder(),
           },
         ),
         // Apply dark color scheme from PRD
@@ -147,8 +147,8 @@ class AppRoot extends ConsumerWidget {
   }
 }
 
-class _NoAnimationPageTransitionsBuilder extends PageTransitionsBuilder {
-  const _NoAnimationPageTransitionsBuilder();
+class _SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SmoothPageTransitionsBuilder();
 
   @override
   Widget buildTransitions<T>(
@@ -158,6 +158,32 @@ class _NoAnimationPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return child;
+    if (kIsWeb) {
+      return FadeTransition(
+        opacity: CurveTween(curve: Curves.easeIn).animate(animation),
+        child: child,
+      );
+    }
+
+    final fadeAnimation = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOut,
+    );
+
+    final slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutQuart,
+    ));
+
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: SlideTransition(
+        position: slideAnimation,
+        child: child,
+      ),
+    );
   }
 }

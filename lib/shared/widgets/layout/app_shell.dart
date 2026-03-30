@@ -131,7 +131,27 @@ class AppShell extends ConsumerWidget {
                           24), // contentPaddingH/V from PRD
                       color:
                           isDarkMode ? AppColors.darkBgPage : AppColors.bgPage,
-                      child: child,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        switchInCurve: Curves.easeOutQuart,
+                        switchOutCurve: Curves.easeInQuart,
+                        transitionBuilder: (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.0, 0.02),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: KeyedSubtree(
+                          key: ValueKey(location),
+                          child: child,
+                        ),
+                      ),
                     ),
                   ),
                 ],

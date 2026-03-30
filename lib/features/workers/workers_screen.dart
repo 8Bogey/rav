@@ -7,7 +7,8 @@ import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
-import 'package:mawlid_al_dhaki/features/workers/providers/workers_provider.dart';
+import 'package:mawlid_al_dhaki/features/workers/providers/workers_provider.dart'
+    show WorkersProvider, WorkerPermissions, workersProvider;
 
 class WorkersScreen extends ConsumerWidget {
   const WorkersScreen({super.key});
@@ -502,26 +503,150 @@ class WorkersScreen extends ConsumerWidget {
   }
   
   void _showEditPermissionsDialog(BuildContext context, WidgetRef ref, bool isDarkMode, Worker worker) {
+    // Parse existing permissions
+    WorkerPermissions currentPermissions = const WorkerPermissions();
+    try {
+      final decoded = jsonDecode(worker.permissions);
+      if (decoded is Map) {
+        currentPermissions = WorkerPermissions.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (e) {
+      // Use default permissions if parsing fails
+    }
+
+    // Create local state for permissions
+    bool canCollect = currentPermissions.collection;
+    bool canAddSubscriber = currentPermissions.addSubscriber;
+    bool canEditData = currentPermissions.editData;
+    bool canViewReports = currentPermissions.viewReports;
+    bool canManageWorkers = currentPermissions.manageWorkers;
+    bool canSettings = currentPermissions.settings;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
-        title: Text(
-          'تعديل صلاحيات ${worker.name}',
-          style: AppTypography.h3.copyWith(
-            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+          title: Text(
+            'تعديل صلاحيات ${worker.name}',
+            style: AppTypography.h3.copyWith(
+              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+            ),
           ),
-        ),
-        content: Text(
-          'سيتم إضافة صلاحيات العامل قريباً',
-          style: AppTypography.bodyMd.copyWith(
-            color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPermissionCheckbox(
+                  'تحصيل',
+                  canCollect,
+                  (value) => setState(() => canCollect = value ?? false),
+                  isDarkMode,
+                ),
+                _buildPermissionCheckbox(
+                  'إضافة مشترك',
+                  canAddSubscriber,
+                  (value) => setState(() => canAddSubscriber = value ?? false),
+                  isDarkMode,
+                ),
+                _buildPermissionCheckbox(
+                  'تعديل بيانات',
+                  canEditData,
+                  (value) => setState(() => canEditData = value ?? false),
+                  isDarkMode,
+                ),
+                _buildPermissionCheckbox(
+                  'عرض التقارير',
+                  canViewReports,
+                  (value) => setState(() => canViewReports = value ?? false),
+                  isDarkMode,
+                ),
+                _buildPermissionCheckbox(
+                  'إدارة العمال',
+                  canManageWorkers,
+                  (value) => setState(() => canManageWorkers = value ?? false),
+                  isDarkMode,
+                ),
+                _buildPermissionCheckbox(
+                  'الإعدادات',
+                  canSettings,
+                  (value) => setState(() => canSettings = value ?? false),
+                  isDarkMode,
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'إلغاء',
+                style: AppTypography.labelLg.copyWith(
+                  color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newPermissions = WorkerPermissions(
+                  collection: canCollect,
+                  addSubscriber: canAddSubscriber,
+                  editData: canEditData,
+                  viewReports: canViewReports,
+                  manageWorkers: canManageWorkers,
+                  settings: canSettings,
+                );
+                
+                await ref.read(workersProvider.notifier).updatePermissions(
+                  worker.id,
+                  newPermissions,
+                );
+                
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.gold,
+              ),
+              child: Text(
+                'حفظ',
+                style: AppTypography.labelLg.copyWith(
+                  color: AppColors.textOnGold,
+                ),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إغلاق'),
+      ),
+    );
+  }
+
+  Widget _buildPermissionCheckbox(
+    String label,
+    bool value,
+    ValueChanged<bool?> onChanged,
+    bool isDarkMode,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Checkbox(
+            value: value,
+            onChanged: onChanged,
+            activeColor: AppColors.gold,
+            side: BorderSide(
+              color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: AppTypography.bodyMd.copyWith(
+              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+            ),
           ),
         ],
       ),
