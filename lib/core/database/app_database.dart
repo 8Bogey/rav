@@ -62,7 +62,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -118,7 +118,13 @@ class AppDatabase extends _$AppDatabase {
           for (final sql in alterStatements) {
             await _migrateAddColumn(sql);
           }
-          print('Database migration completed successfully');
+          print('Database migration to v2 completed successfully');
+        }
+        
+        // Migrate to version 3: ensure letter column exists in cabinets_table
+        if (from < 3) {
+          await _migrateAddColumn('ALTER TABLE cabinets_table ADD COLUMN letter TEXT DEFAULT ""');
+          print('Database migration to v3 completed successfully');
         }
       },
       beforeOpen: (details) async {
