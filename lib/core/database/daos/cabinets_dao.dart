@@ -8,22 +8,60 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
     with _$CabinetsDaoMixin {
   CabinetsDao(super.db);
 
-  // Get all cabinets
-  Future<List<Cabinet>> getAllCabinets() => select(cabinetsTable).get();
-
-  // Get cabinet by ID
-  Future<Cabinet?> getCabinetById(int id) async {
-    return await (select(cabinetsTable)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  // Get all active cabinets - REQUIRES ownerId
+  Future<List<Cabinet>> getAllCabinets({required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(cabinetsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false)))
+        .get();
   }
 
-  // Get cabinet by name
-  Future<Cabinet?> getCabinetByName(String name) async {
-    return await (select(cabinetsTable)..where((tbl) => tbl.name.equals(name))).getSingleOrNull();
+  // Watch all active cabinets - REQUIRES ownerId
+  Stream<List<Cabinet>> watchAllCabinets({required String ownerId}) {
+    if (ownerId.isEmpty) return Stream.value([]);
+    
+    return (select(cabinetsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false)))
+        .watch();
+  }
+
+  // Get cabinet by ID (UUID) - REQUIRES ownerId
+  Future<Cabinet?> getCabinetById(String id, {required String ownerId}) async {
+    if (ownerId.isEmpty) return null;
+    
+    return await (select(cabinetsTable)
+      ..where((tbl) => tbl.id.equals(id))
+      ..where((tbl) => tbl.ownerId.equals(ownerId)))
+        .getSingleOrNull();
+  }
+
+  // Get cabinet by name - REQUIRES ownerId
+  Future<Cabinet?> getCabinetByName(String name, {required String ownerId}) async {
+    if (ownerId.isEmpty) return null;
+    
+    return await (select(cabinetsTable)
+      ..where((tbl) => tbl.name.equals(name))
+      ..where((tbl) => tbl.ownerId.equals(ownerId)))
+        .getSingleOrNull();
   }
 
   // Add a new cabinet
-  Future<int> addCabinet(Insertable<Cabinet> cabinet) {
-    return into(cabinetsTable).insert(cabinet);
+  Future<String> addCabinet(Insertable<Cabinet> cabinet) async {
+    return await into(cabinetsTable).insert(cabinet).then((_) {
+      final comp = cabinet as CabinetsTableCompanion;
+      return comp.id.value;
+    });
+  }
+
+  // Insert cabinet and return ID
+  Future<String> insertCabinet(Insertable<Cabinet> cabinet) async {
+    return await into(cabinetsTable).insert(cabinet).then((_) {
+      final comp = cabinet as CabinetsTableCompanion;
+      return comp.id.value;
+    });
   }
 
   // Update a cabinet
@@ -31,103 +69,88 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
     return update(cabinetsTable).replace(cabinet);
   }
 
-  // Delete a cabinet
-  Future<int> deleteCabinet(int id) {
+  // Soft delete a cabinet
+  Future<int> deleteCabinet(String id) {
+    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
+        .write(const CabinetsTableCompanion(
+          isDeleted: Value(true),
+        ));
+  }
+
+  // Hard delete
+  Future<int> hardDeleteCabinet(String id) {
     return (delete(cabinetsTable)..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  // Get dirty cabinets (those with dirtyFlag = true)
-  Future<List<Cabinet>> getDirtyCabinets() {
-    return (select(cabinetsTable)..where((tbl) => tbl.dirtyFlag.equals(true))).get();
+  // Get dirty cabinets - REQUIRES ownerId
+  Future<List<Cabinet>> getDirtyCabinets({required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(cabinetsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.dirtyFlag.equals(true)))
+        .get();
   }
-  
-  // Update sync status for a cabinet
-  Future<int> updateSyncStatus(int id, String status) {
+
+  // Mark a cabinet record as dirty
+  Future<int> markRecordAsDirty(String id) {
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(CabinetsTableCompanion(syncStatus: Value(status)));
-  }
-  
-  // Mark a cabinet record as dirty (needing sync)
-  Future<int> markRecordAsDirty(int id) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const CabinetsTableCompanion(
-          dirtyFlag: Value(true),
-          lastModified: Value.absent(), // This will use the default timestamp
+        .write(CabinetsTableCompanion(
+          dirtyFlag: const Value(true),
+          updatedAt: Value(DateTime.now()),
         ));
   }
-  
-  // Clear dirty flag for a cabinet record
-  Future<int> clearDirtyFlag(int id) {
+
+  // Clear dirty flag
+  Future<int> clearDirtyFlag(String id) {
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
         .write(const CabinetsTableCompanion(dirtyFlag: Value(false)));
   }
-  
-  // Mark a cabinet record for manual conflict resolution
-  Future<int> markConflictForManualResolution(int id) {
+
+  // Update last synced timestamp
+  Future<int> updateLastSyncedAt(String id) {
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
         .write(CabinetsTableCompanion(
-          conflictResolutionStrategy: Value('manual'),
-          conflictDetectedAt: Value(DateTime.now()),
+          lastSyncedAt: Value(DateTime.now()),
         ));
   }
   
-  // Update conflict resolution information
-  Future<int> updateConflictResolution(int id, {
-    String? conflictResolutionStrategy,
-    DateTime? conflictResolvedAt,
-    String? conflictOrigin,
-  }) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(CabinetsTableCompanion(
-          conflictResolutionStrategy: Value(conflictResolutionStrategy),
-          conflictResolvedAt: Value(conflictResolvedAt),
-          conflictOrigin: Value(conflictOrigin),
-        ));
+  // Get cabinet stats (count active subscribers, sum collected)
+  Future<Map<String, dynamic>> getCabinetStats(String id, {required String ownerId}) async {
+    final cabinet = await getCabinetById(id, ownerId: ownerId);
+    if (cabinet == null) return {};
+    
+    return {
+      'totalSubscribers': cabinet.totalSubscribers,
+      'currentSubscribers': cabinet.currentSubscribers,
+      'collectedAmount': cabinet.collectedAmount,
+      'delayedSubscribers': cabinet.delayedSubscribers,
+    };
   }
   
-  // Mark record as deleted locally
-  Future<int> markDeletedLocally(int id) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(CabinetsTableCompanion(
-          deletedLocally: Value(true),
-          dirtyFlag: Value(true),
-          lastModified: Value(DateTime.now()),
-        ));
+  // Count cabinets - REQUIRES ownerId
+  Future<int> countCabinets({required String ownerId}) async {
+    if (ownerId.isEmpty) return 0;
+    
+    final query = selectOnly(cabinetsTable)
+      ..addColumns([cabinetsTable.id.count()])
+      ..where(cabinetsTable.ownerId.equals(ownerId))
+      ..where(cabinetsTable.isDeleted.equals(false));
+    
+    final result = await query.getSingle();
+    return result.read(cabinetsTable.id.count()) ?? 0;
   }
   
-  // Undelete a record
-  Future<int> undeleteRecord(int id) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(CabinetsTableCompanion(
-          deletedLocally: Value(false),
-          dirtyFlag: Value(true),
-          lastModified: Value(DateTime.now()),
-        ));
-  }
-  
-  // Update sync error information
-  Future<int> updateSyncError(int id, String errorMessage) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(CabinetsTableCompanion(
-          lastSyncError: Value(errorMessage),
-          syncRetryCount: Value.absent(), // Increment retry count in service layer
-        ));
-  }
-  
-  // Reset sync error and retry count after successful sync
-  Future<int> resetSyncError(int id) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const CabinetsTableCompanion(
-          lastSyncError: Value(null),
-          syncRetryCount: Value(0),
-        ));
-  }
-  
-  // Increment sync retry count
-  Future<int> incrementSyncRetryCount(int id) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const CabinetsTableCompanion(
-          syncRetryCount: Value.absent(), // This will need to be handled in service layer
-        ));
+  // Sum collected amount - REQUIRES ownerId
+  Future<double> sumCollectedAmount({required String ownerId}) async {
+    if (ownerId.isEmpty) return 0.0;
+    
+    final query = selectOnly(cabinetsTable)
+      ..addColumns([cabinetsTable.collectedAmount.sum()])
+      ..where(cabinetsTable.ownerId.equals(ownerId))
+      ..where(cabinetsTable.isDeleted.equals(false));
+    
+    final result = await query.getSingle();
+    return result.read(cabinetsTable.collectedAmount.sum()) ?? 0.0;
   }
 }

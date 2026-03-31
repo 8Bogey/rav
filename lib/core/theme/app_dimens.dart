@@ -42,4 +42,10 @@ class AppDimens {
   static const double avatarLg = 48;
   static const double windowMinWidth = 1200;
   static const double windowMinHeight = 720;
+
+  // Animations
+  static const Duration durationFast = Duration(milliseconds: 150);
+  static const Duration durationNormal = Duration(milliseconds: 300);
+  static const Duration durationSlow = Duration(milliseconds: 500);
+  static const Duration durationVerySlow = Duration(milliseconds: 800);
 }

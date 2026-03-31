@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
+import 'package:mawlid_al_dhaki/core/theme/app_dimens.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/shared/widgets/layout/app_sidebar.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
@@ -132,17 +133,20 @@ class AppShell extends ConsumerWidget {
                       color:
                           isDarkMode ? AppColors.darkBgPage : AppColors.bgPage,
                       child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        switchInCurve: Curves.easeOutQuart,
-                        switchOutCurve: Curves.easeInQuart,
-                        transitionBuilder: (Widget child, Animation<double> animation) {
+                        duration: AppDimens.durationNormal,
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        transitionBuilder:
+                            (Widget child, Animation<double> animation) {
+                          final slideAnimation = Tween<Offset>(
+                            begin: const Offset(0.02, 0),
+                            end: Offset.zero,
+                          ).animate(animation);
+
                           return FadeTransition(
                             opacity: animation,
                             child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.0, 0.02),
-                                end: Offset.zero,
-                              ).animate(animation),
+                              position: slideAnimation,
                               child: child,
                             ),
                           );

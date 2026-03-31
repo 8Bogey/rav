@@ -1,0 +1,1242 @@
+﻿[
+  {
+    "id": "rav-q0v1",
+    "title": "Migration validation tests",
+    "description": "Test data migration accuracy: record count comparison between Drift and Isar for all tables. Field-by-field validation for a sample of records. FK integrity check (payment-\u003esubscriber links). ID mapping correctness. Rollback functionality test.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:12:09Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:12:09Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-q0v1",
+        "depends_on_id": "rav-qsl",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:12:08Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-u1uv",
+    "title": "Implement offline payment recording",
+    "description": "Payment recording must work with zero network. Write payment to Isar + outbox entry. Show instant success feedback (audio + toast). Queue outbox for later sync. Display unsynced payment indicator badge on payment records.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:12:04Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:12:04Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-u1uv",
+        "depends_on_id": "rav-8dg",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:12:04Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-uwf",
+    "title": "Update LoginScreen for Convex auth",
+    "description": "Refactor lib/features/auth/login_screen.dart (15171 bytes) to use Convex authentication instead of simple password check. Add user role detection post-login (Admin vs Collector). Route to appropriate UI based on role. Preserve existing Bitepoint-style visual design.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:58Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:58Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-uwf",
+        "depends_on_id": "rav-476",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:57Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-b1f",
+    "title": "Implement dynamic RBAC permission system",
+    "description": "Create lib/core/auth/rbac_service.dart. Define permission scopes: collection_read, collection_write, subscriber_manage, cabinet_manage, reports_view, settings_manage, audit_view, whatsapp_manage. Admin role gets all scopes. Collector role gets configurable subset. Store role/permissions in Workers collection.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:57Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:57Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-b1f",
+        "depends_on_id": "rav-476",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:56Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-gp9",
+    "title": "Implement Convex authentication integration",
+    "description": "Set up Convex auth provider (e.g., Convex + Clerk, or custom JWT). Replace the current simple password-based LoginScreen auth with proper identity-based authentication. Store auth tokens securely via flutter_secure_storage. Handle token refresh and session management.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:56Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:56Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-gp9",
+        "depends_on_id": "rav-476",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:55Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-tnt",
+    "title": "Implement ownerId tenant isolation in Isar",
+    "description": "Add ownerId field to all Isar collections. All repository queries must filter by the current authenticated user's ownerId. Create a CurrentUserProvider that exposes the authenticated user's identity for use in all repository operations.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:56Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:56Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-tnt",
+        "depends_on_id": "rav-476",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:56Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-dl4",
+    "title": "Replace supabase_provider.dart with convex_provider.dart",
+    "description": "Remove lib/core/supabase/supabase_provider.dart (3792 bytes). Create lib/core/convex/convex_provider.dart with ConvexClient provider. This provider feeds the SyncManager instead of the old SupabaseService.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:55Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:55Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-dl4",
+        "depends_on_id": "rav-sem",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:55Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-yt1",
+    "title": "Rewrite service_providers.dart for Isar",
+    "description": "Update lib/core/services/service_providers.dart (50 lines). All 6 service providers (cabinets, subscribers, payments, workers, auditLog, whatsapp) now depend on Isar repositories instead of AppDatabase. Update constructor signatures.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:55Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:55Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-yt1",
+        "depends_on_id": "rav-sem",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:55Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-yfs",
+    "title": "Rewrite database_provider.dart for Isar",
+    "description": "Replace lib/core/database/database_provider.dart (61 lines). Remove databaseProvider (AppDatabase), subscribersDaoProvider, cabinetsDaoProvider, paymentsDaoProvider, workersDaoProvider, auditLogDaoProvider. Create isarProvider, subscriberRepoProvider, cabinetRepoProvider, paymentRepoProvider, workerRepoProvider, auditLogRepoProvider, templateRepoProvider, settingsRepoProvider.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:54Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:54Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-yfs",
+        "depends_on_id": "rav-sem",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:54Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-zfx",
+    "title": "Implement migration validation and rollback",
+    "description": "Create validation step that compares record counts, checksums, and key field values between old (Drift/Supabase) and new (Isar/Convex) databases. Implement rollback: keep old Drift DB file as backup until migration is confirmed successful. Add migration status tracking in shared_preferences.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:49Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:49Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-zfx",
+        "depends_on_id": "rav-ju9",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:48Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-545",
+    "title": "Migrate Workers data with permissions transformation",
+    "description": "Migrate WorkersTable records. Transform permissions from JSON string to List\u003cString\u003e. Map todayCollected and monthTotal (real-\u003edouble). Add default role (collector for existing workers, admin for owner). Drop sync metadata.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:47Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:47Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-545",
+        "depends_on_id": "rav-ju9",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:46Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-0bg",
+    "title": "Migrate Payments data with FK remapping",
+    "description": "Migrate PaymentsTable records. Critical: remap subscriberId FK from old Drift integer ID to new Isar subscriber ID using the ID mapping table. Transform date formats. Drop sync metadata. Verify payment-subscriber linkage integrity after migration.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:46Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:46Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-0bg",
+        "depends_on_id": "rav-ju9",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:46Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-csd",
+    "title": "Migrate Cabinets data (Drift -\u003e Isar)",
+    "description": "Migrate all records from CabinetsTable. Transform: id(int-\u003eauto), letter(text-\u003etext indexed), numeric fields preserved. Drop all sync metadata columns. Verify completion_date nullable handling.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:46Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:46Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-csd",
+        "depends_on_id": "rav-ju9",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:45Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-c6j",
+    "title": "Build ID mapping table for migration",
+    "description": "Create a temporary mapping collection in Isar that maps old Drift integer IDs to new Isar IDs and Convex document IDs. Essential for preserving referential integrity: payments.subscriberId must correctly map to the new subscriber Isar ID. Map: oldDriftId -\u003e newIsarId -\u003e convexDocId for each entity.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:45Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:45Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-c6j",
+        "depends_on_id": "rav-ju9",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:45Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-f8r",
+    "title": "Migrate Subscribers data (Drift -\u003e Isar)",
+    "description": "Migrate all records from SubscribersTable. Transform: id(int-\u003eauto), code(preserve unique constraint), cabinet(text-\u003etext), status(int-\u003eenum), accumulatedDebt(real-\u003edouble), tags(nullable text-\u003eList\u003cString\u003e?), sync metadata columns(drop entirely). Verify record count matches after migration.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:45Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:45Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-f8r",
+        "depends_on_id": "rav-ju9",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:45Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-h5p",
+    "title": "Build Drift-to-Isar migration utility",
+    "description": "Create lib/core/migration/drift_to_isar_migrator.dart. Read all records from existing Drift/SQLite database (mawlid_al_dhaki_v1.db). Transform each record to Isar collection format. Handle: integer IDs to Isar auto-IDs, DateTime format differences, JSON string permissions to List\u003cString\u003e, integer isActive to bool. Write to Isar in batched transactions.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:45Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:45Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-h5p",
+        "depends_on_id": "rav-ju9",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:44Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-5ci",
+    "title": "Implement LWW Conflict Resolution with version vectors",
+    "description": "Create lib/core/sync/conflict_resolver.dart. Replace existing sync_conflict.dart (201 lines) with new LWW strategy using _version fields. Compare version numbers on Convex mutations — reject if stale. On conflict: field-level merge when possible (e.g., Admin updates subscriber name while Collector updates payment), fallback to LWW by timestamp.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:42Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:42Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-5ci",
+        "depends_on_id": "rav-neh",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:42Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-fm9",
+    "title": "Implement Convex Subscription Listener (Read Path)",
+    "description": "Create lib/core/sync/subscription_listener.dart. Subscribes to Convex real-time queries for each entity. On data change from Convex, upsert into local Isar collections. Skip updates that originated from this device (check outbox). This is the background hydration loop that keeps Isar in sync with Convex.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:42Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:42Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-fm9",
+        "depends_on_id": "rav-neh",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:41Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-68n",
+    "title": "Implement SyncManager orchestrator",
+    "description": "Create lib/core/sync/sync_manager.dart. Central orchestrator that coordinates the Outbox Processor (writes) and Subscription Listener (reads). Manages sync lifecycle: start, pause, resume, stop. Exposes sync status stream for UI. Replaces the existing EnhancedSyncService (265 lines) and SupabaseService sync logic (1467 lines).",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:41Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:41Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-68n",
+        "depends_on_id": "rav-neh",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:40Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-brx",
+    "title": "Implement Outbox Processor (Write Path)",
+    "description": "Create lib/core/sync/outbox_processor.dart. Reads pending entries from Isar Outbox collection in FIFO order. For each entry: deserialize payload, call corresponding Convex mutation, mark as completed on success, increment retryCount on failure. Implements sequential push with configurable batch size. Respects connectivity state.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:41Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:41Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-brx",
+        "depends_on_id": "rav-neh",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:41Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-dji",
+    "title": "Run isar_generator code generation",
+    "description": "Configure build.yaml for isar_generator. Run dart run build_runner build to generate .g.dart files for all Isar collections. Verify generated code compiles and all indexes are created correctly.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:40Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:40Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-dji",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:40Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-scm",
+    "title": "Implement Isar encryption with Secure Storage",
+    "description": "Generate a 256-bit encryption key on first launch using flutter_secure_storage. Store it securely. On subsequent launches, retrieve and pass to Isar.open(encryptionKey). This protects financial data (payments, debts, subscriber info) at rest on field devices.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:40Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:40Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-scm",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:39Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-j7l",
+    "title": "Implement Isar repository for Workers",
+    "description": "Create lib/core/isar/repositories/worker_repository.dart. Implement: getAll(), getById(), getByRole(), watch(), create(), update(), delete(), updateCollectionStats(), resetDailyStats(). Writes create outbox entries.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:39Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:39Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-j7l",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:38Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-47l",
+    "title": "Implement Isar repository for Payments",
+    "description": "Create lib/core/isar/repositories/payment_repository.dart. Implement: getAll(), getBySubscriber(), getByDateRange(), getByWorker(), getByCabinet(), watch(), create(), update(), delete(). Auto-update subscriber debt on payment creation. Writes create outbox entries.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:38Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:38Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-47l",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:38Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-s7p",
+    "title": "Implement Isar repository for Cabinets",
+    "description": "Create lib/core/isar/repositories/cabinet_repository.dart. Implement: getAll(), getById(), getByLetter(), watch(), create(), update(), delete(), recalculateStats(). Reactive streams for cabinet progress cards. Writes create outbox entries.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:38Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:38Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-s7p",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:37Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-2p5",
+    "title": "Implement Isar database initialization service",
+    "description": "Create lib/core/isar/isar_database.dart. Initialize Isar with all 8 collections (7 domain + 1 outbox). Handle encryption key from flutter_secure_storage. Set up proper directory path via path_provider. Create IsarProvider for Riverpod.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:37Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:37Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-2p5",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:36Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-eve",
+    "title": "Implement Isar repository for Subscribers",
+    "description": "Create lib/core/isar/repositories/subscriber_repository.dart. Implement: getAll(), getById(), getByCode(), getByCabinet(), getByStatus(), watch() (reactive stream), create(), update(), delete(). All reads return Isar reactive streams for UI binding. All writes also create outbox entries.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:37Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:37Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-eve",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:37Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-7rp",
+    "title": "Design Isar Outbox collection for offline writes",
+    "description": "Create lib/core/isar/collections/outbox_entry_collection.dart. Fields: isarId, tableName(@Index), operationType(enum: create/update/delete), documentId(String), payload(String JSON), createdAt(@Index for FIFO ordering), retryCount, lastError, status(enum: pending/processing/failed). This is the core of the Outbox Pattern for offline-first writes.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:36Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:36Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-7rp",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:36Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-abg",
+    "title": "Design Isar collection for Workers",
+    "description": "Create lib/core/isar/collections/worker_collection.dart. Fields: isarId, name, phone, permissions(List\u003cString\u003e instead of JSON string), role(enum: admin/collector), todayCollected, monthTotal, ownerId(@Index), version, convexId, updatedAt, createdAt.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:35Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:35Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-abg",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:34Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-0ds",
+    "title": "Design Isar collection for Cabinets",
+    "description": "Create lib/core/isar/collections/cabinet_collection.dart. Fields: isarId, name, letter(@Index), totalSubscribers, currentSubscribers, collectedAmount, delayedSubscribers, completionDate, ownerId(@Index), version, convexId, updatedAt, createdAt.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:34Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:34Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-0ds",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:33Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-758",
+    "title": "Design Isar collection for Payments",
+    "description": "Create lib/core/isar/collections/payment_collection.dart. Fields: isarId, subscriberIsarId(@Index link), amount, workerName, date(@Index), cabinetName, ownerId(@Index), version, convexId, updatedAt, createdAt. Use IsarLink\u003cSubscriber\u003e for subscriber relationship.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:34Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:34Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-758",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:34Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-7hk",
+    "title": "Design Isar collection for Subscribers",
+    "description": "Create lib/core/isar/collections/subscriber_collection.dart. Map from Drift SubscribersTable: id(auto)-\u003eisarId, name, code(@Index unique), cabinet(@Index), phone, status(@Index enum), startDate, accumulatedDebt, tags(list), notes, ownerId(@Index), version(int for LWW), convexId(String? for cloud mapping), updatedAt, createdAt.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:33Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:33Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-7hk",
+        "depends_on_id": "rav-i6z",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:33Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-yf8",
+    "title": "Implement ownerId enforcement on all Convex functions",
+    "description": "Audit every mutation and query to ensure identity.subject == doc.ownerId is enforced. Create a shared auth helper (e.g., convex/lib/auth.ts) that extracts and validates tenant identity. No data should ever leak across tenants.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:33Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:33Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-yf8",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:32Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-iuj",
+    "title": "Implement Convex queries for all entities",
+    "description": "Create convex/queries/ with query files for each entity. All queries must filter by ownerId. Include: listSubscribers (with status/cabinet filters), listPayments (by subscriber/date range/worker), listCabinets, listWorkers, getAuditLog (paginated), getSettings, listTemplates. Implement cursor-based pagination for large datasets.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:32Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:32Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-iuj",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:31Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-dv0",
+    "title": "Implement Convex mutations for Workers CRUD",
+    "description": "Create convex/mutations/workers.ts with: createWorker, updateWorker, deleteWorker, updateWorkerCollectionStats, resetDailyCollections. Validate ownerId. Handle permissions array updates for RBAC.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:30Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:30Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-dv0",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:30Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-plt",
+    "title": "Implement Convex mutations for Cabinets CRUD",
+    "description": "Create convex/mutations/cabinets.ts with: createCabinet, updateCabinet, deleteCabinet, recalculateCabinetStats. Validate ownerId. Implement cascading stats recalculation when subscribers/payments change.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:30Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:30Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-plt",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:29Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-4ax",
+    "title": "Implement Convex mutations for Subscribers CRUD",
+    "description": "Create convex/mutations/subscribers.ts with: createSubscriber, updateSubscriber, deleteSubscriber (soft delete), bulkUpdateSubscribers. All mutations must validate identity.subject == ownerId. Implement version increment on every write for LWW conflict resolution.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:29Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:29Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-4ax",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:28Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-kje",
+    "title": "Implement Convex mutations for Payments CRUD",
+    "description": "Create convex/mutations/payments.ts with: createPayment, updatePayment, deletePayment, recordBulkPayments. Validate ownerId. Auto-update subscriber accumulatedDebt and cabinet collectedAmount on payment creation. Atomic version increment.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "feature",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:29Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:29Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-kje",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:29Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-9ey",
+    "title": "Design Convex document schema for AuditLog",
+    "description": "Convert AuditLogTable (id, user, action, target, details, type, timestamp) to Convex document. This is append-only — no updates needed. Add ownerId. Audit logs are critical for financial compliance, ensure no data loss during migration.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:27Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:27Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-9ey",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:27Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-jjk",
+    "title": "Design Convex document schema for Payments",
+    "description": "Convert PaymentsTable (id, subscriberId FK, amount, worker, date, cabinet) to Convex document. Replace subscriberId integer FK with Convex Id reference. Add ownerId. Add _version. Map REAL amount to Convex number type.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:27Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:27Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-jjk",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:26Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-ppl",
+    "title": "Design Convex document schema for Workers",
+    "description": "Convert WorkersTable (id, name, phone, permissions JSON string, todayCollected, monthTotal) to Convex document. Change permissions from JSON string to proper Convex array/object type. Add ownerId. Add role field for RBAC enum (admin/collector).",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:27Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:27Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-ppl",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:26Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-8z1",
+    "title": "Design Convex document schema for Subscribers",
+    "description": "Convert the relational SubscribersTable (id, name, code, cabinet, phone, status, startDate, accumulatedDebt, tags, notes + sync metadata) into a Convex document schema in convex/schema.ts. Replace integer auto-increment ID with Convex _id. Add ownerId field for multi-tenancy. Add _version field for conflict resolution. Remove legacy sync columns (dirtyFlag, syncStatus, cloudId, etc.).",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:26Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:26Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-8z1",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:25Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-w02",
+    "title": "Design Convex document schema for Cabinets",
+    "description": "Convert CabinetsTable (id, name, letter, totalSubscribers, currentSubscribers, collectedAmount, delayedSubscribers, completionDate) to Convex document. Add ownerId for tenant isolation. Replace integer FK references with Convex document ID refs. Add _version for LWW.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:26Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:26Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-w02",
+        "depends_on_id": "rav-3am",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:26Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-h85",
+    "title": "Configure Isar database initialization in main.dart",
+    "description": "Replace the Drift database initialization in main.dart with Isar.open(). Set up Isar instance with all collection schemas. Configure encryption key from flutter_secure_storage. Replace SupabaseService.initialize() with ConvexClient initialization. Update ProviderScope overrides.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:24Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:24Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-h85",
+        "depends_on_id": "rav-987",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:24Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-t9f",
+    "title": "Initialize Convex project backend",
+    "description": "Create a new Convex project via npx convex init. Set up the convex/ directory with schema.ts, configure deployment settings. Set up Convex dashboard access. Create initial project structure: convex/schema.ts, convex/_generated/, convex/mutations/, convex/queries/.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:24Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:24Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-t9f",
+        "depends_on_id": "rav-987",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:23Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-4ph",
+    "title": "Add Convex Flutter SDK dependency",
+    "description": "Add convex_flutter SDK to pubspec.yaml. Research and select the appropriate Convex Dart/Flutter client package. Configure Convex deployment URL and project credentials in .env file (replacing SUPABASE_URL and SUPABASE_ANON_KEY).",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:23Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:23Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-4ph",
+        "depends_on_id": "rav-987",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:23Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-djz",
+    "title": "Add Isar dependencies to pubspec.yaml",
+    "description": "Add isar: ^3.1.0+1, isar_flutter_libs: ^3.1.0+1 to dependencies. Add isar_generator: ^3.1.0+1 to dev_dependencies. Ensure build_runner is present for code generation. Configure Isar initialization in main.dart.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:23Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:23Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-djz",
+        "depends_on_id": "rav-987",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:22Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-jeg",
+    "title": "Remove Drift/SQLite dependencies from pubspec.yaml",
+    "description": "Remove drift: ^2.18.0, drift_flutter: ^0.1.0, sqlite3_flutter_libs: ^0.5.24 from dependencies. Remove drift_dev: ^2.18.0 from dev_dependencies. Remove build_runner dependency if no longer needed by other generators.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:22Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:22Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-jeg",
+        "depends_on_id": "rav-987",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:21Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-t09",
+    "title": "Remove Supabase dependency from pubspec.yaml",
+    "description": "Remove supabase_flutter: ^2.8.0 from dependencies. This also means removing connectivity_plus: ^6.0.3 if it was only used for Supabase sync monitoring (evaluate if still needed for Convex connectivity checks).",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "task",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:11:22Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:11:22Z",
+    "dependencies": [
+      {
+        "issue_id": "rav-t09",
+        "depends_on_id": "rav-987",
+        "type": "discovered-from",
+        "created_at": "2026-03-31T21:11:22Z",
+        "created_by": "Bogey",
+        "metadata": "{}"
+      }
+    ],
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  },
+  {
+    "id": "rav-476",
+    "title": "EPIC: Auth \u0026 Multi-tenancy \u0026 RBAC",
+    "description": "Implement Convex authentication, ownerId-based tenant isolation on all schemas, and dynamic RBAC system. Admin gets full dashboard access. Collector gets scoped permissions (collection, meter reading). Replace current simple password login with proper identity-based auth. Every Query/Mutation must verify identity.subject == doc.ownerId.",
+    "status": "open",
+    "priority": 0,
+    "issue_type": "epic",
+    "owner": "8bogey@gmail.com",
+    "created_at": "2026-03-31T18:04:07Z",
+    "created_by": "Bogey",
+    "updated_at": "2026-03-31T18:04:07Z",
+    "dependency_count": 0,
+    "dependent_count": 0,
+    "comment_count": 0
+  }
+]

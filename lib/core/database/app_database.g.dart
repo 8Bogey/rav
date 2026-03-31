@@ -11,13 +11,9 @@ class $SubscribersTableTable extends SubscribersTable
   $SubscribersTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -27,9 +23,7 @@ class $SubscribersTableTable extends SubscribersTable
   @override
   late final GeneratedColumn<String> code = GeneratedColumn<String>(
       'code', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _cabinetMeta =
       const VerificationMeta('cabinet');
   @override
@@ -122,44 +116,42 @@ class $SubscribersTableTable extends SubscribersTable
   late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
       'permissions_mask', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictOriginMeta =
-      const VerificationMeta('conflictOrigin');
+  static const VerificationMeta _ownerIdMeta =
+      const VerificationMeta('ownerId');
   @override
-  late final GeneratedColumn<String> conflictOrigin = GeneratedColumn<String>(
-      'conflict_origin', aliasedName, true,
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+      'owner_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictDetectedAtMeta =
-      const VerificationMeta('conflictDetectedAt');
+  static const VerificationMeta _versionMeta =
+      const VerificationMeta('version');
   @override
-  late final GeneratedColumn<DateTime> conflictDetectedAt =
-      GeneratedColumn<DateTime>('conflict_detected_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolvedAtMeta =
-      const VerificationMeta('conflictResolvedAt');
-  @override
-  late final GeneratedColumn<DateTime> conflictResolvedAt =
-      GeneratedColumn<DateTime>('conflict_resolved_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolutionStrategyMeta =
-      const VerificationMeta('conflictResolutionStrategy');
-  @override
-  late final GeneratedColumn<String> conflictResolutionStrategy =
-      GeneratedColumn<String>('conflict_resolution_strategy', aliasedName, true,
-          type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncErrorMeta =
-      const VerificationMeta('lastSyncError');
-  @override
-  late final GeneratedColumn<String> lastSyncError = GeneratedColumn<String>(
-      'last_sync_error', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _syncRetryCountMeta =
-      const VerificationMeta('syncRetryCount');
-  @override
-  late final GeneratedColumn<int> syncRetryCount = GeneratedColumn<int>(
-      'sync_retry_count', aliasedName, true,
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+      'version', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      defaultValue: const Constant(1));
+  static const VerificationMeta _isDeletedMeta =
+      const VerificationMeta('isDeleted');
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+      'is_deleted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -179,12 +171,11 @@ class $SubscribersTableTable extends SubscribersTable
         cloudId,
         deletedLocally,
         permissionsMask,
-        conflictOrigin,
-        conflictDetectedAt,
-        conflictResolvedAt,
-        conflictResolutionStrategy,
-        lastSyncError,
-        syncRetryCount
+        ownerId,
+        version,
+        isDeleted,
+        updatedAt,
+        createdAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -198,6 +189,8 @@ class $SubscribersTableTable extends SubscribersTable
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -287,42 +280,25 @@ class $SubscribersTableTable extends SubscribersTable
           permissionsMask.isAcceptableOrUnknown(
               data['permissions_mask']!, _permissionsMaskMeta));
     }
-    if (data.containsKey('conflict_origin')) {
-      context.handle(
-          _conflictOriginMeta,
-          conflictOrigin.isAcceptableOrUnknown(
-              data['conflict_origin']!, _conflictOriginMeta));
+    if (data.containsKey('owner_id')) {
+      context.handle(_ownerIdMeta,
+          ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
     }
-    if (data.containsKey('conflict_detected_at')) {
-      context.handle(
-          _conflictDetectedAtMeta,
-          conflictDetectedAt.isAcceptableOrUnknown(
-              data['conflict_detected_at']!, _conflictDetectedAtMeta));
+    if (data.containsKey('version')) {
+      context.handle(_versionMeta,
+          version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('conflict_resolved_at')) {
-      context.handle(
-          _conflictResolvedAtMeta,
-          conflictResolvedAt.isAcceptableOrUnknown(
-              data['conflict_resolved_at']!, _conflictResolvedAtMeta));
+    if (data.containsKey('is_deleted')) {
+      context.handle(_isDeletedMeta,
+          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
     }
-    if (data.containsKey('conflict_resolution_strategy')) {
-      context.handle(
-          _conflictResolutionStrategyMeta,
-          conflictResolutionStrategy.isAcceptableOrUnknown(
-              data['conflict_resolution_strategy']!,
-              _conflictResolutionStrategyMeta));
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
-    if (data.containsKey('last_sync_error')) {
-      context.handle(
-          _lastSyncErrorMeta,
-          lastSyncError.isAcceptableOrUnknown(
-              data['last_sync_error']!, _lastSyncErrorMeta));
-    }
-    if (data.containsKey('sync_retry_count')) {
-      context.handle(
-          _syncRetryCountMeta,
-          syncRetryCount.isAcceptableOrUnknown(
-              data['sync_retry_count']!, _syncRetryCountMeta));
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
     return context;
   }
@@ -334,7 +310,7 @@ class $SubscribersTableTable extends SubscribersTable
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Subscriber(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       code: attachedDatabase.typeMapping
@@ -367,21 +343,16 @@ class $SubscribersTableTable extends SubscribersTable
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
       permissionsMask: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
-      conflictOrigin: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}conflict_origin']),
-      conflictDetectedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_detected_at']),
-      conflictResolvedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_resolved_at']),
-      conflictResolutionStrategy: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}conflict_resolution_strategy']),
-      lastSyncError: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}last_sync_error']),
-      syncRetryCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}sync_retry_count']),
+      ownerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
+      version: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
+      isDeleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
     );
   }
 
@@ -392,7 +363,7 @@ class $SubscribersTableTable extends SubscribersTable
 }
 
 class Subscriber extends DataClass implements Insertable<Subscriber> {
-  final int id;
+  final String id;
   final String name;
   final String code;
   final String cabinet;
@@ -409,12 +380,11 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
   final String? cloudId;
   final bool? deletedLocally;
   final String? permissionsMask;
-  final String? conflictOrigin;
-  final DateTime? conflictDetectedAt;
-  final DateTime? conflictResolvedAt;
-  final String? conflictResolutionStrategy;
-  final String? lastSyncError;
-  final int? syncRetryCount;
+  final String? ownerId;
+  final int version;
+  final bool isDeleted;
+  final DateTime? updatedAt;
+  final DateTime? createdAt;
   const Subscriber(
       {required this.id,
       required this.name,
@@ -433,16 +403,15 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       this.cloudId,
       this.deletedLocally,
       this.permissionsMask,
-      this.conflictOrigin,
-      this.conflictDetectedAt,
-      this.conflictResolvedAt,
-      this.conflictResolutionStrategy,
-      this.lastSyncError,
-      this.syncRetryCount});
+      this.ownerId,
+      required this.version,
+      required this.isDeleted,
+      this.updatedAt,
+      this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['code'] = Variable<String>(code);
     map['cabinet'] = Variable<String>(cabinet);
@@ -477,24 +446,16 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
     if (!nullToAbsent || permissionsMask != null) {
       map['permissions_mask'] = Variable<String>(permissionsMask);
     }
-    if (!nullToAbsent || conflictOrigin != null) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin);
+    if (!nullToAbsent || ownerId != null) {
+      map['owner_id'] = Variable<String>(ownerId);
     }
-    if (!nullToAbsent || conflictDetectedAt != null) {
-      map['conflict_detected_at'] = Variable<DateTime>(conflictDetectedAt);
+    map['version'] = Variable<int>(version);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
     }
-    if (!nullToAbsent || conflictResolvedAt != null) {
-      map['conflict_resolved_at'] = Variable<DateTime>(conflictResolvedAt);
-    }
-    if (!nullToAbsent || conflictResolutionStrategy != null) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy);
-    }
-    if (!nullToAbsent || lastSyncError != null) {
-      map['last_sync_error'] = Variable<String>(lastSyncError);
-    }
-    if (!nullToAbsent || syncRetryCount != null) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
     }
     return map;
   }
@@ -533,25 +494,17 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       permissionsMask: permissionsMask == null && nullToAbsent
           ? const Value.absent()
           : Value(permissionsMask),
-      conflictOrigin: conflictOrigin == null && nullToAbsent
+      ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictOrigin),
-      conflictDetectedAt: conflictDetectedAt == null && nullToAbsent
+          : Value(ownerId),
+      version: Value(version),
+      isDeleted: Value(isDeleted),
+      updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictDetectedAt),
-      conflictResolvedAt: conflictResolvedAt == null && nullToAbsent
+          : Value(updatedAt),
+      createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictResolvedAt),
-      conflictResolutionStrategy:
-          conflictResolutionStrategy == null && nullToAbsent
-              ? const Value.absent()
-              : Value(conflictResolutionStrategy),
-      lastSyncError: lastSyncError == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncError),
-      syncRetryCount: syncRetryCount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncRetryCount),
+          : Value(createdAt),
     );
   }
 
@@ -559,7 +512,7 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Subscriber(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       code: serializer.fromJson<String>(json['code']),
       cabinet: serializer.fromJson<String>(json['cabinet']),
@@ -576,22 +529,18 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       cloudId: serializer.fromJson<String?>(json['cloudId']),
       deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
       permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
-      conflictOrigin: serializer.fromJson<String?>(json['conflictOrigin']),
-      conflictDetectedAt:
-          serializer.fromJson<DateTime?>(json['conflictDetectedAt']),
-      conflictResolvedAt:
-          serializer.fromJson<DateTime?>(json['conflictResolvedAt']),
-      conflictResolutionStrategy:
-          serializer.fromJson<String?>(json['conflictResolutionStrategy']),
-      lastSyncError: serializer.fromJson<String?>(json['lastSyncError']),
-      syncRetryCount: serializer.fromJson<int?>(json['syncRetryCount']),
+      ownerId: serializer.fromJson<String?>(json['ownerId']),
+      version: serializer.fromJson<int>(json['version']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'code': serializer.toJson<String>(code),
       'cabinet': serializer.toJson<String>(cabinet),
@@ -608,18 +557,16 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       'cloudId': serializer.toJson<String?>(cloudId),
       'deletedLocally': serializer.toJson<bool?>(deletedLocally),
       'permissionsMask': serializer.toJson<String?>(permissionsMask),
-      'conflictOrigin': serializer.toJson<String?>(conflictOrigin),
-      'conflictDetectedAt': serializer.toJson<DateTime?>(conflictDetectedAt),
-      'conflictResolvedAt': serializer.toJson<DateTime?>(conflictResolvedAt),
-      'conflictResolutionStrategy':
-          serializer.toJson<String?>(conflictResolutionStrategy),
-      'lastSyncError': serializer.toJson<String?>(lastSyncError),
-      'syncRetryCount': serializer.toJson<int?>(syncRetryCount),
+      'ownerId': serializer.toJson<String?>(ownerId),
+      'version': serializer.toJson<int>(version),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
   }
 
   Subscriber copyWith(
-          {int? id,
+          {String? id,
           String? name,
           String? code,
           String? cabinet,
@@ -636,12 +583,11 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
           Value<String?> cloudId = const Value.absent(),
           Value<bool?> deletedLocally = const Value.absent(),
           Value<String?> permissionsMask = const Value.absent(),
-          Value<String?> conflictOrigin = const Value.absent(),
-          Value<DateTime?> conflictDetectedAt = const Value.absent(),
-          Value<DateTime?> conflictResolvedAt = const Value.absent(),
-          Value<String?> conflictResolutionStrategy = const Value.absent(),
-          Value<String?> lastSyncError = const Value.absent(),
-          Value<int?> syncRetryCount = const Value.absent()}) =>
+          Value<String?> ownerId = const Value.absent(),
+          int? version,
+          bool? isDeleted,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          Value<DateTime?> createdAt = const Value.absent()}) =>
       Subscriber(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -665,21 +611,11 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
         permissionsMask: permissionsMask.present
             ? permissionsMask.value
             : this.permissionsMask,
-        conflictOrigin:
-            conflictOrigin.present ? conflictOrigin.value : this.conflictOrigin,
-        conflictDetectedAt: conflictDetectedAt.present
-            ? conflictDetectedAt.value
-            : this.conflictDetectedAt,
-        conflictResolvedAt: conflictResolvedAt.present
-            ? conflictResolvedAt.value
-            : this.conflictResolvedAt,
-        conflictResolutionStrategy: conflictResolutionStrategy.present
-            ? conflictResolutionStrategy.value
-            : this.conflictResolutionStrategy,
-        lastSyncError:
-            lastSyncError.present ? lastSyncError.value : this.lastSyncError,
-        syncRetryCount:
-            syncRetryCount.present ? syncRetryCount.value : this.syncRetryCount,
+        ownerId: ownerId.present ? ownerId.value : this.ownerId,
+        version: version ?? this.version,
+        isDeleted: isDeleted ?? this.isDeleted,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
   Subscriber copyWithCompanion(SubscribersTableCompanion data) {
     return Subscriber(
@@ -711,24 +647,11 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       permissionsMask: data.permissionsMask.present
           ? data.permissionsMask.value
           : this.permissionsMask,
-      conflictOrigin: data.conflictOrigin.present
-          ? data.conflictOrigin.value
-          : this.conflictOrigin,
-      conflictDetectedAt: data.conflictDetectedAt.present
-          ? data.conflictDetectedAt.value
-          : this.conflictDetectedAt,
-      conflictResolvedAt: data.conflictResolvedAt.present
-          ? data.conflictResolvedAt.value
-          : this.conflictResolvedAt,
-      conflictResolutionStrategy: data.conflictResolutionStrategy.present
-          ? data.conflictResolutionStrategy.value
-          : this.conflictResolutionStrategy,
-      lastSyncError: data.lastSyncError.present
-          ? data.lastSyncError.value
-          : this.lastSyncError,
-      syncRetryCount: data.syncRetryCount.present
-          ? data.syncRetryCount.value
-          : this.syncRetryCount,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      version: data.version.present ? data.version.value : this.version,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -752,12 +675,11 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -781,12 +703,11 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
         cloudId,
         deletedLocally,
         permissionsMask,
-        conflictOrigin,
-        conflictDetectedAt,
-        conflictResolvedAt,
-        conflictResolutionStrategy,
-        lastSyncError,
-        syncRetryCount
+        ownerId,
+        version,
+        isDeleted,
+        updatedAt,
+        createdAt
       ]);
   @override
   bool operator ==(Object other) =>
@@ -809,16 +730,15 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
           other.cloudId == this.cloudId &&
           other.deletedLocally == this.deletedLocally &&
           other.permissionsMask == this.permissionsMask &&
-          other.conflictOrigin == this.conflictOrigin &&
-          other.conflictDetectedAt == this.conflictDetectedAt &&
-          other.conflictResolvedAt == this.conflictResolvedAt &&
-          other.conflictResolutionStrategy == this.conflictResolutionStrategy &&
-          other.lastSyncError == this.lastSyncError &&
-          other.syncRetryCount == this.syncRetryCount);
+          other.ownerId == this.ownerId &&
+          other.version == this.version &&
+          other.isDeleted == this.isDeleted &&
+          other.updatedAt == this.updatedAt &&
+          other.createdAt == this.createdAt);
 }
 
 class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> name;
   final Value<String> code;
   final Value<String> cabinet;
@@ -835,12 +755,12 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
   final Value<String?> cloudId;
   final Value<bool?> deletedLocally;
   final Value<String?> permissionsMask;
-  final Value<String?> conflictOrigin;
-  final Value<DateTime?> conflictDetectedAt;
-  final Value<DateTime?> conflictResolvedAt;
-  final Value<String?> conflictResolutionStrategy;
-  final Value<String?> lastSyncError;
-  final Value<int?> syncRetryCount;
+  final Value<String?> ownerId;
+  final Value<int> version;
+  final Value<bool> isDeleted;
+  final Value<DateTime?> updatedAt;
+  final Value<DateTime?> createdAt;
+  final Value<int> rowid;
   const SubscribersTableCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -859,15 +779,15 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   SubscribersTableCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     required String name,
     required String code,
     required String cabinet,
@@ -884,20 +804,21 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
-  })  : name = Value(name),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
         code = Value(code),
         cabinet = Value(cabinet),
         phone = Value(phone),
         status = Value(status),
         startDate = Value(startDate);
   static Insertable<Subscriber> custom({
-    Expression<int>? id,
+    Expression<String>? id,
     Expression<String>? name,
     Expression<String>? code,
     Expression<String>? cabinet,
@@ -914,12 +835,12 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
     Expression<String>? cloudId,
     Expression<bool>? deletedLocally,
     Expression<String>? permissionsMask,
-    Expression<String>? conflictOrigin,
-    Expression<DateTime>? conflictDetectedAt,
-    Expression<DateTime>? conflictResolvedAt,
-    Expression<String>? conflictResolutionStrategy,
-    Expression<String>? lastSyncError,
-    Expression<int>? syncRetryCount,
+    Expression<String>? ownerId,
+    Expression<int>? version,
+    Expression<bool>? isDeleted,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -939,20 +860,17 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
       if (cloudId != null) 'cloud_id': cloudId,
       if (deletedLocally != null) 'deleted_locally': deletedLocally,
       if (permissionsMask != null) 'permissions_mask': permissionsMask,
-      if (conflictOrigin != null) 'conflict_origin': conflictOrigin,
-      if (conflictDetectedAt != null)
-        'conflict_detected_at': conflictDetectedAt,
-      if (conflictResolvedAt != null)
-        'conflict_resolved_at': conflictResolvedAt,
-      if (conflictResolutionStrategy != null)
-        'conflict_resolution_strategy': conflictResolutionStrategy,
-      if (lastSyncError != null) 'last_sync_error': lastSyncError,
-      if (syncRetryCount != null) 'sync_retry_count': syncRetryCount,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (version != null) 'version': version,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   SubscribersTableCompanion copyWith(
-      {Value<int>? id,
+      {Value<String>? id,
       Value<String>? name,
       Value<String>? code,
       Value<String>? cabinet,
@@ -969,12 +887,12 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
       Value<String?>? cloudId,
       Value<bool?>? deletedLocally,
       Value<String?>? permissionsMask,
-      Value<String?>? conflictOrigin,
-      Value<DateTime?>? conflictDetectedAt,
-      Value<DateTime?>? conflictResolvedAt,
-      Value<String?>? conflictResolutionStrategy,
-      Value<String?>? lastSyncError,
-      Value<int?>? syncRetryCount}) {
+      Value<String?>? ownerId,
+      Value<int>? version,
+      Value<bool>? isDeleted,
+      Value<DateTime?>? updatedAt,
+      Value<DateTime?>? createdAt,
+      Value<int>? rowid}) {
     return SubscribersTableCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -993,13 +911,12 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
       cloudId: cloudId ?? this.cloudId,
       deletedLocally: deletedLocally ?? this.deletedLocally,
       permissionsMask: permissionsMask ?? this.permissionsMask,
-      conflictOrigin: conflictOrigin ?? this.conflictOrigin,
-      conflictDetectedAt: conflictDetectedAt ?? this.conflictDetectedAt,
-      conflictResolvedAt: conflictResolvedAt ?? this.conflictResolvedAt,
-      conflictResolutionStrategy:
-          conflictResolutionStrategy ?? this.conflictResolutionStrategy,
-      lastSyncError: lastSyncError ?? this.lastSyncError,
-      syncRetryCount: syncRetryCount ?? this.syncRetryCount,
+      ownerId: ownerId ?? this.ownerId,
+      version: version ?? this.version,
+      isDeleted: isDeleted ?? this.isDeleted,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -1007,7 +924,7 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -1057,26 +974,23 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
     if (permissionsMask.present) {
       map['permissions_mask'] = Variable<String>(permissionsMask.value);
     }
-    if (conflictOrigin.present) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin.value);
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
     }
-    if (conflictDetectedAt.present) {
-      map['conflict_detected_at'] =
-          Variable<DateTime>(conflictDetectedAt.value);
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
     }
-    if (conflictResolvedAt.present) {
-      map['conflict_resolved_at'] =
-          Variable<DateTime>(conflictResolvedAt.value);
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
-    if (conflictResolutionStrategy.present) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy.value);
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (lastSyncError.present) {
-      map['last_sync_error'] = Variable<String>(lastSyncError.value);
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (syncRetryCount.present) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -1101,12 +1015,12 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -1120,13 +1034,9 @@ class $CabinetsTableTable extends CabinetsTable
   $CabinetsTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -1223,44 +1133,42 @@ class $CabinetsTableTable extends CabinetsTable
   late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
       'permissions_mask', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictOriginMeta =
-      const VerificationMeta('conflictOrigin');
+  static const VerificationMeta _ownerIdMeta =
+      const VerificationMeta('ownerId');
   @override
-  late final GeneratedColumn<String> conflictOrigin = GeneratedColumn<String>(
-      'conflict_origin', aliasedName, true,
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+      'owner_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictDetectedAtMeta =
-      const VerificationMeta('conflictDetectedAt');
+  static const VerificationMeta _versionMeta =
+      const VerificationMeta('version');
   @override
-  late final GeneratedColumn<DateTime> conflictDetectedAt =
-      GeneratedColumn<DateTime>('conflict_detected_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolvedAtMeta =
-      const VerificationMeta('conflictResolvedAt');
-  @override
-  late final GeneratedColumn<DateTime> conflictResolvedAt =
-      GeneratedColumn<DateTime>('conflict_resolved_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolutionStrategyMeta =
-      const VerificationMeta('conflictResolutionStrategy');
-  @override
-  late final GeneratedColumn<String> conflictResolutionStrategy =
-      GeneratedColumn<String>('conflict_resolution_strategy', aliasedName, true,
-          type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncErrorMeta =
-      const VerificationMeta('lastSyncError');
-  @override
-  late final GeneratedColumn<String> lastSyncError = GeneratedColumn<String>(
-      'last_sync_error', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _syncRetryCountMeta =
-      const VerificationMeta('syncRetryCount');
-  @override
-  late final GeneratedColumn<int> syncRetryCount = GeneratedColumn<int>(
-      'sync_retry_count', aliasedName, true,
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+      'version', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      defaultValue: const Constant(1));
+  static const VerificationMeta _isDeletedMeta =
+      const VerificationMeta('isDeleted');
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+      'is_deleted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1278,12 +1186,11 @@ class $CabinetsTableTable extends CabinetsTable
         cloudId,
         deletedLocally,
         permissionsMask,
-        conflictOrigin,
-        conflictDetectedAt,
-        conflictResolvedAt,
-        conflictResolutionStrategy,
-        lastSyncError,
-        syncRetryCount
+        ownerId,
+        version,
+        isDeleted,
+        updatedAt,
+        createdAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1297,6 +1204,8 @@ class $CabinetsTableTable extends CabinetsTable
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -1382,42 +1291,25 @@ class $CabinetsTableTable extends CabinetsTable
           permissionsMask.isAcceptableOrUnknown(
               data['permissions_mask']!, _permissionsMaskMeta));
     }
-    if (data.containsKey('conflict_origin')) {
-      context.handle(
-          _conflictOriginMeta,
-          conflictOrigin.isAcceptableOrUnknown(
-              data['conflict_origin']!, _conflictOriginMeta));
+    if (data.containsKey('owner_id')) {
+      context.handle(_ownerIdMeta,
+          ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
     }
-    if (data.containsKey('conflict_detected_at')) {
-      context.handle(
-          _conflictDetectedAtMeta,
-          conflictDetectedAt.isAcceptableOrUnknown(
-              data['conflict_detected_at']!, _conflictDetectedAtMeta));
+    if (data.containsKey('version')) {
+      context.handle(_versionMeta,
+          version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('conflict_resolved_at')) {
-      context.handle(
-          _conflictResolvedAtMeta,
-          conflictResolvedAt.isAcceptableOrUnknown(
-              data['conflict_resolved_at']!, _conflictResolvedAtMeta));
+    if (data.containsKey('is_deleted')) {
+      context.handle(_isDeletedMeta,
+          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
     }
-    if (data.containsKey('conflict_resolution_strategy')) {
-      context.handle(
-          _conflictResolutionStrategyMeta,
-          conflictResolutionStrategy.isAcceptableOrUnknown(
-              data['conflict_resolution_strategy']!,
-              _conflictResolutionStrategyMeta));
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
-    if (data.containsKey('last_sync_error')) {
-      context.handle(
-          _lastSyncErrorMeta,
-          lastSyncError.isAcceptableOrUnknown(
-              data['last_sync_error']!, _lastSyncErrorMeta));
-    }
-    if (data.containsKey('sync_retry_count')) {
-      context.handle(
-          _syncRetryCountMeta,
-          syncRetryCount.isAcceptableOrUnknown(
-              data['sync_retry_count']!, _syncRetryCountMeta));
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
     return context;
   }
@@ -1429,7 +1321,7 @@ class $CabinetsTableTable extends CabinetsTable
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Cabinet(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       letter: attachedDatabase.typeMapping
@@ -1458,21 +1350,16 @@ class $CabinetsTableTable extends CabinetsTable
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
       permissionsMask: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
-      conflictOrigin: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}conflict_origin']),
-      conflictDetectedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_detected_at']),
-      conflictResolvedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_resolved_at']),
-      conflictResolutionStrategy: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}conflict_resolution_strategy']),
-      lastSyncError: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}last_sync_error']),
-      syncRetryCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}sync_retry_count']),
+      ownerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
+      version: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
+      isDeleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
     );
   }
 
@@ -1483,7 +1370,7 @@ class $CabinetsTableTable extends CabinetsTable
 }
 
 class Cabinet extends DataClass implements Insertable<Cabinet> {
-  final int id;
+  final String id;
   final String name;
   final String letter;
   final int totalSubscribers;
@@ -1498,12 +1385,11 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
   final String? cloudId;
   final bool? deletedLocally;
   final String? permissionsMask;
-  final String? conflictOrigin;
-  final DateTime? conflictDetectedAt;
-  final DateTime? conflictResolvedAt;
-  final String? conflictResolutionStrategy;
-  final String? lastSyncError;
-  final int? syncRetryCount;
+  final String? ownerId;
+  final int version;
+  final bool isDeleted;
+  final DateTime? updatedAt;
+  final DateTime? createdAt;
   const Cabinet(
       {required this.id,
       required this.name,
@@ -1520,16 +1406,15 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       this.cloudId,
       this.deletedLocally,
       this.permissionsMask,
-      this.conflictOrigin,
-      this.conflictDetectedAt,
-      this.conflictResolvedAt,
-      this.conflictResolutionStrategy,
-      this.lastSyncError,
-      this.syncRetryCount});
+      this.ownerId,
+      required this.version,
+      required this.isDeleted,
+      this.updatedAt,
+      this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['letter'] = Variable<String>(letter);
     map['total_subscribers'] = Variable<int>(totalSubscribers);
@@ -1560,24 +1445,16 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
     if (!nullToAbsent || permissionsMask != null) {
       map['permissions_mask'] = Variable<String>(permissionsMask);
     }
-    if (!nullToAbsent || conflictOrigin != null) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin);
+    if (!nullToAbsent || ownerId != null) {
+      map['owner_id'] = Variable<String>(ownerId);
     }
-    if (!nullToAbsent || conflictDetectedAt != null) {
-      map['conflict_detected_at'] = Variable<DateTime>(conflictDetectedAt);
+    map['version'] = Variable<int>(version);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
     }
-    if (!nullToAbsent || conflictResolvedAt != null) {
-      map['conflict_resolved_at'] = Variable<DateTime>(conflictResolvedAt);
-    }
-    if (!nullToAbsent || conflictResolutionStrategy != null) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy);
-    }
-    if (!nullToAbsent || lastSyncError != null) {
-      map['last_sync_error'] = Variable<String>(lastSyncError);
-    }
-    if (!nullToAbsent || syncRetryCount != null) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
     }
     return map;
   }
@@ -1615,25 +1492,17 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       permissionsMask: permissionsMask == null && nullToAbsent
           ? const Value.absent()
           : Value(permissionsMask),
-      conflictOrigin: conflictOrigin == null && nullToAbsent
+      ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictOrigin),
-      conflictDetectedAt: conflictDetectedAt == null && nullToAbsent
+          : Value(ownerId),
+      version: Value(version),
+      isDeleted: Value(isDeleted),
+      updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictDetectedAt),
-      conflictResolvedAt: conflictResolvedAt == null && nullToAbsent
+          : Value(updatedAt),
+      createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictResolvedAt),
-      conflictResolutionStrategy:
-          conflictResolutionStrategy == null && nullToAbsent
-              ? const Value.absent()
-              : Value(conflictResolutionStrategy),
-      lastSyncError: lastSyncError == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncError),
-      syncRetryCount: syncRetryCount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncRetryCount),
+          : Value(createdAt),
     );
   }
 
@@ -1641,7 +1510,7 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Cabinet(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       letter: serializer.fromJson<String>(json['letter']),
       totalSubscribers: serializer.fromJson<int>(json['totalSubscribers']),
@@ -1656,22 +1525,18 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       cloudId: serializer.fromJson<String?>(json['cloudId']),
       deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
       permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
-      conflictOrigin: serializer.fromJson<String?>(json['conflictOrigin']),
-      conflictDetectedAt:
-          serializer.fromJson<DateTime?>(json['conflictDetectedAt']),
-      conflictResolvedAt:
-          serializer.fromJson<DateTime?>(json['conflictResolvedAt']),
-      conflictResolutionStrategy:
-          serializer.fromJson<String?>(json['conflictResolutionStrategy']),
-      lastSyncError: serializer.fromJson<String?>(json['lastSyncError']),
-      syncRetryCount: serializer.fromJson<int?>(json['syncRetryCount']),
+      ownerId: serializer.fromJson<String?>(json['ownerId']),
+      version: serializer.fromJson<int>(json['version']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'letter': serializer.toJson<String>(letter),
       'totalSubscribers': serializer.toJson<int>(totalSubscribers),
@@ -1686,18 +1551,16 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       'cloudId': serializer.toJson<String?>(cloudId),
       'deletedLocally': serializer.toJson<bool?>(deletedLocally),
       'permissionsMask': serializer.toJson<String?>(permissionsMask),
-      'conflictOrigin': serializer.toJson<String?>(conflictOrigin),
-      'conflictDetectedAt': serializer.toJson<DateTime?>(conflictDetectedAt),
-      'conflictResolvedAt': serializer.toJson<DateTime?>(conflictResolvedAt),
-      'conflictResolutionStrategy':
-          serializer.toJson<String?>(conflictResolutionStrategy),
-      'lastSyncError': serializer.toJson<String?>(lastSyncError),
-      'syncRetryCount': serializer.toJson<int?>(syncRetryCount),
+      'ownerId': serializer.toJson<String?>(ownerId),
+      'version': serializer.toJson<int>(version),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
   }
 
   Cabinet copyWith(
-          {int? id,
+          {String? id,
           String? name,
           String? letter,
           int? totalSubscribers,
@@ -1712,12 +1575,11 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
           Value<String?> cloudId = const Value.absent(),
           Value<bool?> deletedLocally = const Value.absent(),
           Value<String?> permissionsMask = const Value.absent(),
-          Value<String?> conflictOrigin = const Value.absent(),
-          Value<DateTime?> conflictDetectedAt = const Value.absent(),
-          Value<DateTime?> conflictResolvedAt = const Value.absent(),
-          Value<String?> conflictResolutionStrategy = const Value.absent(),
-          Value<String?> lastSyncError = const Value.absent(),
-          Value<int?> syncRetryCount = const Value.absent()}) =>
+          Value<String?> ownerId = const Value.absent(),
+          int? version,
+          bool? isDeleted,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          Value<DateTime?> createdAt = const Value.absent()}) =>
       Cabinet(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -1740,21 +1602,11 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
         permissionsMask: permissionsMask.present
             ? permissionsMask.value
             : this.permissionsMask,
-        conflictOrigin:
-            conflictOrigin.present ? conflictOrigin.value : this.conflictOrigin,
-        conflictDetectedAt: conflictDetectedAt.present
-            ? conflictDetectedAt.value
-            : this.conflictDetectedAt,
-        conflictResolvedAt: conflictResolvedAt.present
-            ? conflictResolvedAt.value
-            : this.conflictResolvedAt,
-        conflictResolutionStrategy: conflictResolutionStrategy.present
-            ? conflictResolutionStrategy.value
-            : this.conflictResolutionStrategy,
-        lastSyncError:
-            lastSyncError.present ? lastSyncError.value : this.lastSyncError,
-        syncRetryCount:
-            syncRetryCount.present ? syncRetryCount.value : this.syncRetryCount,
+        ownerId: ownerId.present ? ownerId.value : this.ownerId,
+        version: version ?? this.version,
+        isDeleted: isDeleted ?? this.isDeleted,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
   Cabinet copyWithCompanion(CabinetsTableCompanion data) {
     return Cabinet(
@@ -1792,24 +1644,11 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       permissionsMask: data.permissionsMask.present
           ? data.permissionsMask.value
           : this.permissionsMask,
-      conflictOrigin: data.conflictOrigin.present
-          ? data.conflictOrigin.value
-          : this.conflictOrigin,
-      conflictDetectedAt: data.conflictDetectedAt.present
-          ? data.conflictDetectedAt.value
-          : this.conflictDetectedAt,
-      conflictResolvedAt: data.conflictResolvedAt.present
-          ? data.conflictResolvedAt.value
-          : this.conflictResolvedAt,
-      conflictResolutionStrategy: data.conflictResolutionStrategy.present
-          ? data.conflictResolutionStrategy.value
-          : this.conflictResolutionStrategy,
-      lastSyncError: data.lastSyncError.present
-          ? data.lastSyncError.value
-          : this.lastSyncError,
-      syncRetryCount: data.syncRetryCount.present
-          ? data.syncRetryCount.value
-          : this.syncRetryCount,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      version: data.version.present ? data.version.value : this.version,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -1831,40 +1670,37 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hashAll([
-        id,
-        name,
-        letter,
-        totalSubscribers,
-        currentSubscribers,
-        collectedAmount,
-        delayedSubscribers,
-        completionDate,
-        lastModified,
-        lastSyncedAt,
-        syncStatus,
-        dirtyFlag,
-        cloudId,
-        deletedLocally,
-        permissionsMask,
-        conflictOrigin,
-        conflictDetectedAt,
-        conflictResolvedAt,
-        conflictResolutionStrategy,
-        lastSyncError,
-        syncRetryCount
-      ]);
+  int get hashCode => Object.hash(
+      id,
+      name,
+      letter,
+      totalSubscribers,
+      currentSubscribers,
+      collectedAmount,
+      delayedSubscribers,
+      completionDate,
+      lastModified,
+      lastSyncedAt,
+      syncStatus,
+      dirtyFlag,
+      cloudId,
+      deletedLocally,
+      permissionsMask,
+      ownerId,
+      version,
+      isDeleted,
+      updatedAt,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1884,16 +1720,15 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
           other.cloudId == this.cloudId &&
           other.deletedLocally == this.deletedLocally &&
           other.permissionsMask == this.permissionsMask &&
-          other.conflictOrigin == this.conflictOrigin &&
-          other.conflictDetectedAt == this.conflictDetectedAt &&
-          other.conflictResolvedAt == this.conflictResolvedAt &&
-          other.conflictResolutionStrategy == this.conflictResolutionStrategy &&
-          other.lastSyncError == this.lastSyncError &&
-          other.syncRetryCount == this.syncRetryCount);
+          other.ownerId == this.ownerId &&
+          other.version == this.version &&
+          other.isDeleted == this.isDeleted &&
+          other.updatedAt == this.updatedAt &&
+          other.createdAt == this.createdAt);
 }
 
 class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> name;
   final Value<String> letter;
   final Value<int> totalSubscribers;
@@ -1908,12 +1743,12 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
   final Value<String?> cloudId;
   final Value<bool?> deletedLocally;
   final Value<String?> permissionsMask;
-  final Value<String?> conflictOrigin;
-  final Value<DateTime?> conflictDetectedAt;
-  final Value<DateTime?> conflictResolvedAt;
-  final Value<String?> conflictResolutionStrategy;
-  final Value<String?> lastSyncError;
-  final Value<int?> syncRetryCount;
+  final Value<String?> ownerId;
+  final Value<int> version;
+  final Value<bool> isDeleted;
+  final Value<DateTime?> updatedAt;
+  final Value<DateTime?> createdAt;
+  final Value<int> rowid;
   const CabinetsTableCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1930,15 +1765,15 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   CabinetsTableCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     required String name,
     this.letter = const Value.absent(),
     required int totalSubscribers,
@@ -1953,18 +1788,19 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
-  })  : name = Value(name),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
         totalSubscribers = Value(totalSubscribers),
         currentSubscribers = Value(currentSubscribers),
         delayedSubscribers = Value(delayedSubscribers);
   static Insertable<Cabinet> custom({
-    Expression<int>? id,
+    Expression<String>? id,
     Expression<String>? name,
     Expression<String>? letter,
     Expression<int>? totalSubscribers,
@@ -1979,12 +1815,12 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
     Expression<String>? cloudId,
     Expression<bool>? deletedLocally,
     Expression<String>? permissionsMask,
-    Expression<String>? conflictOrigin,
-    Expression<DateTime>? conflictDetectedAt,
-    Expression<DateTime>? conflictResolvedAt,
-    Expression<String>? conflictResolutionStrategy,
-    Expression<String>? lastSyncError,
-    Expression<int>? syncRetryCount,
+    Expression<String>? ownerId,
+    Expression<int>? version,
+    Expression<bool>? isDeleted,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2002,20 +1838,17 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
       if (cloudId != null) 'cloud_id': cloudId,
       if (deletedLocally != null) 'deleted_locally': deletedLocally,
       if (permissionsMask != null) 'permissions_mask': permissionsMask,
-      if (conflictOrigin != null) 'conflict_origin': conflictOrigin,
-      if (conflictDetectedAt != null)
-        'conflict_detected_at': conflictDetectedAt,
-      if (conflictResolvedAt != null)
-        'conflict_resolved_at': conflictResolvedAt,
-      if (conflictResolutionStrategy != null)
-        'conflict_resolution_strategy': conflictResolutionStrategy,
-      if (lastSyncError != null) 'last_sync_error': lastSyncError,
-      if (syncRetryCount != null) 'sync_retry_count': syncRetryCount,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (version != null) 'version': version,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   CabinetsTableCompanion copyWith(
-      {Value<int>? id,
+      {Value<String>? id,
       Value<String>? name,
       Value<String>? letter,
       Value<int>? totalSubscribers,
@@ -2030,12 +1863,12 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
       Value<String?>? cloudId,
       Value<bool?>? deletedLocally,
       Value<String?>? permissionsMask,
-      Value<String?>? conflictOrigin,
-      Value<DateTime?>? conflictDetectedAt,
-      Value<DateTime?>? conflictResolvedAt,
-      Value<String?>? conflictResolutionStrategy,
-      Value<String?>? lastSyncError,
-      Value<int?>? syncRetryCount}) {
+      Value<String?>? ownerId,
+      Value<int>? version,
+      Value<bool>? isDeleted,
+      Value<DateTime?>? updatedAt,
+      Value<DateTime?>? createdAt,
+      Value<int>? rowid}) {
     return CabinetsTableCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -2052,13 +1885,12 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
       cloudId: cloudId ?? this.cloudId,
       deletedLocally: deletedLocally ?? this.deletedLocally,
       permissionsMask: permissionsMask ?? this.permissionsMask,
-      conflictOrigin: conflictOrigin ?? this.conflictOrigin,
-      conflictDetectedAt: conflictDetectedAt ?? this.conflictDetectedAt,
-      conflictResolvedAt: conflictResolvedAt ?? this.conflictResolvedAt,
-      conflictResolutionStrategy:
-          conflictResolutionStrategy ?? this.conflictResolutionStrategy,
-      lastSyncError: lastSyncError ?? this.lastSyncError,
-      syncRetryCount: syncRetryCount ?? this.syncRetryCount,
+      ownerId: ownerId ?? this.ownerId,
+      version: version ?? this.version,
+      isDeleted: isDeleted ?? this.isDeleted,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -2066,7 +1898,7 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -2110,26 +1942,23 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
     if (permissionsMask.present) {
       map['permissions_mask'] = Variable<String>(permissionsMask.value);
     }
-    if (conflictOrigin.present) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin.value);
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
     }
-    if (conflictDetectedAt.present) {
-      map['conflict_detected_at'] =
-          Variable<DateTime>(conflictDetectedAt.value);
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
     }
-    if (conflictResolvedAt.present) {
-      map['conflict_resolved_at'] =
-          Variable<DateTime>(conflictResolvedAt.value);
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
-    if (conflictResolutionStrategy.present) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy.value);
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (lastSyncError.present) {
-      map['last_sync_error'] = Variable<String>(lastSyncError.value);
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (syncRetryCount.present) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -2152,12 +1981,12 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -2171,22 +2000,15 @@ class $PaymentsTableTable extends PaymentsTable
   $PaymentsTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _subscriberIdMeta =
       const VerificationMeta('subscriberId');
   @override
-  late final GeneratedColumn<int> subscriberId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> subscriberId = GeneratedColumn<String>(
       'subscriber_id', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES subscribers_table (id)'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _amountMeta = const VerificationMeta('amount');
   @override
   late final GeneratedColumn<double> amount = GeneratedColumn<double>(
@@ -2260,44 +2082,42 @@ class $PaymentsTableTable extends PaymentsTable
   late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
       'permissions_mask', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictOriginMeta =
-      const VerificationMeta('conflictOrigin');
+  static const VerificationMeta _ownerIdMeta =
+      const VerificationMeta('ownerId');
   @override
-  late final GeneratedColumn<String> conflictOrigin = GeneratedColumn<String>(
-      'conflict_origin', aliasedName, true,
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+      'owner_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictDetectedAtMeta =
-      const VerificationMeta('conflictDetectedAt');
+  static const VerificationMeta _versionMeta =
+      const VerificationMeta('version');
   @override
-  late final GeneratedColumn<DateTime> conflictDetectedAt =
-      GeneratedColumn<DateTime>('conflict_detected_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolvedAtMeta =
-      const VerificationMeta('conflictResolvedAt');
-  @override
-  late final GeneratedColumn<DateTime> conflictResolvedAt =
-      GeneratedColumn<DateTime>('conflict_resolved_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolutionStrategyMeta =
-      const VerificationMeta('conflictResolutionStrategy');
-  @override
-  late final GeneratedColumn<String> conflictResolutionStrategy =
-      GeneratedColumn<String>('conflict_resolution_strategy', aliasedName, true,
-          type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncErrorMeta =
-      const VerificationMeta('lastSyncError');
-  @override
-  late final GeneratedColumn<String> lastSyncError = GeneratedColumn<String>(
-      'last_sync_error', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _syncRetryCountMeta =
-      const VerificationMeta('syncRetryCount');
-  @override
-  late final GeneratedColumn<int> syncRetryCount = GeneratedColumn<int>(
-      'sync_retry_count', aliasedName, true,
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+      'version', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      defaultValue: const Constant(1));
+  static const VerificationMeta _isDeletedMeta =
+      const VerificationMeta('isDeleted');
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+      'is_deleted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -2313,12 +2133,11 @@ class $PaymentsTableTable extends PaymentsTable
         cloudId,
         deletedLocally,
         permissionsMask,
-        conflictOrigin,
-        conflictDetectedAt,
-        conflictResolvedAt,
-        conflictResolutionStrategy,
-        lastSyncError,
-        syncRetryCount
+        ownerId,
+        version,
+        isDeleted,
+        updatedAt,
+        createdAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2332,6 +2151,8 @@ class $PaymentsTableTable extends PaymentsTable
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('subscriber_id')) {
       context.handle(
@@ -2403,42 +2224,25 @@ class $PaymentsTableTable extends PaymentsTable
           permissionsMask.isAcceptableOrUnknown(
               data['permissions_mask']!, _permissionsMaskMeta));
     }
-    if (data.containsKey('conflict_origin')) {
-      context.handle(
-          _conflictOriginMeta,
-          conflictOrigin.isAcceptableOrUnknown(
-              data['conflict_origin']!, _conflictOriginMeta));
+    if (data.containsKey('owner_id')) {
+      context.handle(_ownerIdMeta,
+          ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
     }
-    if (data.containsKey('conflict_detected_at')) {
-      context.handle(
-          _conflictDetectedAtMeta,
-          conflictDetectedAt.isAcceptableOrUnknown(
-              data['conflict_detected_at']!, _conflictDetectedAtMeta));
+    if (data.containsKey('version')) {
+      context.handle(_versionMeta,
+          version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('conflict_resolved_at')) {
-      context.handle(
-          _conflictResolvedAtMeta,
-          conflictResolvedAt.isAcceptableOrUnknown(
-              data['conflict_resolved_at']!, _conflictResolvedAtMeta));
+    if (data.containsKey('is_deleted')) {
+      context.handle(_isDeletedMeta,
+          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
     }
-    if (data.containsKey('conflict_resolution_strategy')) {
-      context.handle(
-          _conflictResolutionStrategyMeta,
-          conflictResolutionStrategy.isAcceptableOrUnknown(
-              data['conflict_resolution_strategy']!,
-              _conflictResolutionStrategyMeta));
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
-    if (data.containsKey('last_sync_error')) {
-      context.handle(
-          _lastSyncErrorMeta,
-          lastSyncError.isAcceptableOrUnknown(
-              data['last_sync_error']!, _lastSyncErrorMeta));
-    }
-    if (data.containsKey('sync_retry_count')) {
-      context.handle(
-          _syncRetryCountMeta,
-          syncRetryCount.isAcceptableOrUnknown(
-              data['sync_retry_count']!, _syncRetryCountMeta));
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
     return context;
   }
@@ -2450,9 +2254,9 @@ class $PaymentsTableTable extends PaymentsTable
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Payment(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       subscriberId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}subscriber_id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}subscriber_id'])!,
       amount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}amount'])!,
       worker: attachedDatabase.typeMapping
@@ -2475,21 +2279,16 @@ class $PaymentsTableTable extends PaymentsTable
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
       permissionsMask: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
-      conflictOrigin: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}conflict_origin']),
-      conflictDetectedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_detected_at']),
-      conflictResolvedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_resolved_at']),
-      conflictResolutionStrategy: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}conflict_resolution_strategy']),
-      lastSyncError: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}last_sync_error']),
-      syncRetryCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}sync_retry_count']),
+      ownerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
+      version: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
+      isDeleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
     );
   }
 
@@ -2500,8 +2299,8 @@ class $PaymentsTableTable extends PaymentsTable
 }
 
 class Payment extends DataClass implements Insertable<Payment> {
-  final int id;
-  final int subscriberId;
+  final String id;
+  final String subscriberId;
   final double amount;
   final String worker;
   final DateTime date;
@@ -2513,12 +2312,11 @@ class Payment extends DataClass implements Insertable<Payment> {
   final String? cloudId;
   final bool? deletedLocally;
   final String? permissionsMask;
-  final String? conflictOrigin;
-  final DateTime? conflictDetectedAt;
-  final DateTime? conflictResolvedAt;
-  final String? conflictResolutionStrategy;
-  final String? lastSyncError;
-  final int? syncRetryCount;
+  final String? ownerId;
+  final int version;
+  final bool isDeleted;
+  final DateTime? updatedAt;
+  final DateTime? createdAt;
   const Payment(
       {required this.id,
       required this.subscriberId,
@@ -2533,17 +2331,16 @@ class Payment extends DataClass implements Insertable<Payment> {
       this.cloudId,
       this.deletedLocally,
       this.permissionsMask,
-      this.conflictOrigin,
-      this.conflictDetectedAt,
-      this.conflictResolvedAt,
-      this.conflictResolutionStrategy,
-      this.lastSyncError,
-      this.syncRetryCount});
+      this.ownerId,
+      required this.version,
+      required this.isDeleted,
+      this.updatedAt,
+      this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['subscriber_id'] = Variable<int>(subscriberId);
+    map['id'] = Variable<String>(id);
+    map['subscriber_id'] = Variable<String>(subscriberId);
     map['amount'] = Variable<double>(amount);
     map['worker'] = Variable<String>(worker);
     map['date'] = Variable<DateTime>(date);
@@ -2569,24 +2366,16 @@ class Payment extends DataClass implements Insertable<Payment> {
     if (!nullToAbsent || permissionsMask != null) {
       map['permissions_mask'] = Variable<String>(permissionsMask);
     }
-    if (!nullToAbsent || conflictOrigin != null) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin);
+    if (!nullToAbsent || ownerId != null) {
+      map['owner_id'] = Variable<String>(ownerId);
     }
-    if (!nullToAbsent || conflictDetectedAt != null) {
-      map['conflict_detected_at'] = Variable<DateTime>(conflictDetectedAt);
+    map['version'] = Variable<int>(version);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
     }
-    if (!nullToAbsent || conflictResolvedAt != null) {
-      map['conflict_resolved_at'] = Variable<DateTime>(conflictResolvedAt);
-    }
-    if (!nullToAbsent || conflictResolutionStrategy != null) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy);
-    }
-    if (!nullToAbsent || lastSyncError != null) {
-      map['last_sync_error'] = Variable<String>(lastSyncError);
-    }
-    if (!nullToAbsent || syncRetryCount != null) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
     }
     return map;
   }
@@ -2620,25 +2409,17 @@ class Payment extends DataClass implements Insertable<Payment> {
       permissionsMask: permissionsMask == null && nullToAbsent
           ? const Value.absent()
           : Value(permissionsMask),
-      conflictOrigin: conflictOrigin == null && nullToAbsent
+      ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictOrigin),
-      conflictDetectedAt: conflictDetectedAt == null && nullToAbsent
+          : Value(ownerId),
+      version: Value(version),
+      isDeleted: Value(isDeleted),
+      updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictDetectedAt),
-      conflictResolvedAt: conflictResolvedAt == null && nullToAbsent
+          : Value(updatedAt),
+      createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictResolvedAt),
-      conflictResolutionStrategy:
-          conflictResolutionStrategy == null && nullToAbsent
-              ? const Value.absent()
-              : Value(conflictResolutionStrategy),
-      lastSyncError: lastSyncError == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncError),
-      syncRetryCount: syncRetryCount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncRetryCount),
+          : Value(createdAt),
     );
   }
 
@@ -2646,8 +2427,8 @@ class Payment extends DataClass implements Insertable<Payment> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Payment(
-      id: serializer.fromJson<int>(json['id']),
-      subscriberId: serializer.fromJson<int>(json['subscriberId']),
+      id: serializer.fromJson<String>(json['id']),
+      subscriberId: serializer.fromJson<String>(json['subscriberId']),
       amount: serializer.fromJson<double>(json['amount']),
       worker: serializer.fromJson<String>(json['worker']),
       date: serializer.fromJson<DateTime>(json['date']),
@@ -2659,23 +2440,19 @@ class Payment extends DataClass implements Insertable<Payment> {
       cloudId: serializer.fromJson<String?>(json['cloudId']),
       deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
       permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
-      conflictOrigin: serializer.fromJson<String?>(json['conflictOrigin']),
-      conflictDetectedAt:
-          serializer.fromJson<DateTime?>(json['conflictDetectedAt']),
-      conflictResolvedAt:
-          serializer.fromJson<DateTime?>(json['conflictResolvedAt']),
-      conflictResolutionStrategy:
-          serializer.fromJson<String?>(json['conflictResolutionStrategy']),
-      lastSyncError: serializer.fromJson<String?>(json['lastSyncError']),
-      syncRetryCount: serializer.fromJson<int?>(json['syncRetryCount']),
+      ownerId: serializer.fromJson<String?>(json['ownerId']),
+      version: serializer.fromJson<int>(json['version']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'subscriberId': serializer.toJson<int>(subscriberId),
+      'id': serializer.toJson<String>(id),
+      'subscriberId': serializer.toJson<String>(subscriberId),
       'amount': serializer.toJson<double>(amount),
       'worker': serializer.toJson<String>(worker),
       'date': serializer.toJson<DateTime>(date),
@@ -2687,19 +2464,17 @@ class Payment extends DataClass implements Insertable<Payment> {
       'cloudId': serializer.toJson<String?>(cloudId),
       'deletedLocally': serializer.toJson<bool?>(deletedLocally),
       'permissionsMask': serializer.toJson<String?>(permissionsMask),
-      'conflictOrigin': serializer.toJson<String?>(conflictOrigin),
-      'conflictDetectedAt': serializer.toJson<DateTime?>(conflictDetectedAt),
-      'conflictResolvedAt': serializer.toJson<DateTime?>(conflictResolvedAt),
-      'conflictResolutionStrategy':
-          serializer.toJson<String?>(conflictResolutionStrategy),
-      'lastSyncError': serializer.toJson<String?>(lastSyncError),
-      'syncRetryCount': serializer.toJson<int?>(syncRetryCount),
+      'ownerId': serializer.toJson<String?>(ownerId),
+      'version': serializer.toJson<int>(version),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
   }
 
   Payment copyWith(
-          {int? id,
-          int? subscriberId,
+          {String? id,
+          String? subscriberId,
           double? amount,
           String? worker,
           DateTime? date,
@@ -2711,12 +2486,11 @@ class Payment extends DataClass implements Insertable<Payment> {
           Value<String?> cloudId = const Value.absent(),
           Value<bool?> deletedLocally = const Value.absent(),
           Value<String?> permissionsMask = const Value.absent(),
-          Value<String?> conflictOrigin = const Value.absent(),
-          Value<DateTime?> conflictDetectedAt = const Value.absent(),
-          Value<DateTime?> conflictResolvedAt = const Value.absent(),
-          Value<String?> conflictResolutionStrategy = const Value.absent(),
-          Value<String?> lastSyncError = const Value.absent(),
-          Value<int?> syncRetryCount = const Value.absent()}) =>
+          Value<String?> ownerId = const Value.absent(),
+          int? version,
+          bool? isDeleted,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          Value<DateTime?> createdAt = const Value.absent()}) =>
       Payment(
         id: id ?? this.id,
         subscriberId: subscriberId ?? this.subscriberId,
@@ -2736,21 +2510,11 @@ class Payment extends DataClass implements Insertable<Payment> {
         permissionsMask: permissionsMask.present
             ? permissionsMask.value
             : this.permissionsMask,
-        conflictOrigin:
-            conflictOrigin.present ? conflictOrigin.value : this.conflictOrigin,
-        conflictDetectedAt: conflictDetectedAt.present
-            ? conflictDetectedAt.value
-            : this.conflictDetectedAt,
-        conflictResolvedAt: conflictResolvedAt.present
-            ? conflictResolvedAt.value
-            : this.conflictResolvedAt,
-        conflictResolutionStrategy: conflictResolutionStrategy.present
-            ? conflictResolutionStrategy.value
-            : this.conflictResolutionStrategy,
-        lastSyncError:
-            lastSyncError.present ? lastSyncError.value : this.lastSyncError,
-        syncRetryCount:
-            syncRetryCount.present ? syncRetryCount.value : this.syncRetryCount,
+        ownerId: ownerId.present ? ownerId.value : this.ownerId,
+        version: version ?? this.version,
+        isDeleted: isDeleted ?? this.isDeleted,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
   Payment copyWithCompanion(PaymentsTableCompanion data) {
     return Payment(
@@ -2778,24 +2542,11 @@ class Payment extends DataClass implements Insertable<Payment> {
       permissionsMask: data.permissionsMask.present
           ? data.permissionsMask.value
           : this.permissionsMask,
-      conflictOrigin: data.conflictOrigin.present
-          ? data.conflictOrigin.value
-          : this.conflictOrigin,
-      conflictDetectedAt: data.conflictDetectedAt.present
-          ? data.conflictDetectedAt.value
-          : this.conflictDetectedAt,
-      conflictResolvedAt: data.conflictResolvedAt.present
-          ? data.conflictResolvedAt.value
-          : this.conflictResolvedAt,
-      conflictResolutionStrategy: data.conflictResolutionStrategy.present
-          ? data.conflictResolutionStrategy.value
-          : this.conflictResolutionStrategy,
-      lastSyncError: data.lastSyncError.present
-          ? data.lastSyncError.value
-          : this.lastSyncError,
-      syncRetryCount: data.syncRetryCount.present
-          ? data.syncRetryCount.value
-          : this.syncRetryCount,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      version: data.version.present ? data.version.value : this.version,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -2815,12 +2566,11 @@ class Payment extends DataClass implements Insertable<Payment> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -2840,12 +2590,11 @@ class Payment extends DataClass implements Insertable<Payment> {
       cloudId,
       deletedLocally,
       permissionsMask,
-      conflictOrigin,
-      conflictDetectedAt,
-      conflictResolvedAt,
-      conflictResolutionStrategy,
-      lastSyncError,
-      syncRetryCount);
+      ownerId,
+      version,
+      isDeleted,
+      updatedAt,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2863,17 +2612,16 @@ class Payment extends DataClass implements Insertable<Payment> {
           other.cloudId == this.cloudId &&
           other.deletedLocally == this.deletedLocally &&
           other.permissionsMask == this.permissionsMask &&
-          other.conflictOrigin == this.conflictOrigin &&
-          other.conflictDetectedAt == this.conflictDetectedAt &&
-          other.conflictResolvedAt == this.conflictResolvedAt &&
-          other.conflictResolutionStrategy == this.conflictResolutionStrategy &&
-          other.lastSyncError == this.lastSyncError &&
-          other.syncRetryCount == this.syncRetryCount);
+          other.ownerId == this.ownerId &&
+          other.version == this.version &&
+          other.isDeleted == this.isDeleted &&
+          other.updatedAt == this.updatedAt &&
+          other.createdAt == this.createdAt);
 }
 
 class PaymentsTableCompanion extends UpdateCompanion<Payment> {
-  final Value<int> id;
-  final Value<int> subscriberId;
+  final Value<String> id;
+  final Value<String> subscriberId;
   final Value<double> amount;
   final Value<String> worker;
   final Value<DateTime> date;
@@ -2885,12 +2633,12 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
   final Value<String?> cloudId;
   final Value<bool?> deletedLocally;
   final Value<String?> permissionsMask;
-  final Value<String?> conflictOrigin;
-  final Value<DateTime?> conflictDetectedAt;
-  final Value<DateTime?> conflictResolvedAt;
-  final Value<String?> conflictResolutionStrategy;
-  final Value<String?> lastSyncError;
-  final Value<int?> syncRetryCount;
+  final Value<String?> ownerId;
+  final Value<int> version;
+  final Value<bool> isDeleted;
+  final Value<DateTime?> updatedAt;
+  final Value<DateTime?> createdAt;
+  final Value<int> rowid;
   const PaymentsTableCompanion({
     this.id = const Value.absent(),
     this.subscriberId = const Value.absent(),
@@ -2905,16 +2653,16 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   PaymentsTableCompanion.insert({
-    this.id = const Value.absent(),
-    required int subscriberId,
+    required String id,
+    required String subscriberId,
     required double amount,
     required String worker,
     required DateTime date,
@@ -2926,20 +2674,21 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
-  })  : subscriberId = Value(subscriberId),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        subscriberId = Value(subscriberId),
         amount = Value(amount),
         worker = Value(worker),
         date = Value(date),
         cabinet = Value(cabinet);
   static Insertable<Payment> custom({
-    Expression<int>? id,
-    Expression<int>? subscriberId,
+    Expression<String>? id,
+    Expression<String>? subscriberId,
     Expression<double>? amount,
     Expression<String>? worker,
     Expression<DateTime>? date,
@@ -2951,12 +2700,12 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
     Expression<String>? cloudId,
     Expression<bool>? deletedLocally,
     Expression<String>? permissionsMask,
-    Expression<String>? conflictOrigin,
-    Expression<DateTime>? conflictDetectedAt,
-    Expression<DateTime>? conflictResolvedAt,
-    Expression<String>? conflictResolutionStrategy,
-    Expression<String>? lastSyncError,
-    Expression<int>? syncRetryCount,
+    Expression<String>? ownerId,
+    Expression<int>? version,
+    Expression<bool>? isDeleted,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2972,21 +2721,18 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
       if (cloudId != null) 'cloud_id': cloudId,
       if (deletedLocally != null) 'deleted_locally': deletedLocally,
       if (permissionsMask != null) 'permissions_mask': permissionsMask,
-      if (conflictOrigin != null) 'conflict_origin': conflictOrigin,
-      if (conflictDetectedAt != null)
-        'conflict_detected_at': conflictDetectedAt,
-      if (conflictResolvedAt != null)
-        'conflict_resolved_at': conflictResolvedAt,
-      if (conflictResolutionStrategy != null)
-        'conflict_resolution_strategy': conflictResolutionStrategy,
-      if (lastSyncError != null) 'last_sync_error': lastSyncError,
-      if (syncRetryCount != null) 'sync_retry_count': syncRetryCount,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (version != null) 'version': version,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   PaymentsTableCompanion copyWith(
-      {Value<int>? id,
-      Value<int>? subscriberId,
+      {Value<String>? id,
+      Value<String>? subscriberId,
       Value<double>? amount,
       Value<String>? worker,
       Value<DateTime>? date,
@@ -2998,12 +2744,12 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
       Value<String?>? cloudId,
       Value<bool?>? deletedLocally,
       Value<String?>? permissionsMask,
-      Value<String?>? conflictOrigin,
-      Value<DateTime?>? conflictDetectedAt,
-      Value<DateTime?>? conflictResolvedAt,
-      Value<String?>? conflictResolutionStrategy,
-      Value<String?>? lastSyncError,
-      Value<int?>? syncRetryCount}) {
+      Value<String?>? ownerId,
+      Value<int>? version,
+      Value<bool>? isDeleted,
+      Value<DateTime?>? updatedAt,
+      Value<DateTime?>? createdAt,
+      Value<int>? rowid}) {
     return PaymentsTableCompanion(
       id: id ?? this.id,
       subscriberId: subscriberId ?? this.subscriberId,
@@ -3018,13 +2764,12 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
       cloudId: cloudId ?? this.cloudId,
       deletedLocally: deletedLocally ?? this.deletedLocally,
       permissionsMask: permissionsMask ?? this.permissionsMask,
-      conflictOrigin: conflictOrigin ?? this.conflictOrigin,
-      conflictDetectedAt: conflictDetectedAt ?? this.conflictDetectedAt,
-      conflictResolvedAt: conflictResolvedAt ?? this.conflictResolvedAt,
-      conflictResolutionStrategy:
-          conflictResolutionStrategy ?? this.conflictResolutionStrategy,
-      lastSyncError: lastSyncError ?? this.lastSyncError,
-      syncRetryCount: syncRetryCount ?? this.syncRetryCount,
+      ownerId: ownerId ?? this.ownerId,
+      version: version ?? this.version,
+      isDeleted: isDeleted ?? this.isDeleted,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -3032,10 +2777,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (subscriberId.present) {
-      map['subscriber_id'] = Variable<int>(subscriberId.value);
+      map['subscriber_id'] = Variable<String>(subscriberId.value);
     }
     if (amount.present) {
       map['amount'] = Variable<double>(amount.value);
@@ -3070,26 +2815,23 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
     if (permissionsMask.present) {
       map['permissions_mask'] = Variable<String>(permissionsMask.value);
     }
-    if (conflictOrigin.present) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin.value);
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
     }
-    if (conflictDetectedAt.present) {
-      map['conflict_detected_at'] =
-          Variable<DateTime>(conflictDetectedAt.value);
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
     }
-    if (conflictResolvedAt.present) {
-      map['conflict_resolved_at'] =
-          Variable<DateTime>(conflictResolvedAt.value);
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
-    if (conflictResolutionStrategy.present) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy.value);
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (lastSyncError.present) {
-      map['last_sync_error'] = Variable<String>(lastSyncError.value);
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (syncRetryCount.present) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -3110,12 +2852,12 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -3129,13 +2871,9 @@ class $WorkersTableTable extends WorkersTable
   $WorkersTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -3220,44 +2958,42 @@ class $WorkersTableTable extends WorkersTable
   late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
       'permissions_mask', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictOriginMeta =
-      const VerificationMeta('conflictOrigin');
+  static const VerificationMeta _ownerIdMeta =
+      const VerificationMeta('ownerId');
   @override
-  late final GeneratedColumn<String> conflictOrigin = GeneratedColumn<String>(
-      'conflict_origin', aliasedName, true,
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+      'owner_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictDetectedAtMeta =
-      const VerificationMeta('conflictDetectedAt');
+  static const VerificationMeta _versionMeta =
+      const VerificationMeta('version');
   @override
-  late final GeneratedColumn<DateTime> conflictDetectedAt =
-      GeneratedColumn<DateTime>('conflict_detected_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolvedAtMeta =
-      const VerificationMeta('conflictResolvedAt');
-  @override
-  late final GeneratedColumn<DateTime> conflictResolvedAt =
-      GeneratedColumn<DateTime>('conflict_resolved_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolutionStrategyMeta =
-      const VerificationMeta('conflictResolutionStrategy');
-  @override
-  late final GeneratedColumn<String> conflictResolutionStrategy =
-      GeneratedColumn<String>('conflict_resolution_strategy', aliasedName, true,
-          type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncErrorMeta =
-      const VerificationMeta('lastSyncError');
-  @override
-  late final GeneratedColumn<String> lastSyncError = GeneratedColumn<String>(
-      'last_sync_error', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _syncRetryCountMeta =
-      const VerificationMeta('syncRetryCount');
-  @override
-  late final GeneratedColumn<int> syncRetryCount = GeneratedColumn<int>(
-      'sync_retry_count', aliasedName, true,
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+      'version', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      defaultValue: const Constant(1));
+  static const VerificationMeta _isDeletedMeta =
+      const VerificationMeta('isDeleted');
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+      'is_deleted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -3273,12 +3009,11 @@ class $WorkersTableTable extends WorkersTable
         cloudId,
         deletedLocally,
         permissionsMask,
-        conflictOrigin,
-        conflictDetectedAt,
-        conflictResolvedAt,
-        conflictResolutionStrategy,
-        lastSyncError,
-        syncRetryCount
+        ownerId,
+        version,
+        isDeleted,
+        updatedAt,
+        createdAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3292,6 +3027,8 @@ class $WorkersTableTable extends WorkersTable
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -3363,42 +3100,25 @@ class $WorkersTableTable extends WorkersTable
           permissionsMask.isAcceptableOrUnknown(
               data['permissions_mask']!, _permissionsMaskMeta));
     }
-    if (data.containsKey('conflict_origin')) {
-      context.handle(
-          _conflictOriginMeta,
-          conflictOrigin.isAcceptableOrUnknown(
-              data['conflict_origin']!, _conflictOriginMeta));
+    if (data.containsKey('owner_id')) {
+      context.handle(_ownerIdMeta,
+          ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
     }
-    if (data.containsKey('conflict_detected_at')) {
-      context.handle(
-          _conflictDetectedAtMeta,
-          conflictDetectedAt.isAcceptableOrUnknown(
-              data['conflict_detected_at']!, _conflictDetectedAtMeta));
+    if (data.containsKey('version')) {
+      context.handle(_versionMeta,
+          version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('conflict_resolved_at')) {
-      context.handle(
-          _conflictResolvedAtMeta,
-          conflictResolvedAt.isAcceptableOrUnknown(
-              data['conflict_resolved_at']!, _conflictResolvedAtMeta));
+    if (data.containsKey('is_deleted')) {
+      context.handle(_isDeletedMeta,
+          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
     }
-    if (data.containsKey('conflict_resolution_strategy')) {
-      context.handle(
-          _conflictResolutionStrategyMeta,
-          conflictResolutionStrategy.isAcceptableOrUnknown(
-              data['conflict_resolution_strategy']!,
-              _conflictResolutionStrategyMeta));
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
-    if (data.containsKey('last_sync_error')) {
-      context.handle(
-          _lastSyncErrorMeta,
-          lastSyncError.isAcceptableOrUnknown(
-              data['last_sync_error']!, _lastSyncErrorMeta));
-    }
-    if (data.containsKey('sync_retry_count')) {
-      context.handle(
-          _syncRetryCountMeta,
-          syncRetryCount.isAcceptableOrUnknown(
-              data['sync_retry_count']!, _syncRetryCountMeta));
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
     return context;
   }
@@ -3410,7 +3130,7 @@ class $WorkersTableTable extends WorkersTable
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Worker(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       phone: attachedDatabase.typeMapping
@@ -3435,21 +3155,16 @@ class $WorkersTableTable extends WorkersTable
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
       permissionsMask: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
-      conflictOrigin: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}conflict_origin']),
-      conflictDetectedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_detected_at']),
-      conflictResolvedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_resolved_at']),
-      conflictResolutionStrategy: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}conflict_resolution_strategy']),
-      lastSyncError: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}last_sync_error']),
-      syncRetryCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}sync_retry_count']),
+      ownerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
+      version: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
+      isDeleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
     );
   }
 
@@ -3460,7 +3175,7 @@ class $WorkersTableTable extends WorkersTable
 }
 
 class Worker extends DataClass implements Insertable<Worker> {
-  final int id;
+  final String id;
   final String name;
   final String phone;
   final String permissions;
@@ -3473,12 +3188,11 @@ class Worker extends DataClass implements Insertable<Worker> {
   final String? cloudId;
   final bool? deletedLocally;
   final String? permissionsMask;
-  final String? conflictOrigin;
-  final DateTime? conflictDetectedAt;
-  final DateTime? conflictResolvedAt;
-  final String? conflictResolutionStrategy;
-  final String? lastSyncError;
-  final int? syncRetryCount;
+  final String? ownerId;
+  final int version;
+  final bool isDeleted;
+  final DateTime? updatedAt;
+  final DateTime? createdAt;
   const Worker(
       {required this.id,
       required this.name,
@@ -3493,16 +3207,15 @@ class Worker extends DataClass implements Insertable<Worker> {
       this.cloudId,
       this.deletedLocally,
       this.permissionsMask,
-      this.conflictOrigin,
-      this.conflictDetectedAt,
-      this.conflictResolvedAt,
-      this.conflictResolutionStrategy,
-      this.lastSyncError,
-      this.syncRetryCount});
+      this.ownerId,
+      required this.version,
+      required this.isDeleted,
+      this.updatedAt,
+      this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['phone'] = Variable<String>(phone);
     map['permissions'] = Variable<String>(permissions);
@@ -3529,24 +3242,16 @@ class Worker extends DataClass implements Insertable<Worker> {
     if (!nullToAbsent || permissionsMask != null) {
       map['permissions_mask'] = Variable<String>(permissionsMask);
     }
-    if (!nullToAbsent || conflictOrigin != null) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin);
+    if (!nullToAbsent || ownerId != null) {
+      map['owner_id'] = Variable<String>(ownerId);
     }
-    if (!nullToAbsent || conflictDetectedAt != null) {
-      map['conflict_detected_at'] = Variable<DateTime>(conflictDetectedAt);
+    map['version'] = Variable<int>(version);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
     }
-    if (!nullToAbsent || conflictResolvedAt != null) {
-      map['conflict_resolved_at'] = Variable<DateTime>(conflictResolvedAt);
-    }
-    if (!nullToAbsent || conflictResolutionStrategy != null) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy);
-    }
-    if (!nullToAbsent || lastSyncError != null) {
-      map['last_sync_error'] = Variable<String>(lastSyncError);
-    }
-    if (!nullToAbsent || syncRetryCount != null) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
     }
     return map;
   }
@@ -3580,25 +3285,17 @@ class Worker extends DataClass implements Insertable<Worker> {
       permissionsMask: permissionsMask == null && nullToAbsent
           ? const Value.absent()
           : Value(permissionsMask),
-      conflictOrigin: conflictOrigin == null && nullToAbsent
+      ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictOrigin),
-      conflictDetectedAt: conflictDetectedAt == null && nullToAbsent
+          : Value(ownerId),
+      version: Value(version),
+      isDeleted: Value(isDeleted),
+      updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictDetectedAt),
-      conflictResolvedAt: conflictResolvedAt == null && nullToAbsent
+          : Value(updatedAt),
+      createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictResolvedAt),
-      conflictResolutionStrategy:
-          conflictResolutionStrategy == null && nullToAbsent
-              ? const Value.absent()
-              : Value(conflictResolutionStrategy),
-      lastSyncError: lastSyncError == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncError),
-      syncRetryCount: syncRetryCount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncRetryCount),
+          : Value(createdAt),
     );
   }
 
@@ -3606,7 +3303,7 @@ class Worker extends DataClass implements Insertable<Worker> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Worker(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       phone: serializer.fromJson<String>(json['phone']),
       permissions: serializer.fromJson<String>(json['permissions']),
@@ -3619,22 +3316,18 @@ class Worker extends DataClass implements Insertable<Worker> {
       cloudId: serializer.fromJson<String?>(json['cloudId']),
       deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
       permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
-      conflictOrigin: serializer.fromJson<String?>(json['conflictOrigin']),
-      conflictDetectedAt:
-          serializer.fromJson<DateTime?>(json['conflictDetectedAt']),
-      conflictResolvedAt:
-          serializer.fromJson<DateTime?>(json['conflictResolvedAt']),
-      conflictResolutionStrategy:
-          serializer.fromJson<String?>(json['conflictResolutionStrategy']),
-      lastSyncError: serializer.fromJson<String?>(json['lastSyncError']),
-      syncRetryCount: serializer.fromJson<int?>(json['syncRetryCount']),
+      ownerId: serializer.fromJson<String?>(json['ownerId']),
+      version: serializer.fromJson<int>(json['version']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'phone': serializer.toJson<String>(phone),
       'permissions': serializer.toJson<String>(permissions),
@@ -3647,18 +3340,16 @@ class Worker extends DataClass implements Insertable<Worker> {
       'cloudId': serializer.toJson<String?>(cloudId),
       'deletedLocally': serializer.toJson<bool?>(deletedLocally),
       'permissionsMask': serializer.toJson<String?>(permissionsMask),
-      'conflictOrigin': serializer.toJson<String?>(conflictOrigin),
-      'conflictDetectedAt': serializer.toJson<DateTime?>(conflictDetectedAt),
-      'conflictResolvedAt': serializer.toJson<DateTime?>(conflictResolvedAt),
-      'conflictResolutionStrategy':
-          serializer.toJson<String?>(conflictResolutionStrategy),
-      'lastSyncError': serializer.toJson<String?>(lastSyncError),
-      'syncRetryCount': serializer.toJson<int?>(syncRetryCount),
+      'ownerId': serializer.toJson<String?>(ownerId),
+      'version': serializer.toJson<int>(version),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
   }
 
   Worker copyWith(
-          {int? id,
+          {String? id,
           String? name,
           String? phone,
           String? permissions,
@@ -3671,12 +3362,11 @@ class Worker extends DataClass implements Insertable<Worker> {
           Value<String?> cloudId = const Value.absent(),
           Value<bool?> deletedLocally = const Value.absent(),
           Value<String?> permissionsMask = const Value.absent(),
-          Value<String?> conflictOrigin = const Value.absent(),
-          Value<DateTime?> conflictDetectedAt = const Value.absent(),
-          Value<DateTime?> conflictResolvedAt = const Value.absent(),
-          Value<String?> conflictResolutionStrategy = const Value.absent(),
-          Value<String?> lastSyncError = const Value.absent(),
-          Value<int?> syncRetryCount = const Value.absent()}) =>
+          Value<String?> ownerId = const Value.absent(),
+          int? version,
+          bool? isDeleted,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          Value<DateTime?> createdAt = const Value.absent()}) =>
       Worker(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -3696,21 +3386,11 @@ class Worker extends DataClass implements Insertable<Worker> {
         permissionsMask: permissionsMask.present
             ? permissionsMask.value
             : this.permissionsMask,
-        conflictOrigin:
-            conflictOrigin.present ? conflictOrigin.value : this.conflictOrigin,
-        conflictDetectedAt: conflictDetectedAt.present
-            ? conflictDetectedAt.value
-            : this.conflictDetectedAt,
-        conflictResolvedAt: conflictResolvedAt.present
-            ? conflictResolvedAt.value
-            : this.conflictResolvedAt,
-        conflictResolutionStrategy: conflictResolutionStrategy.present
-            ? conflictResolutionStrategy.value
-            : this.conflictResolutionStrategy,
-        lastSyncError:
-            lastSyncError.present ? lastSyncError.value : this.lastSyncError,
-        syncRetryCount:
-            syncRetryCount.present ? syncRetryCount.value : this.syncRetryCount,
+        ownerId: ownerId.present ? ownerId.value : this.ownerId,
+        version: version ?? this.version,
+        isDeleted: isDeleted ?? this.isDeleted,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
   Worker copyWithCompanion(WorkersTableCompanion data) {
     return Worker(
@@ -3740,24 +3420,11 @@ class Worker extends DataClass implements Insertable<Worker> {
       permissionsMask: data.permissionsMask.present
           ? data.permissionsMask.value
           : this.permissionsMask,
-      conflictOrigin: data.conflictOrigin.present
-          ? data.conflictOrigin.value
-          : this.conflictOrigin,
-      conflictDetectedAt: data.conflictDetectedAt.present
-          ? data.conflictDetectedAt.value
-          : this.conflictDetectedAt,
-      conflictResolvedAt: data.conflictResolvedAt.present
-          ? data.conflictResolvedAt.value
-          : this.conflictResolvedAt,
-      conflictResolutionStrategy: data.conflictResolutionStrategy.present
-          ? data.conflictResolutionStrategy.value
-          : this.conflictResolutionStrategy,
-      lastSyncError: data.lastSyncError.present
-          ? data.lastSyncError.value
-          : this.lastSyncError,
-      syncRetryCount: data.syncRetryCount.present
-          ? data.syncRetryCount.value
-          : this.syncRetryCount,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      version: data.version.present ? data.version.value : this.version,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -3777,12 +3444,11 @@ class Worker extends DataClass implements Insertable<Worker> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -3802,12 +3468,11 @@ class Worker extends DataClass implements Insertable<Worker> {
       cloudId,
       deletedLocally,
       permissionsMask,
-      conflictOrigin,
-      conflictDetectedAt,
-      conflictResolvedAt,
-      conflictResolutionStrategy,
-      lastSyncError,
-      syncRetryCount);
+      ownerId,
+      version,
+      isDeleted,
+      updatedAt,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3825,16 +3490,15 @@ class Worker extends DataClass implements Insertable<Worker> {
           other.cloudId == this.cloudId &&
           other.deletedLocally == this.deletedLocally &&
           other.permissionsMask == this.permissionsMask &&
-          other.conflictOrigin == this.conflictOrigin &&
-          other.conflictDetectedAt == this.conflictDetectedAt &&
-          other.conflictResolvedAt == this.conflictResolvedAt &&
-          other.conflictResolutionStrategy == this.conflictResolutionStrategy &&
-          other.lastSyncError == this.lastSyncError &&
-          other.syncRetryCount == this.syncRetryCount);
+          other.ownerId == this.ownerId &&
+          other.version == this.version &&
+          other.isDeleted == this.isDeleted &&
+          other.updatedAt == this.updatedAt &&
+          other.createdAt == this.createdAt);
 }
 
 class WorkersTableCompanion extends UpdateCompanion<Worker> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> name;
   final Value<String> phone;
   final Value<String> permissions;
@@ -3847,12 +3511,12 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
   final Value<String?> cloudId;
   final Value<bool?> deletedLocally;
   final Value<String?> permissionsMask;
-  final Value<String?> conflictOrigin;
-  final Value<DateTime?> conflictDetectedAt;
-  final Value<DateTime?> conflictResolvedAt;
-  final Value<String?> conflictResolutionStrategy;
-  final Value<String?> lastSyncError;
-  final Value<int?> syncRetryCount;
+  final Value<String?> ownerId;
+  final Value<int> version;
+  final Value<bool> isDeleted;
+  final Value<DateTime?> updatedAt;
+  final Value<DateTime?> createdAt;
+  final Value<int> rowid;
   const WorkersTableCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -3867,15 +3531,15 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   WorkersTableCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     required String name,
     required String phone,
     required String permissions,
@@ -3888,17 +3552,18 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
-  })  : name = Value(name),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
         phone = Value(phone),
         permissions = Value(permissions);
   static Insertable<Worker> custom({
-    Expression<int>? id,
+    Expression<String>? id,
     Expression<String>? name,
     Expression<String>? phone,
     Expression<String>? permissions,
@@ -3911,12 +3576,12 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
     Expression<String>? cloudId,
     Expression<bool>? deletedLocally,
     Expression<String>? permissionsMask,
-    Expression<String>? conflictOrigin,
-    Expression<DateTime>? conflictDetectedAt,
-    Expression<DateTime>? conflictResolvedAt,
-    Expression<String>? conflictResolutionStrategy,
-    Expression<String>? lastSyncError,
-    Expression<int>? syncRetryCount,
+    Expression<String>? ownerId,
+    Expression<int>? version,
+    Expression<bool>? isDeleted,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3932,20 +3597,17 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
       if (cloudId != null) 'cloud_id': cloudId,
       if (deletedLocally != null) 'deleted_locally': deletedLocally,
       if (permissionsMask != null) 'permissions_mask': permissionsMask,
-      if (conflictOrigin != null) 'conflict_origin': conflictOrigin,
-      if (conflictDetectedAt != null)
-        'conflict_detected_at': conflictDetectedAt,
-      if (conflictResolvedAt != null)
-        'conflict_resolved_at': conflictResolvedAt,
-      if (conflictResolutionStrategy != null)
-        'conflict_resolution_strategy': conflictResolutionStrategy,
-      if (lastSyncError != null) 'last_sync_error': lastSyncError,
-      if (syncRetryCount != null) 'sync_retry_count': syncRetryCount,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (version != null) 'version': version,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   WorkersTableCompanion copyWith(
-      {Value<int>? id,
+      {Value<String>? id,
       Value<String>? name,
       Value<String>? phone,
       Value<String>? permissions,
@@ -3958,12 +3620,12 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
       Value<String?>? cloudId,
       Value<bool?>? deletedLocally,
       Value<String?>? permissionsMask,
-      Value<String?>? conflictOrigin,
-      Value<DateTime?>? conflictDetectedAt,
-      Value<DateTime?>? conflictResolvedAt,
-      Value<String?>? conflictResolutionStrategy,
-      Value<String?>? lastSyncError,
-      Value<int?>? syncRetryCount}) {
+      Value<String?>? ownerId,
+      Value<int>? version,
+      Value<bool>? isDeleted,
+      Value<DateTime?>? updatedAt,
+      Value<DateTime?>? createdAt,
+      Value<int>? rowid}) {
     return WorkersTableCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -3978,13 +3640,12 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
       cloudId: cloudId ?? this.cloudId,
       deletedLocally: deletedLocally ?? this.deletedLocally,
       permissionsMask: permissionsMask ?? this.permissionsMask,
-      conflictOrigin: conflictOrigin ?? this.conflictOrigin,
-      conflictDetectedAt: conflictDetectedAt ?? this.conflictDetectedAt,
-      conflictResolvedAt: conflictResolvedAt ?? this.conflictResolvedAt,
-      conflictResolutionStrategy:
-          conflictResolutionStrategy ?? this.conflictResolutionStrategy,
-      lastSyncError: lastSyncError ?? this.lastSyncError,
-      syncRetryCount: syncRetryCount ?? this.syncRetryCount,
+      ownerId: ownerId ?? this.ownerId,
+      version: version ?? this.version,
+      isDeleted: isDeleted ?? this.isDeleted,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -3992,7 +3653,7 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -4030,26 +3691,23 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
     if (permissionsMask.present) {
       map['permissions_mask'] = Variable<String>(permissionsMask.value);
     }
-    if (conflictOrigin.present) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin.value);
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
     }
-    if (conflictDetectedAt.present) {
-      map['conflict_detected_at'] =
-          Variable<DateTime>(conflictDetectedAt.value);
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
     }
-    if (conflictResolvedAt.present) {
-      map['conflict_resolved_at'] =
-          Variable<DateTime>(conflictResolvedAt.value);
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
-    if (conflictResolutionStrategy.present) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy.value);
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (lastSyncError.present) {
-      map['last_sync_error'] = Variable<String>(lastSyncError.value);
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (syncRetryCount.present) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -4070,12 +3728,12 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -4089,13 +3747,9 @@ class $AuditLogTableTable extends AuditLogTable
   $AuditLogTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _userMeta = const VerificationMeta('user');
   @override
   late final GeneratedColumn<String> user = GeneratedColumn<String>(
@@ -4182,44 +3836,42 @@ class $AuditLogTableTable extends AuditLogTable
   late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
       'permissions_mask', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictOriginMeta =
-      const VerificationMeta('conflictOrigin');
+  static const VerificationMeta _ownerIdMeta =
+      const VerificationMeta('ownerId');
   @override
-  late final GeneratedColumn<String> conflictOrigin = GeneratedColumn<String>(
-      'conflict_origin', aliasedName, true,
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+      'owner_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictDetectedAtMeta =
-      const VerificationMeta('conflictDetectedAt');
+  static const VerificationMeta _versionMeta =
+      const VerificationMeta('version');
   @override
-  late final GeneratedColumn<DateTime> conflictDetectedAt =
-      GeneratedColumn<DateTime>('conflict_detected_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolvedAtMeta =
-      const VerificationMeta('conflictResolvedAt');
-  @override
-  late final GeneratedColumn<DateTime> conflictResolvedAt =
-      GeneratedColumn<DateTime>('conflict_resolved_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolutionStrategyMeta =
-      const VerificationMeta('conflictResolutionStrategy');
-  @override
-  late final GeneratedColumn<String> conflictResolutionStrategy =
-      GeneratedColumn<String>('conflict_resolution_strategy', aliasedName, true,
-          type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncErrorMeta =
-      const VerificationMeta('lastSyncError');
-  @override
-  late final GeneratedColumn<String> lastSyncError = GeneratedColumn<String>(
-      'last_sync_error', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _syncRetryCountMeta =
-      const VerificationMeta('syncRetryCount');
-  @override
-  late final GeneratedColumn<int> syncRetryCount = GeneratedColumn<int>(
-      'sync_retry_count', aliasedName, true,
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+      'version', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      defaultValue: const Constant(1));
+  static const VerificationMeta _isDeletedMeta =
+      const VerificationMeta('isDeleted');
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+      'is_deleted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -4236,12 +3888,11 @@ class $AuditLogTableTable extends AuditLogTable
         cloudId,
         deletedLocally,
         permissionsMask,
-        conflictOrigin,
-        conflictDetectedAt,
-        conflictResolvedAt,
-        conflictResolutionStrategy,
-        lastSyncError,
-        syncRetryCount
+        ownerId,
+        version,
+        isDeleted,
+        updatedAt,
+        createdAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4255,6 +3906,8 @@ class $AuditLogTableTable extends AuditLogTable
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('user')) {
       context.handle(
@@ -4328,42 +3981,25 @@ class $AuditLogTableTable extends AuditLogTable
           permissionsMask.isAcceptableOrUnknown(
               data['permissions_mask']!, _permissionsMaskMeta));
     }
-    if (data.containsKey('conflict_origin')) {
-      context.handle(
-          _conflictOriginMeta,
-          conflictOrigin.isAcceptableOrUnknown(
-              data['conflict_origin']!, _conflictOriginMeta));
+    if (data.containsKey('owner_id')) {
+      context.handle(_ownerIdMeta,
+          ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
     }
-    if (data.containsKey('conflict_detected_at')) {
-      context.handle(
-          _conflictDetectedAtMeta,
-          conflictDetectedAt.isAcceptableOrUnknown(
-              data['conflict_detected_at']!, _conflictDetectedAtMeta));
+    if (data.containsKey('version')) {
+      context.handle(_versionMeta,
+          version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('conflict_resolved_at')) {
-      context.handle(
-          _conflictResolvedAtMeta,
-          conflictResolvedAt.isAcceptableOrUnknown(
-              data['conflict_resolved_at']!, _conflictResolvedAtMeta));
+    if (data.containsKey('is_deleted')) {
+      context.handle(_isDeletedMeta,
+          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
     }
-    if (data.containsKey('conflict_resolution_strategy')) {
-      context.handle(
-          _conflictResolutionStrategyMeta,
-          conflictResolutionStrategy.isAcceptableOrUnknown(
-              data['conflict_resolution_strategy']!,
-              _conflictResolutionStrategyMeta));
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
-    if (data.containsKey('last_sync_error')) {
-      context.handle(
-          _lastSyncErrorMeta,
-          lastSyncError.isAcceptableOrUnknown(
-              data['last_sync_error']!, _lastSyncErrorMeta));
-    }
-    if (data.containsKey('sync_retry_count')) {
-      context.handle(
-          _syncRetryCountMeta,
-          syncRetryCount.isAcceptableOrUnknown(
-              data['sync_retry_count']!, _syncRetryCountMeta));
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
     return context;
   }
@@ -4375,7 +4011,7 @@ class $AuditLogTableTable extends AuditLogTable
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return AuditLogEntry(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       user: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}user'])!,
       action: attachedDatabase.typeMapping
@@ -4402,21 +4038,16 @@ class $AuditLogTableTable extends AuditLogTable
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
       permissionsMask: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
-      conflictOrigin: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}conflict_origin']),
-      conflictDetectedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_detected_at']),
-      conflictResolvedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_resolved_at']),
-      conflictResolutionStrategy: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}conflict_resolution_strategy']),
-      lastSyncError: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}last_sync_error']),
-      syncRetryCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}sync_retry_count']),
+      ownerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
+      version: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
+      isDeleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
     );
   }
 
@@ -4427,7 +4058,7 @@ class $AuditLogTableTable extends AuditLogTable
 }
 
 class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
-  final int id;
+  final String id;
   final String user;
   final String action;
   final String target;
@@ -4441,12 +4072,11 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
   final String? cloudId;
   final bool? deletedLocally;
   final String? permissionsMask;
-  final String? conflictOrigin;
-  final DateTime? conflictDetectedAt;
-  final DateTime? conflictResolvedAt;
-  final String? conflictResolutionStrategy;
-  final String? lastSyncError;
-  final int? syncRetryCount;
+  final String? ownerId;
+  final int version;
+  final bool isDeleted;
+  final DateTime? updatedAt;
+  final DateTime? createdAt;
   const AuditLogEntry(
       {required this.id,
       required this.user,
@@ -4462,16 +4092,15 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       this.cloudId,
       this.deletedLocally,
       this.permissionsMask,
-      this.conflictOrigin,
-      this.conflictDetectedAt,
-      this.conflictResolvedAt,
-      this.conflictResolutionStrategy,
-      this.lastSyncError,
-      this.syncRetryCount});
+      this.ownerId,
+      required this.version,
+      required this.isDeleted,
+      this.updatedAt,
+      this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['user'] = Variable<String>(user);
     map['action'] = Variable<String>(action);
     map['target'] = Variable<String>(target);
@@ -4499,24 +4128,16 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
     if (!nullToAbsent || permissionsMask != null) {
       map['permissions_mask'] = Variable<String>(permissionsMask);
     }
-    if (!nullToAbsent || conflictOrigin != null) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin);
+    if (!nullToAbsent || ownerId != null) {
+      map['owner_id'] = Variable<String>(ownerId);
     }
-    if (!nullToAbsent || conflictDetectedAt != null) {
-      map['conflict_detected_at'] = Variable<DateTime>(conflictDetectedAt);
+    map['version'] = Variable<int>(version);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
     }
-    if (!nullToAbsent || conflictResolvedAt != null) {
-      map['conflict_resolved_at'] = Variable<DateTime>(conflictResolvedAt);
-    }
-    if (!nullToAbsent || conflictResolutionStrategy != null) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy);
-    }
-    if (!nullToAbsent || lastSyncError != null) {
-      map['last_sync_error'] = Variable<String>(lastSyncError);
-    }
-    if (!nullToAbsent || syncRetryCount != null) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
     }
     return map;
   }
@@ -4551,25 +4172,17 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       permissionsMask: permissionsMask == null && nullToAbsent
           ? const Value.absent()
           : Value(permissionsMask),
-      conflictOrigin: conflictOrigin == null && nullToAbsent
+      ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictOrigin),
-      conflictDetectedAt: conflictDetectedAt == null && nullToAbsent
+          : Value(ownerId),
+      version: Value(version),
+      isDeleted: Value(isDeleted),
+      updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictDetectedAt),
-      conflictResolvedAt: conflictResolvedAt == null && nullToAbsent
+          : Value(updatedAt),
+      createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictResolvedAt),
-      conflictResolutionStrategy:
-          conflictResolutionStrategy == null && nullToAbsent
-              ? const Value.absent()
-              : Value(conflictResolutionStrategy),
-      lastSyncError: lastSyncError == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncError),
-      syncRetryCount: syncRetryCount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncRetryCount),
+          : Value(createdAt),
     );
   }
 
@@ -4577,7 +4190,7 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return AuditLogEntry(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       user: serializer.fromJson<String>(json['user']),
       action: serializer.fromJson<String>(json['action']),
       target: serializer.fromJson<String>(json['target']),
@@ -4591,22 +4204,18 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       cloudId: serializer.fromJson<String?>(json['cloudId']),
       deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
       permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
-      conflictOrigin: serializer.fromJson<String?>(json['conflictOrigin']),
-      conflictDetectedAt:
-          serializer.fromJson<DateTime?>(json['conflictDetectedAt']),
-      conflictResolvedAt:
-          serializer.fromJson<DateTime?>(json['conflictResolvedAt']),
-      conflictResolutionStrategy:
-          serializer.fromJson<String?>(json['conflictResolutionStrategy']),
-      lastSyncError: serializer.fromJson<String?>(json['lastSyncError']),
-      syncRetryCount: serializer.fromJson<int?>(json['syncRetryCount']),
+      ownerId: serializer.fromJson<String?>(json['ownerId']),
+      version: serializer.fromJson<int>(json['version']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'user': serializer.toJson<String>(user),
       'action': serializer.toJson<String>(action),
       'target': serializer.toJson<String>(target),
@@ -4620,18 +4229,16 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       'cloudId': serializer.toJson<String?>(cloudId),
       'deletedLocally': serializer.toJson<bool?>(deletedLocally),
       'permissionsMask': serializer.toJson<String?>(permissionsMask),
-      'conflictOrigin': serializer.toJson<String?>(conflictOrigin),
-      'conflictDetectedAt': serializer.toJson<DateTime?>(conflictDetectedAt),
-      'conflictResolvedAt': serializer.toJson<DateTime?>(conflictResolvedAt),
-      'conflictResolutionStrategy':
-          serializer.toJson<String?>(conflictResolutionStrategy),
-      'lastSyncError': serializer.toJson<String?>(lastSyncError),
-      'syncRetryCount': serializer.toJson<int?>(syncRetryCount),
+      'ownerId': serializer.toJson<String?>(ownerId),
+      'version': serializer.toJson<int>(version),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
   }
 
   AuditLogEntry copyWith(
-          {int? id,
+          {String? id,
           String? user,
           String? action,
           String? target,
@@ -4645,12 +4252,11 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
           Value<String?> cloudId = const Value.absent(),
           Value<bool?> deletedLocally = const Value.absent(),
           Value<String?> permissionsMask = const Value.absent(),
-          Value<String?> conflictOrigin = const Value.absent(),
-          Value<DateTime?> conflictDetectedAt = const Value.absent(),
-          Value<DateTime?> conflictResolvedAt = const Value.absent(),
-          Value<String?> conflictResolutionStrategy = const Value.absent(),
-          Value<String?> lastSyncError = const Value.absent(),
-          Value<int?> syncRetryCount = const Value.absent()}) =>
+          Value<String?> ownerId = const Value.absent(),
+          int? version,
+          bool? isDeleted,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          Value<DateTime?> createdAt = const Value.absent()}) =>
       AuditLogEntry(
         id: id ?? this.id,
         user: user ?? this.user,
@@ -4671,21 +4277,11 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
         permissionsMask: permissionsMask.present
             ? permissionsMask.value
             : this.permissionsMask,
-        conflictOrigin:
-            conflictOrigin.present ? conflictOrigin.value : this.conflictOrigin,
-        conflictDetectedAt: conflictDetectedAt.present
-            ? conflictDetectedAt.value
-            : this.conflictDetectedAt,
-        conflictResolvedAt: conflictResolvedAt.present
-            ? conflictResolvedAt.value
-            : this.conflictResolvedAt,
-        conflictResolutionStrategy: conflictResolutionStrategy.present
-            ? conflictResolutionStrategy.value
-            : this.conflictResolutionStrategy,
-        lastSyncError:
-            lastSyncError.present ? lastSyncError.value : this.lastSyncError,
-        syncRetryCount:
-            syncRetryCount.present ? syncRetryCount.value : this.syncRetryCount,
+        ownerId: ownerId.present ? ownerId.value : this.ownerId,
+        version: version ?? this.version,
+        isDeleted: isDeleted ?? this.isDeleted,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
   AuditLogEntry copyWithCompanion(AuditLogTableCompanion data) {
     return AuditLogEntry(
@@ -4712,24 +4308,11 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       permissionsMask: data.permissionsMask.present
           ? data.permissionsMask.value
           : this.permissionsMask,
-      conflictOrigin: data.conflictOrigin.present
-          ? data.conflictOrigin.value
-          : this.conflictOrigin,
-      conflictDetectedAt: data.conflictDetectedAt.present
-          ? data.conflictDetectedAt.value
-          : this.conflictDetectedAt,
-      conflictResolvedAt: data.conflictResolvedAt.present
-          ? data.conflictResolvedAt.value
-          : this.conflictResolvedAt,
-      conflictResolutionStrategy: data.conflictResolutionStrategy.present
-          ? data.conflictResolutionStrategy.value
-          : this.conflictResolutionStrategy,
-      lastSyncError: data.lastSyncError.present
-          ? data.lastSyncError.value
-          : this.lastSyncError,
-      syncRetryCount: data.syncRetryCount.present
-          ? data.syncRetryCount.value
-          : this.syncRetryCount,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      version: data.version.present ? data.version.value : this.version,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -4750,12 +4333,11 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -4776,12 +4358,11 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       cloudId,
       deletedLocally,
       permissionsMask,
-      conflictOrigin,
-      conflictDetectedAt,
-      conflictResolvedAt,
-      conflictResolutionStrategy,
-      lastSyncError,
-      syncRetryCount);
+      ownerId,
+      version,
+      isDeleted,
+      updatedAt,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4800,16 +4381,15 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
           other.cloudId == this.cloudId &&
           other.deletedLocally == this.deletedLocally &&
           other.permissionsMask == this.permissionsMask &&
-          other.conflictOrigin == this.conflictOrigin &&
-          other.conflictDetectedAt == this.conflictDetectedAt &&
-          other.conflictResolvedAt == this.conflictResolvedAt &&
-          other.conflictResolutionStrategy == this.conflictResolutionStrategy &&
-          other.lastSyncError == this.lastSyncError &&
-          other.syncRetryCount == this.syncRetryCount);
+          other.ownerId == this.ownerId &&
+          other.version == this.version &&
+          other.isDeleted == this.isDeleted &&
+          other.updatedAt == this.updatedAt &&
+          other.createdAt == this.createdAt);
 }
 
 class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> user;
   final Value<String> action;
   final Value<String> target;
@@ -4823,12 +4403,12 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
   final Value<String?> cloudId;
   final Value<bool?> deletedLocally;
   final Value<String?> permissionsMask;
-  final Value<String?> conflictOrigin;
-  final Value<DateTime?> conflictDetectedAt;
-  final Value<DateTime?> conflictResolvedAt;
-  final Value<String?> conflictResolutionStrategy;
-  final Value<String?> lastSyncError;
-  final Value<int?> syncRetryCount;
+  final Value<String?> ownerId;
+  final Value<int> version;
+  final Value<bool> isDeleted;
+  final Value<DateTime?> updatedAt;
+  final Value<DateTime?> createdAt;
+  final Value<int> rowid;
   const AuditLogTableCompanion({
     this.id = const Value.absent(),
     this.user = const Value.absent(),
@@ -4844,15 +4424,15 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   AuditLogTableCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     required String user,
     required String action,
     required String target,
@@ -4866,19 +4446,20 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
-  })  : user = Value(user),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        user = Value(user),
         action = Value(action),
         target = Value(target),
         details = Value(details),
         type = Value(type);
   static Insertable<AuditLogEntry> custom({
-    Expression<int>? id,
+    Expression<String>? id,
     Expression<String>? user,
     Expression<String>? action,
     Expression<String>? target,
@@ -4892,12 +4473,12 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
     Expression<String>? cloudId,
     Expression<bool>? deletedLocally,
     Expression<String>? permissionsMask,
-    Expression<String>? conflictOrigin,
-    Expression<DateTime>? conflictDetectedAt,
-    Expression<DateTime>? conflictResolvedAt,
-    Expression<String>? conflictResolutionStrategy,
-    Expression<String>? lastSyncError,
-    Expression<int>? syncRetryCount,
+    Expression<String>? ownerId,
+    Expression<int>? version,
+    Expression<bool>? isDeleted,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4914,20 +4495,17 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
       if (cloudId != null) 'cloud_id': cloudId,
       if (deletedLocally != null) 'deleted_locally': deletedLocally,
       if (permissionsMask != null) 'permissions_mask': permissionsMask,
-      if (conflictOrigin != null) 'conflict_origin': conflictOrigin,
-      if (conflictDetectedAt != null)
-        'conflict_detected_at': conflictDetectedAt,
-      if (conflictResolvedAt != null)
-        'conflict_resolved_at': conflictResolvedAt,
-      if (conflictResolutionStrategy != null)
-        'conflict_resolution_strategy': conflictResolutionStrategy,
-      if (lastSyncError != null) 'last_sync_error': lastSyncError,
-      if (syncRetryCount != null) 'sync_retry_count': syncRetryCount,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (version != null) 'version': version,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   AuditLogTableCompanion copyWith(
-      {Value<int>? id,
+      {Value<String>? id,
       Value<String>? user,
       Value<String>? action,
       Value<String>? target,
@@ -4941,12 +4519,12 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
       Value<String?>? cloudId,
       Value<bool?>? deletedLocally,
       Value<String?>? permissionsMask,
-      Value<String?>? conflictOrigin,
-      Value<DateTime?>? conflictDetectedAt,
-      Value<DateTime?>? conflictResolvedAt,
-      Value<String?>? conflictResolutionStrategy,
-      Value<String?>? lastSyncError,
-      Value<int?>? syncRetryCount}) {
+      Value<String?>? ownerId,
+      Value<int>? version,
+      Value<bool>? isDeleted,
+      Value<DateTime?>? updatedAt,
+      Value<DateTime?>? createdAt,
+      Value<int>? rowid}) {
     return AuditLogTableCompanion(
       id: id ?? this.id,
       user: user ?? this.user,
@@ -4962,13 +4540,12 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
       cloudId: cloudId ?? this.cloudId,
       deletedLocally: deletedLocally ?? this.deletedLocally,
       permissionsMask: permissionsMask ?? this.permissionsMask,
-      conflictOrigin: conflictOrigin ?? this.conflictOrigin,
-      conflictDetectedAt: conflictDetectedAt ?? this.conflictDetectedAt,
-      conflictResolvedAt: conflictResolvedAt ?? this.conflictResolvedAt,
-      conflictResolutionStrategy:
-          conflictResolutionStrategy ?? this.conflictResolutionStrategy,
-      lastSyncError: lastSyncError ?? this.lastSyncError,
-      syncRetryCount: syncRetryCount ?? this.syncRetryCount,
+      ownerId: ownerId ?? this.ownerId,
+      version: version ?? this.version,
+      isDeleted: isDeleted ?? this.isDeleted,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -4976,7 +4553,7 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (user.present) {
       map['user'] = Variable<String>(user.value);
@@ -5017,26 +4594,23 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
     if (permissionsMask.present) {
       map['permissions_mask'] = Variable<String>(permissionsMask.value);
     }
-    if (conflictOrigin.present) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin.value);
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
     }
-    if (conflictDetectedAt.present) {
-      map['conflict_detected_at'] =
-          Variable<DateTime>(conflictDetectedAt.value);
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
     }
-    if (conflictResolvedAt.present) {
-      map['conflict_resolved_at'] =
-          Variable<DateTime>(conflictResolvedAt.value);
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
-    if (conflictResolutionStrategy.present) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy.value);
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (lastSyncError.present) {
-      map['last_sync_error'] = Variable<String>(lastSyncError.value);
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (syncRetryCount.present) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -5058,12 +4632,12 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -5077,13 +4651,9 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
   $WhatsappTemplatesTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -5103,22 +4673,6 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _updatedAtMeta =
-      const VerificationMeta('updatedAt');
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-      'updated_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
   static const VerificationMeta _lastModifiedMeta =
       const VerificationMeta('lastModified');
   @override
@@ -5171,52 +4725,52 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
   late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
       'permissions_mask', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictOriginMeta =
-      const VerificationMeta('conflictOrigin');
+  static const VerificationMeta _ownerIdMeta =
+      const VerificationMeta('ownerId');
   @override
-  late final GeneratedColumn<String> conflictOrigin = GeneratedColumn<String>(
-      'conflict_origin', aliasedName, true,
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+      'owner_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _conflictDetectedAtMeta =
-      const VerificationMeta('conflictDetectedAt');
+  static const VerificationMeta _versionMeta =
+      const VerificationMeta('version');
   @override
-  late final GeneratedColumn<DateTime> conflictDetectedAt =
-      GeneratedColumn<DateTime>('conflict_detected_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolvedAtMeta =
-      const VerificationMeta('conflictResolvedAt');
-  @override
-  late final GeneratedColumn<DateTime> conflictResolvedAt =
-      GeneratedColumn<DateTime>('conflict_resolved_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _conflictResolutionStrategyMeta =
-      const VerificationMeta('conflictResolutionStrategy');
-  @override
-  late final GeneratedColumn<String> conflictResolutionStrategy =
-      GeneratedColumn<String>('conflict_resolution_strategy', aliasedName, true,
-          type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncErrorMeta =
-      const VerificationMeta('lastSyncError');
-  @override
-  late final GeneratedColumn<String> lastSyncError = GeneratedColumn<String>(
-      'last_sync_error', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _syncRetryCountMeta =
-      const VerificationMeta('syncRetryCount');
-  @override
-  late final GeneratedColumn<int> syncRetryCount = GeneratedColumn<int>(
-      'sync_retry_count', aliasedName, true,
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+      'version', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      defaultValue: const Constant(1));
+  static const VerificationMeta _isDeletedMeta =
+      const VerificationMeta('isDeleted');
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+      'is_deleted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns => [
         id,
         title,
         content,
         isActive,
-        createdAt,
-        updatedAt,
         lastModified,
         lastSyncedAt,
         syncStatus,
@@ -5224,12 +4778,11 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
         cloudId,
         deletedLocally,
         permissionsMask,
-        conflictOrigin,
-        conflictDetectedAt,
-        conflictResolvedAt,
-        conflictResolutionStrategy,
-        lastSyncError,
-        syncRetryCount
+        ownerId,
+        version,
+        isDeleted,
+        updatedAt,
+        createdAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5244,6 +4797,8 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -5260,14 +4815,6 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
     if (data.containsKey('is_active')) {
       context.handle(_isActiveMeta,
           isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(_updatedAtMeta,
-          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
     if (data.containsKey('last_modified')) {
       context.handle(
@@ -5307,42 +4854,25 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
           permissionsMask.isAcceptableOrUnknown(
               data['permissions_mask']!, _permissionsMaskMeta));
     }
-    if (data.containsKey('conflict_origin')) {
-      context.handle(
-          _conflictOriginMeta,
-          conflictOrigin.isAcceptableOrUnknown(
-              data['conflict_origin']!, _conflictOriginMeta));
+    if (data.containsKey('owner_id')) {
+      context.handle(_ownerIdMeta,
+          ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
     }
-    if (data.containsKey('conflict_detected_at')) {
-      context.handle(
-          _conflictDetectedAtMeta,
-          conflictDetectedAt.isAcceptableOrUnknown(
-              data['conflict_detected_at']!, _conflictDetectedAtMeta));
+    if (data.containsKey('version')) {
+      context.handle(_versionMeta,
+          version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('conflict_resolved_at')) {
-      context.handle(
-          _conflictResolvedAtMeta,
-          conflictResolvedAt.isAcceptableOrUnknown(
-              data['conflict_resolved_at']!, _conflictResolvedAtMeta));
+    if (data.containsKey('is_deleted')) {
+      context.handle(_isDeletedMeta,
+          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
     }
-    if (data.containsKey('conflict_resolution_strategy')) {
-      context.handle(
-          _conflictResolutionStrategyMeta,
-          conflictResolutionStrategy.isAcceptableOrUnknown(
-              data['conflict_resolution_strategy']!,
-              _conflictResolutionStrategyMeta));
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
-    if (data.containsKey('last_sync_error')) {
-      context.handle(
-          _lastSyncErrorMeta,
-          lastSyncError.isAcceptableOrUnknown(
-              data['last_sync_error']!, _lastSyncErrorMeta));
-    }
-    if (data.containsKey('sync_retry_count')) {
-      context.handle(
-          _syncRetryCountMeta,
-          syncRetryCount.isAcceptableOrUnknown(
-              data['sync_retry_count']!, _syncRetryCountMeta));
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
     return context;
   }
@@ -5354,17 +4884,13 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return WhatsappTemplateData(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       content: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}content'])!,
       isActive: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}is_active'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      updatedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       lastModified: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_modified']),
       lastSyncedAt: attachedDatabase.typeMapping.read(
@@ -5379,21 +4905,16 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
       permissionsMask: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
-      conflictOrigin: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}conflict_origin']),
-      conflictDetectedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_detected_at']),
-      conflictResolvedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime,
-          data['${effectivePrefix}conflict_resolved_at']),
-      conflictResolutionStrategy: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}conflict_resolution_strategy']),
-      lastSyncError: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}last_sync_error']),
-      syncRetryCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}sync_retry_count']),
+      ownerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
+      version: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
+      isDeleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
   }
 
@@ -5405,12 +4926,10 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
 
 class WhatsappTemplateData extends DataClass
     implements Insertable<WhatsappTemplateData> {
-  final int id;
+  final String id;
   final String title;
   final String content;
   final int isActive;
-  final DateTime createdAt;
-  final DateTime updatedAt;
   final DateTime? lastModified;
   final DateTime? lastSyncedAt;
   final String? syncStatus;
@@ -5418,19 +4937,16 @@ class WhatsappTemplateData extends DataClass
   final String? cloudId;
   final bool? deletedLocally;
   final String? permissionsMask;
-  final String? conflictOrigin;
-  final DateTime? conflictDetectedAt;
-  final DateTime? conflictResolvedAt;
-  final String? conflictResolutionStrategy;
-  final String? lastSyncError;
-  final int? syncRetryCount;
+  final String? ownerId;
+  final int version;
+  final bool isDeleted;
+  final DateTime updatedAt;
+  final DateTime createdAt;
   const WhatsappTemplateData(
       {required this.id,
       required this.title,
       required this.content,
       required this.isActive,
-      required this.createdAt,
-      required this.updatedAt,
       this.lastModified,
       this.lastSyncedAt,
       this.syncStatus,
@@ -5438,21 +4954,18 @@ class WhatsappTemplateData extends DataClass
       this.cloudId,
       this.deletedLocally,
       this.permissionsMask,
-      this.conflictOrigin,
-      this.conflictDetectedAt,
-      this.conflictResolvedAt,
-      this.conflictResolutionStrategy,
-      this.lastSyncError,
-      this.syncRetryCount});
+      this.ownerId,
+      required this.version,
+      required this.isDeleted,
+      required this.updatedAt,
+      required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['title'] = Variable<String>(title);
     map['content'] = Variable<String>(content);
     map['is_active'] = Variable<int>(isActive);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
     if (!nullToAbsent || lastModified != null) {
       map['last_modified'] = Variable<DateTime>(lastModified);
     }
@@ -5474,25 +4987,13 @@ class WhatsappTemplateData extends DataClass
     if (!nullToAbsent || permissionsMask != null) {
       map['permissions_mask'] = Variable<String>(permissionsMask);
     }
-    if (!nullToAbsent || conflictOrigin != null) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin);
+    if (!nullToAbsent || ownerId != null) {
+      map['owner_id'] = Variable<String>(ownerId);
     }
-    if (!nullToAbsent || conflictDetectedAt != null) {
-      map['conflict_detected_at'] = Variable<DateTime>(conflictDetectedAt);
-    }
-    if (!nullToAbsent || conflictResolvedAt != null) {
-      map['conflict_resolved_at'] = Variable<DateTime>(conflictResolvedAt);
-    }
-    if (!nullToAbsent || conflictResolutionStrategy != null) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy);
-    }
-    if (!nullToAbsent || lastSyncError != null) {
-      map['last_sync_error'] = Variable<String>(lastSyncError);
-    }
-    if (!nullToAbsent || syncRetryCount != null) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount);
-    }
+    map['version'] = Variable<int>(version);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
 
@@ -5502,8 +5003,6 @@ class WhatsappTemplateData extends DataClass
       title: Value(title),
       content: Value(content),
       isActive: Value(isActive),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
       lastModified: lastModified == null && nullToAbsent
           ? const Value.absent()
           : Value(lastModified),
@@ -5525,25 +5024,13 @@ class WhatsappTemplateData extends DataClass
       permissionsMask: permissionsMask == null && nullToAbsent
           ? const Value.absent()
           : Value(permissionsMask),
-      conflictOrigin: conflictOrigin == null && nullToAbsent
+      ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
-          : Value(conflictOrigin),
-      conflictDetectedAt: conflictDetectedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(conflictDetectedAt),
-      conflictResolvedAt: conflictResolvedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(conflictResolvedAt),
-      conflictResolutionStrategy:
-          conflictResolutionStrategy == null && nullToAbsent
-              ? const Value.absent()
-              : Value(conflictResolutionStrategy),
-      lastSyncError: lastSyncError == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncError),
-      syncRetryCount: syncRetryCount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncRetryCount),
+          : Value(ownerId),
+      version: Value(version),
+      isDeleted: Value(isDeleted),
+      updatedAt: Value(updatedAt),
+      createdAt: Value(createdAt),
     );
   }
 
@@ -5551,12 +5038,10 @@ class WhatsappTemplateData extends DataClass
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return WhatsappTemplateData(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       content: serializer.fromJson<String>(json['content']),
       isActive: serializer.fromJson<int>(json['isActive']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       lastModified: serializer.fromJson<DateTime?>(json['lastModified']),
       lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
       syncStatus: serializer.fromJson<String?>(json['syncStatus']),
@@ -5564,27 +5049,21 @@ class WhatsappTemplateData extends DataClass
       cloudId: serializer.fromJson<String?>(json['cloudId']),
       deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
       permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
-      conflictOrigin: serializer.fromJson<String?>(json['conflictOrigin']),
-      conflictDetectedAt:
-          serializer.fromJson<DateTime?>(json['conflictDetectedAt']),
-      conflictResolvedAt:
-          serializer.fromJson<DateTime?>(json['conflictResolvedAt']),
-      conflictResolutionStrategy:
-          serializer.fromJson<String?>(json['conflictResolutionStrategy']),
-      lastSyncError: serializer.fromJson<String?>(json['lastSyncError']),
-      syncRetryCount: serializer.fromJson<int?>(json['syncRetryCount']),
+      ownerId: serializer.fromJson<String?>(json['ownerId']),
+      version: serializer.fromJson<int>(json['version']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'title': serializer.toJson<String>(title),
       'content': serializer.toJson<String>(content),
       'isActive': serializer.toJson<int>(isActive),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'lastModified': serializer.toJson<DateTime?>(lastModified),
       'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
       'syncStatus': serializer.toJson<String?>(syncStatus),
@@ -5592,23 +5071,19 @@ class WhatsappTemplateData extends DataClass
       'cloudId': serializer.toJson<String?>(cloudId),
       'deletedLocally': serializer.toJson<bool?>(deletedLocally),
       'permissionsMask': serializer.toJson<String?>(permissionsMask),
-      'conflictOrigin': serializer.toJson<String?>(conflictOrigin),
-      'conflictDetectedAt': serializer.toJson<DateTime?>(conflictDetectedAt),
-      'conflictResolvedAt': serializer.toJson<DateTime?>(conflictResolvedAt),
-      'conflictResolutionStrategy':
-          serializer.toJson<String?>(conflictResolutionStrategy),
-      'lastSyncError': serializer.toJson<String?>(lastSyncError),
-      'syncRetryCount': serializer.toJson<int?>(syncRetryCount),
+      'ownerId': serializer.toJson<String?>(ownerId),
+      'version': serializer.toJson<int>(version),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
 
   WhatsappTemplateData copyWith(
-          {int? id,
+          {String? id,
           String? title,
           String? content,
           int? isActive,
-          DateTime? createdAt,
-          DateTime? updatedAt,
           Value<DateTime?> lastModified = const Value.absent(),
           Value<DateTime?> lastSyncedAt = const Value.absent(),
           Value<String?> syncStatus = const Value.absent(),
@@ -5616,19 +5091,16 @@ class WhatsappTemplateData extends DataClass
           Value<String?> cloudId = const Value.absent(),
           Value<bool?> deletedLocally = const Value.absent(),
           Value<String?> permissionsMask = const Value.absent(),
-          Value<String?> conflictOrigin = const Value.absent(),
-          Value<DateTime?> conflictDetectedAt = const Value.absent(),
-          Value<DateTime?> conflictResolvedAt = const Value.absent(),
-          Value<String?> conflictResolutionStrategy = const Value.absent(),
-          Value<String?> lastSyncError = const Value.absent(),
-          Value<int?> syncRetryCount = const Value.absent()}) =>
+          Value<String?> ownerId = const Value.absent(),
+          int? version,
+          bool? isDeleted,
+          DateTime? updatedAt,
+          DateTime? createdAt}) =>
       WhatsappTemplateData(
         id: id ?? this.id,
         title: title ?? this.title,
         content: content ?? this.content,
         isActive: isActive ?? this.isActive,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
         lastModified:
             lastModified.present ? lastModified.value : this.lastModified,
         lastSyncedAt:
@@ -5641,21 +5113,11 @@ class WhatsappTemplateData extends DataClass
         permissionsMask: permissionsMask.present
             ? permissionsMask.value
             : this.permissionsMask,
-        conflictOrigin:
-            conflictOrigin.present ? conflictOrigin.value : this.conflictOrigin,
-        conflictDetectedAt: conflictDetectedAt.present
-            ? conflictDetectedAt.value
-            : this.conflictDetectedAt,
-        conflictResolvedAt: conflictResolvedAt.present
-            ? conflictResolvedAt.value
-            : this.conflictResolvedAt,
-        conflictResolutionStrategy: conflictResolutionStrategy.present
-            ? conflictResolutionStrategy.value
-            : this.conflictResolutionStrategy,
-        lastSyncError:
-            lastSyncError.present ? lastSyncError.value : this.lastSyncError,
-        syncRetryCount:
-            syncRetryCount.present ? syncRetryCount.value : this.syncRetryCount,
+        ownerId: ownerId.present ? ownerId.value : this.ownerId,
+        version: version ?? this.version,
+        isDeleted: isDeleted ?? this.isDeleted,
+        updatedAt: updatedAt ?? this.updatedAt,
+        createdAt: createdAt ?? this.createdAt,
       );
   WhatsappTemplateData copyWithCompanion(WhatsappTemplatesTableCompanion data) {
     return WhatsappTemplateData(
@@ -5663,8 +5125,6 @@ class WhatsappTemplateData extends DataClass
       title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       lastModified: data.lastModified.present
           ? data.lastModified.value
           : this.lastModified,
@@ -5681,24 +5141,11 @@ class WhatsappTemplateData extends DataClass
       permissionsMask: data.permissionsMask.present
           ? data.permissionsMask.value
           : this.permissionsMask,
-      conflictOrigin: data.conflictOrigin.present
-          ? data.conflictOrigin.value
-          : this.conflictOrigin,
-      conflictDetectedAt: data.conflictDetectedAt.present
-          ? data.conflictDetectedAt.value
-          : this.conflictDetectedAt,
-      conflictResolvedAt: data.conflictResolvedAt.present
-          ? data.conflictResolvedAt.value
-          : this.conflictResolvedAt,
-      conflictResolutionStrategy: data.conflictResolutionStrategy.present
-          ? data.conflictResolutionStrategy.value
-          : this.conflictResolutionStrategy,
-      lastSyncError: data.lastSyncError.present
-          ? data.lastSyncError.value
-          : this.lastSyncError,
-      syncRetryCount: data.syncRetryCount.present
-          ? data.syncRetryCount.value
-          : this.syncRetryCount,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      version: data.version.present ? data.version.value : this.version,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -5709,8 +5156,6 @@ class WhatsappTemplateData extends DataClass
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('isActive: $isActive, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
           ..write('lastModified: $lastModified, ')
           ..write('lastSyncedAt: $lastSyncedAt, ')
           ..write('syncStatus: $syncStatus, ')
@@ -5718,12 +5163,11 @@ class WhatsappTemplateData extends DataClass
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -5734,8 +5178,6 @@ class WhatsappTemplateData extends DataClass
       title,
       content,
       isActive,
-      createdAt,
-      updatedAt,
       lastModified,
       lastSyncedAt,
       syncStatus,
@@ -5743,12 +5185,11 @@ class WhatsappTemplateData extends DataClass
       cloudId,
       deletedLocally,
       permissionsMask,
-      conflictOrigin,
-      conflictDetectedAt,
-      conflictResolvedAt,
-      conflictResolutionStrategy,
-      lastSyncError,
-      syncRetryCount);
+      ownerId,
+      version,
+      isDeleted,
+      updatedAt,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5757,8 +5198,6 @@ class WhatsappTemplateData extends DataClass
           other.title == this.title &&
           other.content == this.content &&
           other.isActive == this.isActive &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
           other.lastModified == this.lastModified &&
           other.lastSyncedAt == this.lastSyncedAt &&
           other.syncStatus == this.syncStatus &&
@@ -5766,22 +5205,19 @@ class WhatsappTemplateData extends DataClass
           other.cloudId == this.cloudId &&
           other.deletedLocally == this.deletedLocally &&
           other.permissionsMask == this.permissionsMask &&
-          other.conflictOrigin == this.conflictOrigin &&
-          other.conflictDetectedAt == this.conflictDetectedAt &&
-          other.conflictResolvedAt == this.conflictResolvedAt &&
-          other.conflictResolutionStrategy == this.conflictResolutionStrategy &&
-          other.lastSyncError == this.lastSyncError &&
-          other.syncRetryCount == this.syncRetryCount);
+          other.ownerId == this.ownerId &&
+          other.version == this.version &&
+          other.isDeleted == this.isDeleted &&
+          other.updatedAt == this.updatedAt &&
+          other.createdAt == this.createdAt);
 }
 
 class WhatsappTemplatesTableCompanion
     extends UpdateCompanion<WhatsappTemplateData> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> title;
   final Value<String> content;
   final Value<int> isActive;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
   final Value<DateTime?> lastModified;
   final Value<DateTime?> lastSyncedAt;
   final Value<String?> syncStatus;
@@ -5789,19 +5225,17 @@ class WhatsappTemplatesTableCompanion
   final Value<String?> cloudId;
   final Value<bool?> deletedLocally;
   final Value<String?> permissionsMask;
-  final Value<String?> conflictOrigin;
-  final Value<DateTime?> conflictDetectedAt;
-  final Value<DateTime?> conflictResolvedAt;
-  final Value<String?> conflictResolutionStrategy;
-  final Value<String?> lastSyncError;
-  final Value<int?> syncRetryCount;
+  final Value<String?> ownerId;
+  final Value<int> version;
+  final Value<bool> isDeleted;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
   const WhatsappTemplatesTableCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.content = const Value.absent(),
     this.isActive = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
     this.lastModified = const Value.absent(),
     this.lastSyncedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -5809,20 +5243,18 @@ class WhatsappTemplatesTableCompanion
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   WhatsappTemplatesTableCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     required String title,
     required String content,
     this.isActive = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
     this.lastModified = const Value.absent(),
     this.lastSyncedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -5830,21 +5262,20 @@ class WhatsappTemplatesTableCompanion
     this.cloudId = const Value.absent(),
     this.deletedLocally = const Value.absent(),
     this.permissionsMask = const Value.absent(),
-    this.conflictOrigin = const Value.absent(),
-    this.conflictDetectedAt = const Value.absent(),
-    this.conflictResolvedAt = const Value.absent(),
-    this.conflictResolutionStrategy = const Value.absent(),
-    this.lastSyncError = const Value.absent(),
-    this.syncRetryCount = const Value.absent(),
-  })  : title = Value(title),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        title = Value(title),
         content = Value(content);
   static Insertable<WhatsappTemplateData> custom({
-    Expression<int>? id,
+    Expression<String>? id,
     Expression<String>? title,
     Expression<String>? content,
     Expression<int>? isActive,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
     Expression<DateTime>? lastModified,
     Expression<DateTime>? lastSyncedAt,
     Expression<String>? syncStatus,
@@ -5852,20 +5283,18 @@ class WhatsappTemplatesTableCompanion
     Expression<String>? cloudId,
     Expression<bool>? deletedLocally,
     Expression<String>? permissionsMask,
-    Expression<String>? conflictOrigin,
-    Expression<DateTime>? conflictDetectedAt,
-    Expression<DateTime>? conflictResolvedAt,
-    Expression<String>? conflictResolutionStrategy,
-    Expression<String>? lastSyncError,
-    Expression<int>? syncRetryCount,
+    Expression<String>? ownerId,
+    Expression<int>? version,
+    Expression<bool>? isDeleted,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
       if (content != null) 'content': content,
       if (isActive != null) 'is_active': isActive,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
       if (lastModified != null) 'last_modified': lastModified,
       if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
@@ -5873,25 +5302,20 @@ class WhatsappTemplatesTableCompanion
       if (cloudId != null) 'cloud_id': cloudId,
       if (deletedLocally != null) 'deleted_locally': deletedLocally,
       if (permissionsMask != null) 'permissions_mask': permissionsMask,
-      if (conflictOrigin != null) 'conflict_origin': conflictOrigin,
-      if (conflictDetectedAt != null)
-        'conflict_detected_at': conflictDetectedAt,
-      if (conflictResolvedAt != null)
-        'conflict_resolved_at': conflictResolvedAt,
-      if (conflictResolutionStrategy != null)
-        'conflict_resolution_strategy': conflictResolutionStrategy,
-      if (lastSyncError != null) 'last_sync_error': lastSyncError,
-      if (syncRetryCount != null) 'sync_retry_count': syncRetryCount,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (version != null) 'version': version,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   WhatsappTemplatesTableCompanion copyWith(
-      {Value<int>? id,
+      {Value<String>? id,
       Value<String>? title,
       Value<String>? content,
       Value<int>? isActive,
-      Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt,
       Value<DateTime?>? lastModified,
       Value<DateTime?>? lastSyncedAt,
       Value<String?>? syncStatus,
@@ -5899,19 +5323,17 @@ class WhatsappTemplatesTableCompanion
       Value<String?>? cloudId,
       Value<bool?>? deletedLocally,
       Value<String?>? permissionsMask,
-      Value<String?>? conflictOrigin,
-      Value<DateTime?>? conflictDetectedAt,
-      Value<DateTime?>? conflictResolvedAt,
-      Value<String?>? conflictResolutionStrategy,
-      Value<String?>? lastSyncError,
-      Value<int?>? syncRetryCount}) {
+      Value<String?>? ownerId,
+      Value<int>? version,
+      Value<bool>? isDeleted,
+      Value<DateTime>? updatedAt,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
     return WhatsappTemplatesTableCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
       content: content ?? this.content,
       isActive: isActive ?? this.isActive,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
       lastModified: lastModified ?? this.lastModified,
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -5919,13 +5341,12 @@ class WhatsappTemplatesTableCompanion
       cloudId: cloudId ?? this.cloudId,
       deletedLocally: deletedLocally ?? this.deletedLocally,
       permissionsMask: permissionsMask ?? this.permissionsMask,
-      conflictOrigin: conflictOrigin ?? this.conflictOrigin,
-      conflictDetectedAt: conflictDetectedAt ?? this.conflictDetectedAt,
-      conflictResolvedAt: conflictResolvedAt ?? this.conflictResolvedAt,
-      conflictResolutionStrategy:
-          conflictResolutionStrategy ?? this.conflictResolutionStrategy,
-      lastSyncError: lastSyncError ?? this.lastSyncError,
-      syncRetryCount: syncRetryCount ?? this.syncRetryCount,
+      ownerId: ownerId ?? this.ownerId,
+      version: version ?? this.version,
+      isDeleted: isDeleted ?? this.isDeleted,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -5933,7 +5354,7 @@ class WhatsappTemplatesTableCompanion
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -5943,12 +5364,6 @@ class WhatsappTemplatesTableCompanion
     }
     if (isActive.present) {
       map['is_active'] = Variable<int>(isActive.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
     if (lastModified.present) {
       map['last_modified'] = Variable<DateTime>(lastModified.value);
@@ -5971,26 +5386,23 @@ class WhatsappTemplatesTableCompanion
     if (permissionsMask.present) {
       map['permissions_mask'] = Variable<String>(permissionsMask.value);
     }
-    if (conflictOrigin.present) {
-      map['conflict_origin'] = Variable<String>(conflictOrigin.value);
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
     }
-    if (conflictDetectedAt.present) {
-      map['conflict_detected_at'] =
-          Variable<DateTime>(conflictDetectedAt.value);
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
     }
-    if (conflictResolvedAt.present) {
-      map['conflict_resolved_at'] =
-          Variable<DateTime>(conflictResolvedAt.value);
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
-    if (conflictResolutionStrategy.present) {
-      map['conflict_resolution_strategy'] =
-          Variable<String>(conflictResolutionStrategy.value);
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (lastSyncError.present) {
-      map['last_sync_error'] = Variable<String>(lastSyncError.value);
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (syncRetryCount.present) {
-      map['sync_retry_count'] = Variable<int>(syncRetryCount.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -6002,8 +5414,6 @@ class WhatsappTemplatesTableCompanion
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('isActive: $isActive, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
           ..write('lastModified: $lastModified, ')
           ..write('lastSyncedAt: $lastSyncedAt, ')
           ..write('syncStatus: $syncStatus, ')
@@ -6011,12 +5421,12 @@ class WhatsappTemplatesTableCompanion
           ..write('cloudId: $cloudId, ')
           ..write('deletedLocally: $deletedLocally, ')
           ..write('permissionsMask: $permissionsMask, ')
-          ..write('conflictOrigin: $conflictOrigin, ')
-          ..write('conflictDetectedAt: $conflictDetectedAt, ')
-          ..write('conflictResolvedAt: $conflictResolvedAt, ')
-          ..write('conflictResolutionStrategy: $conflictResolutionStrategy, ')
-          ..write('lastSyncError: $lastSyncError, ')
-          ..write('syncRetryCount: $syncRetryCount')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -6030,13 +5440,9 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
   $GeneratorSettingsTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -6060,14 +5466,30 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
   late final GeneratedColumn<String> logoPath = GeneratedColumn<String>(
       'logo_path', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
+  static const VerificationMeta _ownerIdMeta =
+      const VerificationMeta('ownerId');
   @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+      'owner_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _versionMeta =
+      const VerificationMeta('version');
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+      'version', aliasedName, false,
+      type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
+      defaultValue: const Constant(1));
+  static const VerificationMeta _isDeletedMeta =
+      const VerificationMeta('isDeleted');
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+      'is_deleted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
@@ -6076,9 +5498,27 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, name, phoneNumber, address, logoPath, createdAt, updatedAt];
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        name,
+        phoneNumber,
+        address,
+        logoPath,
+        ownerId,
+        version,
+        isDeleted,
+        updatedAt,
+        createdAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -6092,6 +5532,8 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -6117,13 +5559,25 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
       context.handle(_logoPathMeta,
           logoPath.isAcceptableOrUnknown(data['logo_path']!, _logoPathMeta));
     }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    if (data.containsKey('owner_id')) {
+      context.handle(_ownerIdMeta,
+          ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
+    }
+    if (data.containsKey('version')) {
+      context.handle(_versionMeta,
+          version.isAcceptableOrUnknown(data['version']!, _versionMeta));
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(_isDeletedMeta,
+          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
     return context;
   }
@@ -6135,7 +5589,7 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return GeneratorSettingsData(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       phoneNumber: attachedDatabase.typeMapping
@@ -6144,10 +5598,16 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
           .read(DriftSqlType.string, data['${effectivePrefix}address'])!,
       logoPath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}logo_path']),
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      ownerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
+      version: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
+      isDeleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
   }
 
@@ -6159,33 +5619,44 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
 
 class GeneratorSettingsData extends DataClass
     implements Insertable<GeneratorSettingsData> {
-  final int id;
+  final String id;
   final String name;
   final String phoneNumber;
   final String address;
   final String? logoPath;
-  final DateTime createdAt;
+  final String? ownerId;
+  final int version;
+  final bool isDeleted;
   final DateTime updatedAt;
+  final DateTime createdAt;
   const GeneratorSettingsData(
       {required this.id,
       required this.name,
       required this.phoneNumber,
       required this.address,
       this.logoPath,
-      required this.createdAt,
-      required this.updatedAt});
+      this.ownerId,
+      required this.version,
+      required this.isDeleted,
+      required this.updatedAt,
+      required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['phone_number'] = Variable<String>(phoneNumber);
     map['address'] = Variable<String>(address);
     if (!nullToAbsent || logoPath != null) {
       map['logo_path'] = Variable<String>(logoPath);
     }
-    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || ownerId != null) {
+      map['owner_id'] = Variable<String>(ownerId);
+    }
+    map['version'] = Variable<int>(version);
+    map['is_deleted'] = Variable<bool>(isDeleted);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
 
@@ -6198,8 +5669,13 @@ class GeneratorSettingsData extends DataClass
       logoPath: logoPath == null && nullToAbsent
           ? const Value.absent()
           : Value(logoPath),
-      createdAt: Value(createdAt),
+      ownerId: ownerId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ownerId),
+      version: Value(version),
+      isDeleted: Value(isDeleted),
       updatedAt: Value(updatedAt),
+      createdAt: Value(createdAt),
     );
   }
 
@@ -6207,45 +5683,57 @@ class GeneratorSettingsData extends DataClass
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return GeneratorSettingsData(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       phoneNumber: serializer.fromJson<String>(json['phoneNumber']),
       address: serializer.fromJson<String>(json['address']),
       logoPath: serializer.fromJson<String?>(json['logoPath']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      ownerId: serializer.fromJson<String?>(json['ownerId']),
+      version: serializer.fromJson<int>(json['version']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'phoneNumber': serializer.toJson<String>(phoneNumber),
       'address': serializer.toJson<String>(address),
       'logoPath': serializer.toJson<String?>(logoPath),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'ownerId': serializer.toJson<String?>(ownerId),
+      'version': serializer.toJson<int>(version),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
 
   GeneratorSettingsData copyWith(
-          {int? id,
+          {String? id,
           String? name,
           String? phoneNumber,
           String? address,
           Value<String?> logoPath = const Value.absent(),
-          DateTime? createdAt,
-          DateTime? updatedAt}) =>
+          Value<String?> ownerId = const Value.absent(),
+          int? version,
+          bool? isDeleted,
+          DateTime? updatedAt,
+          DateTime? createdAt}) =>
       GeneratorSettingsData(
         id: id ?? this.id,
         name: name ?? this.name,
         phoneNumber: phoneNumber ?? this.phoneNumber,
         address: address ?? this.address,
         logoPath: logoPath.present ? logoPath.value : this.logoPath,
-        createdAt: createdAt ?? this.createdAt,
+        ownerId: ownerId.present ? ownerId.value : this.ownerId,
+        version: version ?? this.version,
+        isDeleted: isDeleted ?? this.isDeleted,
         updatedAt: updatedAt ?? this.updatedAt,
+        createdAt: createdAt ?? this.createdAt,
       );
   GeneratorSettingsData copyWithCompanion(
       GeneratorSettingsTableCompanion data) {
@@ -6256,8 +5744,11 @@ class GeneratorSettingsData extends DataClass
           data.phoneNumber.present ? data.phoneNumber.value : this.phoneNumber,
       address: data.address.present ? data.address.value : this.address,
       logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      version: data.version.present ? data.version.value : this.version,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -6269,15 +5760,18 @@ class GeneratorSettingsData extends DataClass
           ..write('phoneNumber: $phoneNumber, ')
           ..write('address: $address, ')
           ..write('logoPath: $logoPath, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, name, phoneNumber, address, logoPath, createdAt, updatedAt);
+  int get hashCode => Object.hash(id, name, phoneNumber, address, logoPath,
+      ownerId, version, isDeleted, updatedAt, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6287,47 +5781,67 @@ class GeneratorSettingsData extends DataClass
           other.phoneNumber == this.phoneNumber &&
           other.address == this.address &&
           other.logoPath == this.logoPath &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.ownerId == this.ownerId &&
+          other.version == this.version &&
+          other.isDeleted == this.isDeleted &&
+          other.updatedAt == this.updatedAt &&
+          other.createdAt == this.createdAt);
 }
 
 class GeneratorSettingsTableCompanion
     extends UpdateCompanion<GeneratorSettingsData> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> name;
   final Value<String> phoneNumber;
   final Value<String> address;
   final Value<String?> logoPath;
-  final Value<DateTime> createdAt;
+  final Value<String?> ownerId;
+  final Value<int> version;
+  final Value<bool> isDeleted;
   final Value<DateTime> updatedAt;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
   const GeneratorSettingsTableCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.phoneNumber = const Value.absent(),
     this.address = const Value.absent(),
     this.logoPath = const Value.absent(),
-    this.createdAt = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   GeneratorSettingsTableCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     required String name,
     required String phoneNumber,
     required String address,
     this.logoPath = const Value.absent(),
-    this.createdAt = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isDeleted = const Value.absent(),
     this.updatedAt = const Value.absent(),
-  })  : name = Value(name),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
         phoneNumber = Value(phoneNumber),
         address = Value(address);
   static Insertable<GeneratorSettingsData> custom({
-    Expression<int>? id,
+    Expression<String>? id,
     Expression<String>? name,
     Expression<String>? phoneNumber,
     Expression<String>? address,
     Expression<String>? logoPath,
-    Expression<DateTime>? createdAt,
+    Expression<String>? ownerId,
+    Expression<int>? version,
+    Expression<bool>? isDeleted,
     Expression<DateTime>? updatedAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -6335,27 +5849,39 @@ class GeneratorSettingsTableCompanion
       if (phoneNumber != null) 'phone_number': phoneNumber,
       if (address != null) 'address': address,
       if (logoPath != null) 'logo_path': logoPath,
-      if (createdAt != null) 'created_at': createdAt,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (version != null) 'version': version,
+      if (isDeleted != null) 'is_deleted': isDeleted,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   GeneratorSettingsTableCompanion copyWith(
-      {Value<int>? id,
+      {Value<String>? id,
       Value<String>? name,
       Value<String>? phoneNumber,
       Value<String>? address,
       Value<String?>? logoPath,
+      Value<String?>? ownerId,
+      Value<int>? version,
+      Value<bool>? isDeleted,
+      Value<DateTime>? updatedAt,
       Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt}) {
+      Value<int>? rowid}) {
     return GeneratorSettingsTableCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       address: address ?? this.address,
       logoPath: logoPath ?? this.logoPath,
-      createdAt: createdAt ?? this.createdAt,
+      ownerId: ownerId ?? this.ownerId,
+      version: version ?? this.version,
+      isDeleted: isDeleted ?? this.isDeleted,
       updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -6363,7 +5889,7 @@ class GeneratorSettingsTableCompanion
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -6377,11 +5903,23 @@ class GeneratorSettingsTableCompanion
     if (logoPath.present) {
       map['logo_path'] = Variable<String>(logoPath.value);
     }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -6394,8 +5932,568 @@ class GeneratorSettingsTableCompanion
           ..write('phoneNumber: $phoneNumber, ')
           ..write('address: $address, ')
           ..write('logoPath: $logoPath, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('version: $version, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $OutboxTableTable extends OutboxTable
+    with TableInfo<$OutboxTableTable, OutboxEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OutboxTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _targetTableMeta =
+      const VerificationMeta('targetTable');
+  @override
+  late final GeneratedColumn<String> targetTable = GeneratedColumn<String>(
+      'target_table', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _operationTypeMeta =
+      const VerificationMeta('operationType');
+  @override
+  late final GeneratedColumn<String> operationType = GeneratedColumn<String>(
+      'operation_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _documentIdMeta =
+      const VerificationMeta('documentId');
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+      'document_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _payloadMeta =
+      const VerificationMeta('payload');
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+      'payload', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  static const VerificationMeta _retryCountMeta =
+      const VerificationMeta('retryCount');
+  @override
+  late final GeneratedColumn<int> retryCount = GeneratedColumn<int>(
+      'retry_count', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _lastErrorMeta =
+      const VerificationMeta('lastError');
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+      'last_error', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _syncedAtMeta =
+      const VerificationMeta('syncedAt');
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+      'synced_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        targetTable,
+        operationType,
+        documentId,
+        payload,
+        status,
+        retryCount,
+        lastError,
+        createdAt,
+        syncedAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'outbox_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<OutboxEntry> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('target_table')) {
+      context.handle(
+          _targetTableMeta,
+          targetTable.isAcceptableOrUnknown(
+              data['target_table']!, _targetTableMeta));
+    } else if (isInserting) {
+      context.missing(_targetTableMeta);
+    }
+    if (data.containsKey('operation_type')) {
+      context.handle(
+          _operationTypeMeta,
+          operationType.isAcceptableOrUnknown(
+              data['operation_type']!, _operationTypeMeta));
+    } else if (isInserting) {
+      context.missing(_operationTypeMeta);
+    }
+    if (data.containsKey('document_id')) {
+      context.handle(
+          _documentIdMeta,
+          documentId.isAcceptableOrUnknown(
+              data['document_id']!, _documentIdMeta));
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(_payloadMeta,
+          payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta));
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('retry_count')) {
+      context.handle(
+          _retryCountMeta,
+          retryCount.isAcceptableOrUnknown(
+              data['retry_count']!, _retryCountMeta));
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(_lastErrorMeta,
+          lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(_syncedAtMeta,
+          syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  OutboxEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OutboxEntry(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      targetTable: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}target_table'])!,
+      operationType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}operation_type'])!,
+      documentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}document_id'])!,
+      payload: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}payload'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      retryCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}retry_count'])!,
+      lastError: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}last_error']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      syncedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}synced_at']),
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+    );
+  }
+
+  @override
+  $OutboxTableTable createAlias(String alias) {
+    return $OutboxTableTable(attachedDatabase, alias);
+  }
+}
+
+class OutboxEntry extends DataClass implements Insertable<OutboxEntry> {
+  final String id;
+  final String targetTable;
+  final String operationType;
+  final String documentId;
+  final String payload;
+  final String status;
+  final int retryCount;
+  final String? lastError;
+  final DateTime createdAt;
+  final DateTime? syncedAt;
+  final DateTime? updatedAt;
+  const OutboxEntry(
+      {required this.id,
+      required this.targetTable,
+      required this.operationType,
+      required this.documentId,
+      required this.payload,
+      required this.status,
+      required this.retryCount,
+      this.lastError,
+      required this.createdAt,
+      this.syncedAt,
+      this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['target_table'] = Variable<String>(targetTable);
+    map['operation_type'] = Variable<String>(operationType);
+    map['document_id'] = Variable<String>(documentId);
+    map['payload'] = Variable<String>(payload);
+    map['status'] = Variable<String>(status);
+    map['retry_count'] = Variable<int>(retryCount);
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || syncedAt != null) {
+      map['synced_at'] = Variable<DateTime>(syncedAt);
+    }
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    return map;
+  }
+
+  OutboxTableCompanion toCompanion(bool nullToAbsent) {
+    return OutboxTableCompanion(
+      id: Value(id),
+      targetTable: Value(targetTable),
+      operationType: Value(operationType),
+      documentId: Value(documentId),
+      payload: Value(payload),
+      status: Value(status),
+      retryCount: Value(retryCount),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
+      createdAt: Value(createdAt),
+      syncedAt: syncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncedAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+    );
+  }
+
+  factory OutboxEntry.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OutboxEntry(
+      id: serializer.fromJson<String>(json['id']),
+      targetTable: serializer.fromJson<String>(json['targetTable']),
+      operationType: serializer.fromJson<String>(json['operationType']),
+      documentId: serializer.fromJson<String>(json['documentId']),
+      payload: serializer.fromJson<String>(json['payload']),
+      status: serializer.fromJson<String>(json['status']),
+      retryCount: serializer.fromJson<int>(json['retryCount']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'targetTable': serializer.toJson<String>(targetTable),
+      'operationType': serializer.toJson<String>(operationType),
+      'documentId': serializer.toJson<String>(documentId),
+      'payload': serializer.toJson<String>(payload),
+      'status': serializer.toJson<String>(status),
+      'retryCount': serializer.toJson<int>(retryCount),
+      'lastError': serializer.toJson<String?>(lastError),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'syncedAt': serializer.toJson<DateTime?>(syncedAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+    };
+  }
+
+  OutboxEntry copyWith(
+          {String? id,
+          String? targetTable,
+          String? operationType,
+          String? documentId,
+          String? payload,
+          String? status,
+          int? retryCount,
+          Value<String?> lastError = const Value.absent(),
+          DateTime? createdAt,
+          Value<DateTime?> syncedAt = const Value.absent(),
+          Value<DateTime?> updatedAt = const Value.absent()}) =>
+      OutboxEntry(
+        id: id ?? this.id,
+        targetTable: targetTable ?? this.targetTable,
+        operationType: operationType ?? this.operationType,
+        documentId: documentId ?? this.documentId,
+        payload: payload ?? this.payload,
+        status: status ?? this.status,
+        retryCount: retryCount ?? this.retryCount,
+        lastError: lastError.present ? lastError.value : this.lastError,
+        createdAt: createdAt ?? this.createdAt,
+        syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+      );
+  OutboxEntry copyWithCompanion(OutboxTableCompanion data) {
+    return OutboxEntry(
+      id: data.id.present ? data.id.value : this.id,
+      targetTable:
+          data.targetTable.present ? data.targetTable.value : this.targetTable,
+      operationType: data.operationType.present
+          ? data.operationType.value
+          : this.operationType,
+      documentId:
+          data.documentId.present ? data.documentId.value : this.documentId,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      status: data.status.present ? data.status.value : this.status,
+      retryCount:
+          data.retryCount.present ? data.retryCount.value : this.retryCount,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OutboxEntry(')
+          ..write('id: $id, ')
+          ..write('targetTable: $targetTable, ')
+          ..write('operationType: $operationType, ')
+          ..write('documentId: $documentId, ')
+          ..write('payload: $payload, ')
+          ..write('status: $status, ')
+          ..write('retryCount: $retryCount, ')
+          ..write('lastError: $lastError, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncedAt: $syncedAt, ')
           ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, targetTable, operationType, documentId,
+      payload, status, retryCount, lastError, createdAt, syncedAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OutboxEntry &&
+          other.id == this.id &&
+          other.targetTable == this.targetTable &&
+          other.operationType == this.operationType &&
+          other.documentId == this.documentId &&
+          other.payload == this.payload &&
+          other.status == this.status &&
+          other.retryCount == this.retryCount &&
+          other.lastError == this.lastError &&
+          other.createdAt == this.createdAt &&
+          other.syncedAt == this.syncedAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class OutboxTableCompanion extends UpdateCompanion<OutboxEntry> {
+  final Value<String> id;
+  final Value<String> targetTable;
+  final Value<String> operationType;
+  final Value<String> documentId;
+  final Value<String> payload;
+  final Value<String> status;
+  final Value<int> retryCount;
+  final Value<String?> lastError;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> syncedAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> rowid;
+  const OutboxTableCompanion({
+    this.id = const Value.absent(),
+    this.targetTable = const Value.absent(),
+    this.operationType = const Value.absent(),
+    this.documentId = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.status = const Value.absent(),
+    this.retryCount = const Value.absent(),
+    this.lastError = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OutboxTableCompanion.insert({
+    required String id,
+    required String targetTable,
+    required String operationType,
+    required String documentId,
+    required String payload,
+    this.status = const Value.absent(),
+    this.retryCount = const Value.absent(),
+    this.lastError = const Value.absent(),
+    required DateTime createdAt,
+    this.syncedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        targetTable = Value(targetTable),
+        operationType = Value(operationType),
+        documentId = Value(documentId),
+        payload = Value(payload),
+        createdAt = Value(createdAt);
+  static Insertable<OutboxEntry> custom({
+    Expression<String>? id,
+    Expression<String>? targetTable,
+    Expression<String>? operationType,
+    Expression<String>? documentId,
+    Expression<String>? payload,
+    Expression<String>? status,
+    Expression<int>? retryCount,
+    Expression<String>? lastError,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? syncedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (targetTable != null) 'target_table': targetTable,
+      if (operationType != null) 'operation_type': operationType,
+      if (documentId != null) 'document_id': documentId,
+      if (payload != null) 'payload': payload,
+      if (status != null) 'status': status,
+      if (retryCount != null) 'retry_count': retryCount,
+      if (lastError != null) 'last_error': lastError,
+      if (createdAt != null) 'created_at': createdAt,
+      if (syncedAt != null) 'synced_at': syncedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OutboxTableCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? targetTable,
+      Value<String>? operationType,
+      Value<String>? documentId,
+      Value<String>? payload,
+      Value<String>? status,
+      Value<int>? retryCount,
+      Value<String?>? lastError,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? syncedAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? rowid}) {
+    return OutboxTableCompanion(
+      id: id ?? this.id,
+      targetTable: targetTable ?? this.targetTable,
+      operationType: operationType ?? this.operationType,
+      documentId: documentId ?? this.documentId,
+      payload: payload ?? this.payload,
+      status: status ?? this.status,
+      retryCount: retryCount ?? this.retryCount,
+      lastError: lastError ?? this.lastError,
+      createdAt: createdAt ?? this.createdAt,
+      syncedAt: syncedAt ?? this.syncedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (targetTable.present) {
+      map['target_table'] = Variable<String>(targetTable.value);
+    }
+    if (operationType.present) {
+      map['operation_type'] = Variable<String>(operationType.value);
+    }
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (retryCount.present) {
+      map['retry_count'] = Variable<int>(retryCount.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OutboxTableCompanion(')
+          ..write('id: $id, ')
+          ..write('targetTable: $targetTable, ')
+          ..write('operationType: $operationType, ')
+          ..write('documentId: $documentId, ')
+          ..write('payload: $payload, ')
+          ..write('status: $status, ')
+          ..write('retryCount: $retryCount, ')
+          ..write('lastError: $lastError, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -6414,6 +6512,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WhatsappTemplatesTableTable(this);
   late final $GeneratorSettingsTableTable generatorSettingsTable =
       $GeneratorSettingsTableTable(this);
+  late final $OutboxTableTable outboxTable = $OutboxTableTable(this);
   late final SubscribersDao subscribersDao =
       SubscribersDao(this as AppDatabase);
   late final CabinetsDao cabinetsDao = CabinetsDao(this as AppDatabase);
@@ -6433,13 +6532,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         workersTable,
         auditLogTable,
         whatsappTemplatesTable,
-        generatorSettingsTable
+        generatorSettingsTable,
+        outboxTable
       ];
 }
 
 typedef $$SubscribersTableTableCreateCompanionBuilder
     = SubscribersTableCompanion Function({
-  Value<int> id,
+  required String id,
   required String name,
   required String code,
   required String cabinet,
@@ -6456,16 +6556,16 @@ typedef $$SubscribersTableTableCreateCompanionBuilder
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
 typedef $$SubscribersTableTableUpdateCompanionBuilder
     = SubscribersTableCompanion Function({
-  Value<int> id,
+  Value<String> id,
   Value<String> name,
   Value<String> code,
   Value<String> cabinet,
@@ -6482,34 +6582,13 @@ typedef $$SubscribersTableTableUpdateCompanionBuilder
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
-
-final class $$SubscribersTableTableReferences
-    extends BaseReferences<_$AppDatabase, $SubscribersTableTable, Subscriber> {
-  $$SubscribersTableTableReferences(
-      super.$_db, super.$_table, super.$_typedResult);
-
-  static MultiTypedResultKey<$PaymentsTableTable, List<Payment>>
-      _paymentsTableRefsTable(_$AppDatabase db) =>
-          MultiTypedResultKey.fromTable(db.paymentsTable,
-              aliasName: $_aliasNameGenerator(
-                  db.subscribersTable.id, db.paymentsTable.subscriberId));
-
-  $$PaymentsTableTableProcessedTableManager get paymentsTableRefs {
-    final manager = $$PaymentsTableTableTableManager($_db, $_db.paymentsTable)
-        .filter((f) => f.subscriberId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_paymentsTableRefsTable($_db));
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
-  }
-}
 
 class $$SubscribersTableTableFilterComposer
     extends Composer<_$AppDatabase, $SubscribersTableTable> {
@@ -6520,7 +6599,7 @@ class $$SubscribersTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
@@ -6574,49 +6653,20 @@ class $$SubscribersTableTableFilterComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnFilters(column));
-
-  Expression<bool> paymentsTableRefs(
-      Expression<bool> Function($$PaymentsTableTableFilterComposer f) f) {
-    final $$PaymentsTableTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.paymentsTable,
-        getReferencedColumn: (t) => t.subscriberId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$PaymentsTableTableFilterComposer(
-              $db: $db,
-              $table: $db.paymentsTable,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$SubscribersTableTableOrderingComposer
@@ -6628,7 +6678,7 @@ class $$SubscribersTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get name => $composableBuilder(
@@ -6684,29 +6734,20 @@ class $$SubscribersTableTableOrderingComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$SubscribersTableTableAnnotationComposer
@@ -6718,7 +6759,7 @@ class $$SubscribersTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
@@ -6769,44 +6810,20 @@ class $$SubscribersTableTableAnnotationComposer
   GeneratedColumn<String> get permissionsMask => $composableBuilder(
       column: $table.permissionsMask, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin, builder: (column) => column);
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt, builder: (column) => column);
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt, builder: (column) => column);
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy, builder: (column) => column);
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  GeneratedColumn<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => column);
-
-  GeneratedColumn<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount, builder: (column) => column);
-
-  Expression<T> paymentsTableRefs<T extends Object>(
-      Expression<T> Function($$PaymentsTableTableAnnotationComposer a) f) {
-    final $$PaymentsTableTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.paymentsTable,
-        getReferencedColumn: (t) => t.subscriberId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$PaymentsTableTableAnnotationComposer(
-              $db: $db,
-              $table: $db.paymentsTable,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$SubscribersTableTableTableManager extends RootTableManager<
@@ -6818,9 +6835,12 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
     $$SubscribersTableTableAnnotationComposer,
     $$SubscribersTableTableCreateCompanionBuilder,
     $$SubscribersTableTableUpdateCompanionBuilder,
-    (Subscriber, $$SubscribersTableTableReferences),
+    (
+      Subscriber,
+      BaseReferences<_$AppDatabase, $SubscribersTableTable, Subscriber>
+    ),
     Subscriber,
-    PrefetchHooks Function({bool paymentsTableRefs})> {
+    PrefetchHooks Function()> {
   $$SubscribersTableTableTableManager(
       _$AppDatabase db, $SubscribersTableTable table)
       : super(TableManagerState(
@@ -6833,7 +6853,7 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$SubscribersTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            Value<String> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> code = const Value.absent(),
             Value<String> cabinet = const Value.absent(),
@@ -6850,12 +6870,12 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               SubscribersTableCompanion(
             id: id,
@@ -6875,15 +6895,15 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            required String id,
             required String name,
             required String code,
             required String cabinet,
@@ -6900,12 +6920,12 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               SubscribersTableCompanion.insert(
             id: id,
@@ -6925,45 +6945,17 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $$SubscribersTableTableReferences(db, table, e)
-                  ))
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({paymentsTableRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (paymentsTableRefs) db.paymentsTable
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (paymentsTableRefs)
-                    await $_getPrefetchedData<Subscriber,
-                            $SubscribersTableTable, Payment>(
-                        currentTable: table,
-                        referencedTable: $$SubscribersTableTableReferences
-                            ._paymentsTableRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $$SubscribersTableTableReferences(db, table, p0)
-                                .paymentsTableRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.subscriberId == item.id),
-                        typedResults: items)
-                ];
-              },
-            );
-          },
+          prefetchHooksCallback: null,
         ));
 }
 
@@ -6976,12 +6968,15 @@ typedef $$SubscribersTableTableProcessedTableManager = ProcessedTableManager<
     $$SubscribersTableTableAnnotationComposer,
     $$SubscribersTableTableCreateCompanionBuilder,
     $$SubscribersTableTableUpdateCompanionBuilder,
-    (Subscriber, $$SubscribersTableTableReferences),
+    (
+      Subscriber,
+      BaseReferences<_$AppDatabase, $SubscribersTableTable, Subscriber>
+    ),
     Subscriber,
-    PrefetchHooks Function({bool paymentsTableRefs})>;
+    PrefetchHooks Function()>;
 typedef $$CabinetsTableTableCreateCompanionBuilder = CabinetsTableCompanion
     Function({
-  Value<int> id,
+  required String id,
   required String name,
   Value<String> letter,
   required int totalSubscribers,
@@ -6996,16 +6991,16 @@ typedef $$CabinetsTableTableCreateCompanionBuilder = CabinetsTableCompanion
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
 typedef $$CabinetsTableTableUpdateCompanionBuilder = CabinetsTableCompanion
     Function({
-  Value<int> id,
+  Value<String> id,
   Value<String> name,
   Value<String> letter,
   Value<int> totalSubscribers,
@@ -7020,12 +7015,12 @@ typedef $$CabinetsTableTableUpdateCompanionBuilder = CabinetsTableCompanion
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
 
 class $$CabinetsTableTableFilterComposer
@@ -7037,7 +7032,7 @@ class $$CabinetsTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
@@ -7089,28 +7084,20 @@ class $$CabinetsTableTableFilterComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$CabinetsTableTableOrderingComposer
@@ -7122,7 +7109,7 @@ class $$CabinetsTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get name => $composableBuilder(
@@ -7176,29 +7163,20 @@ class $$CabinetsTableTableOrderingComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$CabinetsTableTableAnnotationComposer
@@ -7210,7 +7188,7 @@ class $$CabinetsTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
@@ -7255,23 +7233,20 @@ class $$CabinetsTableTableAnnotationComposer
   GeneratedColumn<String> get permissionsMask => $composableBuilder(
       column: $table.permissionsMask, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin, builder: (column) => column);
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt, builder: (column) => column);
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt, builder: (column) => column);
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy, builder: (column) => column);
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  GeneratedColumn<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => column);
-
-  GeneratedColumn<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount, builder: (column) => column);
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$CabinetsTableTableTableManager extends RootTableManager<
@@ -7297,7 +7272,7 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$CabinetsTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            Value<String> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> letter = const Value.absent(),
             Value<int> totalSubscribers = const Value.absent(),
@@ -7312,12 +7287,12 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               CabinetsTableCompanion(
             id: id,
@@ -7335,15 +7310,15 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            required String id,
             required String name,
             Value<String> letter = const Value.absent(),
             required int totalSubscribers,
@@ -7358,12 +7333,12 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               CabinetsTableCompanion.insert(
             id: id,
@@ -7381,12 +7356,12 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -7409,8 +7384,8 @@ typedef $$CabinetsTableTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function()>;
 typedef $$PaymentsTableTableCreateCompanionBuilder = PaymentsTableCompanion
     Function({
-  Value<int> id,
-  required int subscriberId,
+  required String id,
+  required String subscriberId,
   required double amount,
   required String worker,
   required DateTime date,
@@ -7422,17 +7397,17 @@ typedef $$PaymentsTableTableCreateCompanionBuilder = PaymentsTableCompanion
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
 typedef $$PaymentsTableTableUpdateCompanionBuilder = PaymentsTableCompanion
     Function({
-  Value<int> id,
-  Value<int> subscriberId,
+  Value<String> id,
+  Value<String> subscriberId,
   Value<double> amount,
   Value<String> worker,
   Value<DateTime> date,
@@ -7444,35 +7419,13 @@ typedef $$PaymentsTableTableUpdateCompanionBuilder = PaymentsTableCompanion
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
-
-final class $$PaymentsTableTableReferences
-    extends BaseReferences<_$AppDatabase, $PaymentsTableTable, Payment> {
-  $$PaymentsTableTableReferences(
-      super.$_db, super.$_table, super.$_typedResult);
-
-  static $SubscribersTableTable _subscriberIdTable(_$AppDatabase db) =>
-      db.subscribersTable.createAlias($_aliasNameGenerator(
-          db.paymentsTable.subscriberId, db.subscribersTable.id));
-
-  $$SubscribersTableTableProcessedTableManager get subscriberId {
-    final $_column = $_itemColumn<int>('subscriber_id')!;
-
-    final manager =
-        $$SubscribersTableTableTableManager($_db, $_db.subscribersTable)
-            .filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_subscriberIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
-  }
-}
 
 class $$PaymentsTableTableFilterComposer
     extends Composer<_$AppDatabase, $PaymentsTableTable> {
@@ -7483,8 +7436,11 @@ class $$PaymentsTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subscriberId => $composableBuilder(
+      column: $table.subscriberId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get amount => $composableBuilder(
       column: $table.amount, builder: (column) => ColumnFilters(column));
@@ -7521,48 +7477,20 @@ class $$PaymentsTableTableFilterComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnFilters(column));
-
-  $$SubscribersTableTableFilterComposer get subscriberId {
-    final $$SubscribersTableTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.subscriberId,
-        referencedTable: $db.subscribersTable,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$SubscribersTableTableFilterComposer(
-              $db: $db,
-              $table: $db.subscribersTable,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$PaymentsTableTableOrderingComposer
@@ -7574,8 +7502,12 @@ class $$PaymentsTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get subscriberId => $composableBuilder(
+      column: $table.subscriberId,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get amount => $composableBuilder(
       column: $table.amount, builder: (column) => ColumnOrderings(column));
@@ -7614,49 +7546,20 @@ class $$PaymentsTableTableOrderingComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnOrderings(column));
-
-  $$SubscribersTableTableOrderingComposer get subscriberId {
-    final $$SubscribersTableTableOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.subscriberId,
-        referencedTable: $db.subscribersTable,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$SubscribersTableTableOrderingComposer(
-              $db: $db,
-              $table: $db.subscribersTable,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$PaymentsTableTableAnnotationComposer
@@ -7668,8 +7571,11 @@ class $$PaymentsTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get subscriberId => $composableBuilder(
+      column: $table.subscriberId, builder: (column) => column);
 
   GeneratedColumn<double> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
@@ -7704,43 +7610,20 @@ class $$PaymentsTableTableAnnotationComposer
   GeneratedColumn<String> get permissionsMask => $composableBuilder(
       column: $table.permissionsMask, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin, builder: (column) => column);
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt, builder: (column) => column);
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt, builder: (column) => column);
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy, builder: (column) => column);
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  GeneratedColumn<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => column);
-
-  GeneratedColumn<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount, builder: (column) => column);
-
-  $$SubscribersTableTableAnnotationComposer get subscriberId {
-    final $$SubscribersTableTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.subscriberId,
-        referencedTable: $db.subscribersTable,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$SubscribersTableTableAnnotationComposer(
-              $db: $db,
-              $table: $db.subscribersTable,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$PaymentsTableTableTableManager extends RootTableManager<
@@ -7752,9 +7635,9 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
     $$PaymentsTableTableAnnotationComposer,
     $$PaymentsTableTableCreateCompanionBuilder,
     $$PaymentsTableTableUpdateCompanionBuilder,
-    (Payment, $$PaymentsTableTableReferences),
+    (Payment, BaseReferences<_$AppDatabase, $PaymentsTableTable, Payment>),
     Payment,
-    PrefetchHooks Function({bool subscriberId})> {
+    PrefetchHooks Function()> {
   $$PaymentsTableTableTableManager(_$AppDatabase db, $PaymentsTableTable table)
       : super(TableManagerState(
           db: db,
@@ -7766,8 +7649,8 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$PaymentsTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int> subscriberId = const Value.absent(),
+            Value<String> id = const Value.absent(),
+            Value<String> subscriberId = const Value.absent(),
             Value<double> amount = const Value.absent(),
             Value<String> worker = const Value.absent(),
             Value<DateTime> date = const Value.absent(),
@@ -7779,12 +7662,12 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               PaymentsTableCompanion(
             id: id,
@@ -7800,16 +7683,16 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required int subscriberId,
+            required String id,
+            required String subscriberId,
             required double amount,
             required String worker,
             required DateTime date,
@@ -7821,12 +7704,12 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               PaymentsTableCompanion.insert(
             id: id,
@@ -7842,55 +7725,17 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $$PaymentsTableTableReferences(db, table, e)
-                  ))
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({subscriberId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic>>(state) {
-                if (subscriberId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.subscriberId,
-                    referencedTable:
-                        $$PaymentsTableTableReferences._subscriberIdTable(db),
-                    referencedColumn: $$PaymentsTableTableReferences
-                        ._subscriberIdTable(db)
-                        .id,
-                  ) as T;
-                }
-
-                return state;
-              },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
+          prefetchHooksCallback: null,
         ));
 }
 
@@ -7903,12 +7748,12 @@ typedef $$PaymentsTableTableProcessedTableManager = ProcessedTableManager<
     $$PaymentsTableTableAnnotationComposer,
     $$PaymentsTableTableCreateCompanionBuilder,
     $$PaymentsTableTableUpdateCompanionBuilder,
-    (Payment, $$PaymentsTableTableReferences),
+    (Payment, BaseReferences<_$AppDatabase, $PaymentsTableTable, Payment>),
     Payment,
-    PrefetchHooks Function({bool subscriberId})>;
+    PrefetchHooks Function()>;
 typedef $$WorkersTableTableCreateCompanionBuilder = WorkersTableCompanion
     Function({
-  Value<int> id,
+  required String id,
   required String name,
   required String phone,
   required String permissions,
@@ -7921,16 +7766,16 @@ typedef $$WorkersTableTableCreateCompanionBuilder = WorkersTableCompanion
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
 typedef $$WorkersTableTableUpdateCompanionBuilder = WorkersTableCompanion
     Function({
-  Value<int> id,
+  Value<String> id,
   Value<String> name,
   Value<String> phone,
   Value<String> permissions,
@@ -7943,12 +7788,12 @@ typedef $$WorkersTableTableUpdateCompanionBuilder = WorkersTableCompanion
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
 
 class $$WorkersTableTableFilterComposer
@@ -7960,7 +7805,7 @@ class $$WorkersTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
@@ -8002,28 +7847,20 @@ class $$WorkersTableTableFilterComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$WorkersTableTableOrderingComposer
@@ -8035,7 +7872,7 @@ class $$WorkersTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get name => $composableBuilder(
@@ -8079,29 +7916,20 @@ class $$WorkersTableTableOrderingComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$WorkersTableTableAnnotationComposer
@@ -8113,7 +7941,7 @@ class $$WorkersTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
@@ -8152,23 +7980,20 @@ class $$WorkersTableTableAnnotationComposer
   GeneratedColumn<String> get permissionsMask => $composableBuilder(
       column: $table.permissionsMask, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin, builder: (column) => column);
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt, builder: (column) => column);
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt, builder: (column) => column);
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy, builder: (column) => column);
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  GeneratedColumn<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => column);
-
-  GeneratedColumn<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount, builder: (column) => column);
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$WorkersTableTableTableManager extends RootTableManager<
@@ -8194,7 +8019,7 @@ class $$WorkersTableTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$WorkersTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            Value<String> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> phone = const Value.absent(),
             Value<String> permissions = const Value.absent(),
@@ -8207,12 +8032,12 @@ class $$WorkersTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               WorkersTableCompanion(
             id: id,
@@ -8228,15 +8053,15 @@ class $$WorkersTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            required String id,
             required String name,
             required String phone,
             required String permissions,
@@ -8249,12 +8074,12 @@ class $$WorkersTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               WorkersTableCompanion.insert(
             id: id,
@@ -8270,12 +8095,12 @@ class $$WorkersTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -8298,7 +8123,7 @@ typedef $$WorkersTableTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function()>;
 typedef $$AuditLogTableTableCreateCompanionBuilder = AuditLogTableCompanion
     Function({
-  Value<int> id,
+  required String id,
   required String user,
   required String action,
   required String target,
@@ -8312,16 +8137,16 @@ typedef $$AuditLogTableTableCreateCompanionBuilder = AuditLogTableCompanion
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
 typedef $$AuditLogTableTableUpdateCompanionBuilder = AuditLogTableCompanion
     Function({
-  Value<int> id,
+  Value<String> id,
   Value<String> user,
   Value<String> action,
   Value<String> target,
@@ -8335,12 +8160,12 @@ typedef $$AuditLogTableTableUpdateCompanionBuilder = AuditLogTableCompanion
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
 });
 
 class $$AuditLogTableTableFilterComposer
@@ -8352,7 +8177,7 @@ class $$AuditLogTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get user => $composableBuilder(
@@ -8396,28 +8221,20 @@ class $$AuditLogTableTableFilterComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$AuditLogTableTableOrderingComposer
@@ -8429,7 +8246,7 @@ class $$AuditLogTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get user => $composableBuilder(
@@ -8475,29 +8292,20 @@ class $$AuditLogTableTableOrderingComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$AuditLogTableTableAnnotationComposer
@@ -8509,7 +8317,7 @@ class $$AuditLogTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get user =>
@@ -8551,23 +8359,20 @@ class $$AuditLogTableTableAnnotationComposer
   GeneratedColumn<String> get permissionsMask => $composableBuilder(
       column: $table.permissionsMask, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin, builder: (column) => column);
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt, builder: (column) => column);
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt, builder: (column) => column);
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy, builder: (column) => column);
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  GeneratedColumn<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => column);
-
-  GeneratedColumn<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount, builder: (column) => column);
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$AuditLogTableTableTableManager extends RootTableManager<
@@ -8596,7 +8401,7 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$AuditLogTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            Value<String> id = const Value.absent(),
             Value<String> user = const Value.absent(),
             Value<String> action = const Value.absent(),
             Value<String> target = const Value.absent(),
@@ -8610,12 +8415,12 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               AuditLogTableCompanion(
             id: id,
@@ -8632,15 +8437,15 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            required String id,
             required String user,
             required String action,
             required String target,
@@ -8654,12 +8459,12 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               AuditLogTableCompanion.insert(
             id: id,
@@ -8676,12 +8481,12 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -8707,12 +8512,10 @@ typedef $$AuditLogTableTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function()>;
 typedef $$WhatsappTemplatesTableTableCreateCompanionBuilder
     = WhatsappTemplatesTableCompanion Function({
-  Value<int> id,
+  required String id,
   required String title,
   required String content,
   Value<int> isActive,
-  Value<DateTime> createdAt,
-  Value<DateTime> updatedAt,
   Value<DateTime?> lastModified,
   Value<DateTime?> lastSyncedAt,
   Value<String?> syncStatus,
@@ -8720,21 +8523,19 @@ typedef $$WhatsappTemplatesTableTableCreateCompanionBuilder
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime> updatedAt,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
 });
 typedef $$WhatsappTemplatesTableTableUpdateCompanionBuilder
     = WhatsappTemplatesTableCompanion Function({
-  Value<int> id,
+  Value<String> id,
   Value<String> title,
   Value<String> content,
   Value<int> isActive,
-  Value<DateTime> createdAt,
-  Value<DateTime> updatedAt,
   Value<DateTime?> lastModified,
   Value<DateTime?> lastSyncedAt,
   Value<String?> syncStatus,
@@ -8742,12 +8543,12 @@ typedef $$WhatsappTemplatesTableTableUpdateCompanionBuilder
   Value<String?> cloudId,
   Value<bool?> deletedLocally,
   Value<String?> permissionsMask,
-  Value<String?> conflictOrigin,
-  Value<DateTime?> conflictDetectedAt,
-  Value<DateTime?> conflictResolvedAt,
-  Value<String?> conflictResolutionStrategy,
-  Value<String?> lastSyncError,
-  Value<int?> syncRetryCount,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
+  Value<DateTime> updatedAt,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
 });
 
 class $$WhatsappTemplatesTableTableFilterComposer
@@ -8759,7 +8560,7 @@ class $$WhatsappTemplatesTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get title => $composableBuilder(
@@ -8770,12 +8571,6 @@ class $$WhatsappTemplatesTableTableFilterComposer
 
   ColumnFilters<int> get isActive => $composableBuilder(
       column: $table.isActive, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get lastModified => $composableBuilder(
       column: $table.lastModified, builder: (column) => ColumnFilters(column));
@@ -8800,28 +8595,20 @@ class $$WhatsappTemplatesTableTableFilterComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$WhatsappTemplatesTableTableOrderingComposer
@@ -8833,7 +8620,7 @@ class $$WhatsappTemplatesTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get title => $composableBuilder(
@@ -8844,12 +8631,6 @@ class $$WhatsappTemplatesTableTableOrderingComposer
 
   ColumnOrderings<int> get isActive => $composableBuilder(
       column: $table.isActive, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get lastModified => $composableBuilder(
       column: $table.lastModified,
@@ -8876,29 +8657,20 @@ class $$WhatsappTemplatesTableTableOrderingComposer
       column: $table.permissionsMask,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$WhatsappTemplatesTableTableAnnotationComposer
@@ -8910,7 +8682,7 @@ class $$WhatsappTemplatesTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
@@ -8921,12 +8693,6 @@ class $$WhatsappTemplatesTableTableAnnotationComposer
 
   GeneratedColumn<int> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get lastModified => $composableBuilder(
       column: $table.lastModified, builder: (column) => column);
@@ -8949,23 +8715,20 @@ class $$WhatsappTemplatesTableTableAnnotationComposer
   GeneratedColumn<String> get permissionsMask => $composableBuilder(
       column: $table.permissionsMask, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictOrigin => $composableBuilder(
-      column: $table.conflictOrigin, builder: (column) => column);
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictDetectedAt => $composableBuilder(
-      column: $table.conflictDetectedAt, builder: (column) => column);
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get conflictResolvedAt => $composableBuilder(
-      column: $table.conflictResolvedAt, builder: (column) => column);
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
-  GeneratedColumn<String> get conflictResolutionStrategy => $composableBuilder(
-      column: $table.conflictResolutionStrategy, builder: (column) => column);
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  GeneratedColumn<String> get lastSyncError => $composableBuilder(
-      column: $table.lastSyncError, builder: (column) => column);
-
-  GeneratedColumn<int> get syncRetryCount => $composableBuilder(
-      column: $table.syncRetryCount, builder: (column) => column);
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
@@ -8999,12 +8762,10 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
               $$WhatsappTemplatesTableTableAnnotationComposer(
                   $db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            Value<String> id = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String> content = const Value.absent(),
             Value<int> isActive = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime?> lastModified = const Value.absent(),
             Value<DateTime?> lastSyncedAt = const Value.absent(),
             Value<String?> syncStatus = const Value.absent(),
@@ -9012,20 +8773,18 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               WhatsappTemplatesTableCompanion(
             id: id,
             title: title,
             content: content,
             isActive: isActive,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
             lastModified: lastModified,
             lastSyncedAt: lastSyncedAt,
             syncStatus: syncStatus,
@@ -9033,20 +8792,18 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            required String id,
             required String title,
             required String content,
             Value<int> isActive = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime?> lastModified = const Value.absent(),
             Value<DateTime?> lastSyncedAt = const Value.absent(),
             Value<String?> syncStatus = const Value.absent(),
@@ -9054,20 +8811,18 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
             Value<String?> cloudId = const Value.absent(),
             Value<bool?> deletedLocally = const Value.absent(),
             Value<String?> permissionsMask = const Value.absent(),
-            Value<String?> conflictOrigin = const Value.absent(),
-            Value<DateTime?> conflictDetectedAt = const Value.absent(),
-            Value<DateTime?> conflictResolvedAt = const Value.absent(),
-            Value<String?> conflictResolutionStrategy = const Value.absent(),
-            Value<String?> lastSyncError = const Value.absent(),
-            Value<int?> syncRetryCount = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               WhatsappTemplatesTableCompanion.insert(
             id: id,
             title: title,
             content: content,
             isActive: isActive,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
             lastModified: lastModified,
             lastSyncedAt: lastSyncedAt,
             syncStatus: syncStatus,
@@ -9075,12 +8830,12 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
             cloudId: cloudId,
             deletedLocally: deletedLocally,
             permissionsMask: permissionsMask,
-            conflictOrigin: conflictOrigin,
-            conflictDetectedAt: conflictDetectedAt,
-            conflictResolvedAt: conflictResolvedAt,
-            conflictResolutionStrategy: conflictResolutionStrategy,
-            lastSyncError: lastSyncError,
-            syncRetryCount: syncRetryCount,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -9108,23 +8863,31 @@ typedef $$WhatsappTemplatesTableTableProcessedTableManager
         PrefetchHooks Function()>;
 typedef $$GeneratorSettingsTableTableCreateCompanionBuilder
     = GeneratorSettingsTableCompanion Function({
-  Value<int> id,
+  required String id,
   required String name,
   required String phoneNumber,
   required String address,
   Value<String?> logoPath,
-  Value<DateTime> createdAt,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
   Value<DateTime> updatedAt,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
 });
 typedef $$GeneratorSettingsTableTableUpdateCompanionBuilder
     = GeneratorSettingsTableCompanion Function({
-  Value<int> id,
+  Value<String> id,
   Value<String> name,
   Value<String> phoneNumber,
   Value<String> address,
   Value<String?> logoPath,
-  Value<DateTime> createdAt,
+  Value<String?> ownerId,
+  Value<int> version,
+  Value<bool> isDeleted,
   Value<DateTime> updatedAt,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
 });
 
 class $$GeneratorSettingsTableTableFilterComposer
@@ -9136,7 +8899,7 @@ class $$GeneratorSettingsTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
@@ -9151,11 +8914,20 @@ class $$GeneratorSettingsTableTableFilterComposer
   ColumnFilters<String> get logoPath => $composableBuilder(
       column: $table.logoPath, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$GeneratorSettingsTableTableOrderingComposer
@@ -9167,7 +8939,7 @@ class $$GeneratorSettingsTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get name => $composableBuilder(
@@ -9182,11 +8954,20 @@ class $$GeneratorSettingsTableTableOrderingComposer
   ColumnOrderings<String> get logoPath => $composableBuilder(
       column: $table.logoPath, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$GeneratorSettingsTableTableAnnotationComposer
@@ -9198,7 +8979,7 @@ class $$GeneratorSettingsTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
@@ -9213,11 +8994,20 @@ class $$GeneratorSettingsTableTableAnnotationComposer
   GeneratedColumn<String> get logoPath =>
       $composableBuilder(column: $table.logoPath, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$GeneratorSettingsTableTableTableManager extends RootTableManager<
@@ -9251,13 +9041,17 @@ class $$GeneratorSettingsTableTableTableManager extends RootTableManager<
               $$GeneratorSettingsTableTableAnnotationComposer(
                   $db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            Value<String> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> phoneNumber = const Value.absent(),
             Value<String> address = const Value.absent(),
             Value<String?> logoPath = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               GeneratorSettingsTableCompanion(
             id: id,
@@ -9265,17 +9059,25 @@ class $$GeneratorSettingsTableTableTableManager extends RootTableManager<
             phoneNumber: phoneNumber,
             address: address,
             logoPath: logoPath,
-            createdAt: createdAt,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
             updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            required String id,
             required String name,
             required String phoneNumber,
             required String address,
             Value<String?> logoPath = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> ownerId = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<bool> isDeleted = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               GeneratorSettingsTableCompanion.insert(
             id: id,
@@ -9283,8 +9085,12 @@ class $$GeneratorSettingsTableTableTableManager extends RootTableManager<
             phoneNumber: phoneNumber,
             address: address,
             logoPath: logoPath,
-            createdAt: createdAt,
+            ownerId: ownerId,
+            version: version,
+            isDeleted: isDeleted,
             updatedAt: updatedAt,
+            createdAt: createdAt,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -9310,6 +9116,270 @@ typedef $$GeneratorSettingsTableTableProcessedTableManager
         ),
         GeneratorSettingsData,
         PrefetchHooks Function()>;
+typedef $$OutboxTableTableCreateCompanionBuilder = OutboxTableCompanion
+    Function({
+  required String id,
+  required String targetTable,
+  required String operationType,
+  required String documentId,
+  required String payload,
+  Value<String> status,
+  Value<int> retryCount,
+  Value<String?> lastError,
+  required DateTime createdAt,
+  Value<DateTime?> syncedAt,
+  Value<DateTime?> updatedAt,
+  Value<int> rowid,
+});
+typedef $$OutboxTableTableUpdateCompanionBuilder = OutboxTableCompanion
+    Function({
+  Value<String> id,
+  Value<String> targetTable,
+  Value<String> operationType,
+  Value<String> documentId,
+  Value<String> payload,
+  Value<String> status,
+  Value<int> retryCount,
+  Value<String?> lastError,
+  Value<DateTime> createdAt,
+  Value<DateTime?> syncedAt,
+  Value<DateTime?> updatedAt,
+  Value<int> rowid,
+});
+
+class $$OutboxTableTableFilterComposer
+    extends Composer<_$AppDatabase, $OutboxTableTable> {
+  $$OutboxTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get targetTable => $composableBuilder(
+      column: $table.targetTable, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get operationType => $composableBuilder(
+      column: $table.operationType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get documentId => $composableBuilder(
+      column: $table.documentId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get payload => $composableBuilder(
+      column: $table.payload, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get retryCount => $composableBuilder(
+      column: $table.retryCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+      column: $table.lastError, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+      column: $table.syncedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$OutboxTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $OutboxTableTable> {
+  $$OutboxTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get targetTable => $composableBuilder(
+      column: $table.targetTable, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get operationType => $composableBuilder(
+      column: $table.operationType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get documentId => $composableBuilder(
+      column: $table.documentId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+      column: $table.payload, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get retryCount => $composableBuilder(
+      column: $table.retryCount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+      column: $table.lastError, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+      column: $table.syncedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$OutboxTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OutboxTableTable> {
+  $$OutboxTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get targetTable => $composableBuilder(
+      column: $table.targetTable, builder: (column) => column);
+
+  GeneratedColumn<String> get operationType => $composableBuilder(
+      column: $table.operationType, builder: (column) => column);
+
+  GeneratedColumn<String> get documentId => $composableBuilder(
+      column: $table.documentId, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get retryCount => $composableBuilder(
+      column: $table.retryCount, builder: (column) => column);
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$OutboxTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $OutboxTableTable,
+    OutboxEntry,
+    $$OutboxTableTableFilterComposer,
+    $$OutboxTableTableOrderingComposer,
+    $$OutboxTableTableAnnotationComposer,
+    $$OutboxTableTableCreateCompanionBuilder,
+    $$OutboxTableTableUpdateCompanionBuilder,
+    (
+      OutboxEntry,
+      BaseReferences<_$AppDatabase, $OutboxTableTable, OutboxEntry>
+    ),
+    OutboxEntry,
+    PrefetchHooks Function()> {
+  $$OutboxTableTableTableManager(_$AppDatabase db, $OutboxTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OutboxTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OutboxTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OutboxTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> targetTable = const Value.absent(),
+            Value<String> operationType = const Value.absent(),
+            Value<String> documentId = const Value.absent(),
+            Value<String> payload = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<int> retryCount = const Value.absent(),
+            Value<String?> lastError = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> syncedAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              OutboxTableCompanion(
+            id: id,
+            targetTable: targetTable,
+            operationType: operationType,
+            documentId: documentId,
+            payload: payload,
+            status: status,
+            retryCount: retryCount,
+            lastError: lastError,
+            createdAt: createdAt,
+            syncedAt: syncedAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String targetTable,
+            required String operationType,
+            required String documentId,
+            required String payload,
+            Value<String> status = const Value.absent(),
+            Value<int> retryCount = const Value.absent(),
+            Value<String?> lastError = const Value.absent(),
+            required DateTime createdAt,
+            Value<DateTime?> syncedAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              OutboxTableCompanion.insert(
+            id: id,
+            targetTable: targetTable,
+            operationType: operationType,
+            documentId: documentId,
+            payload: payload,
+            status: status,
+            retryCount: retryCount,
+            lastError: lastError,
+            createdAt: createdAt,
+            syncedAt: syncedAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$OutboxTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $OutboxTableTable,
+    OutboxEntry,
+    $$OutboxTableTableFilterComposer,
+    $$OutboxTableTableOrderingComposer,
+    $$OutboxTableTableAnnotationComposer,
+    $$OutboxTableTableCreateCompanionBuilder,
+    $$OutboxTableTableUpdateCompanionBuilder,
+    (
+      OutboxEntry,
+      BaseReferences<_$AppDatabase, $OutboxTableTable, OutboxEntry>
+    ),
+    OutboxEntry,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9330,4 +9400,6 @@ class $AppDatabaseManager {
   $$GeneratorSettingsTableTableTableManager get generatorSettingsTable =>
       $$GeneratorSettingsTableTableTableManager(
           _db, _db.generatorSettingsTable);
+  $$OutboxTableTableTableManager get outboxTable =>
+      $$OutboxTableTableTableManager(_db, _db.outboxTable);
 }

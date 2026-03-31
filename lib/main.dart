@@ -3,6 +3,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/router/app_router.dart';
+import 'package:mawlid_al_dhaki/core/router/glitch_page_transition.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/supabase/supabase_service.dart';
@@ -67,11 +68,11 @@ class AppRoot extends ConsumerWidget {
         primarySwatch: Colors.green,
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: _SmoothPageTransitionsBuilder(),
-            TargetPlatform.iOS: _SmoothPageTransitionsBuilder(),
-            TargetPlatform.macOS: _SmoothPageTransitionsBuilder(),
-            TargetPlatform.windows: _SmoothPageTransitionsBuilder(),
-            TargetPlatform.linux: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.android: GlitchPageTransitionsBuilder(),
+            TargetPlatform.iOS: GlitchPageTransitionsBuilder(),
+            TargetPlatform.macOS: GlitchPageTransitionsBuilder(),
+            TargetPlatform.windows: GlitchPageTransitionsBuilder(),
+            TargetPlatform.linux: GlitchPageTransitionsBuilder(),
           },
         ),
         // Apply the color scheme from PRD
@@ -96,11 +97,11 @@ class AppRoot extends ConsumerWidget {
         brightness: Brightness.dark,
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: _SmoothPageTransitionsBuilder(),
-            TargetPlatform.iOS: _SmoothPageTransitionsBuilder(),
-            TargetPlatform.macOS: _SmoothPageTransitionsBuilder(),
-            TargetPlatform.windows: _SmoothPageTransitionsBuilder(),
-            TargetPlatform.linux: _SmoothPageTransitionsBuilder(),
+            TargetPlatform.android: GlitchPageTransitionsBuilder(),
+            TargetPlatform.iOS: GlitchPageTransitionsBuilder(),
+            TargetPlatform.macOS: GlitchPageTransitionsBuilder(),
+            TargetPlatform.windows: GlitchPageTransitionsBuilder(),
+            TargetPlatform.linux: GlitchPageTransitionsBuilder(),
           },
         ),
         // Apply dark color scheme from PRD
@@ -143,47 +144,6 @@ class AppRoot extends ConsumerWidget {
         ),
       ),
       routerConfig: router,
-    );
-  }
-}
-
-class _SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
-  const _SmoothPageTransitionsBuilder();
-
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    if (kIsWeb) {
-      return FadeTransition(
-        opacity: CurveTween(curve: Curves.easeIn).animate(animation),
-        child: child,
-      );
-    }
-
-    final fadeAnimation = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeOut,
-    );
-
-    final slideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.05),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeOutQuart,
-    ));
-
-    return FadeTransition(
-      opacity: fadeAnimation,
-      child: SlideTransition(
-        position: slideAnimation,
-        child: child,
-      ),
     );
   }
 }

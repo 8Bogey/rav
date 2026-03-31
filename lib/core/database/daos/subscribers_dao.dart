@@ -8,22 +8,64 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
     with _$SubscribersDaoMixin {
   SubscribersDao(super.db);
 
-  // Get all subscribers
-  Future<List<Subscriber>> getAllSubscribers() => select(subscribersTable).get();
-
-  // Get subscriber by ID
-  Future<Subscriber?> getSubscriberById(int id) async {
-    return await (select(subscribersTable)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  /// Get active subscribers - REQUIRES ownerId for tenant isolation
+  /// Returns empty list if ownerId is null (no data leak)
+  Future<List<Subscriber>> getAllSubscribers({required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    final query = select(subscribersTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false));
+    
+    return query.get();
   }
 
-  // Get subscriber by code
-  Future<Subscriber?> getSubscriberByCode(String code) async {
-    return await (select(subscribersTable)..where((tbl) => tbl.code.equals(code))).getSingleOrNull();
+  /// Watch active subscribers - REQUIRES ownerId for tenant isolation
+  Stream<List<Subscriber>> watchAllSubscribers({required String ownerId}) {
+    if (ownerId.isEmpty) return Stream.value([]);
+    
+    final query = select(subscribersTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false));
+    
+    return query.watch();
   }
 
-  // Add a new subscriber
-  Future<int> addSubscriber(Insertable<Subscriber> subscriber) {
-    return into(subscribersTable).insert(subscriber);
+  // Get subscriber by ID (UUID) - REQUIRES ownerId
+  Future<Subscriber?> getSubscriberById(String id, {required String ownerId}) async {
+    if (ownerId.isEmpty) return null;
+    
+    return await (select(subscribersTable)
+      ..where((tbl) => tbl.id.equals(id))
+      ..where((tbl) => tbl.ownerId.equals(ownerId)))
+        .getSingleOrNull();
+  }
+
+  // Get subscriber by code - REQUIRES ownerId
+  Future<Subscriber?> getSubscriberByCode(String code, {required String ownerId}) async {
+    if (ownerId.isEmpty) return null;
+    
+    return await (select(subscribersTable)
+      ..where((tbl) => tbl.code.equals(code))
+      ..where((tbl) => tbl.ownerId.equals(ownerId)))
+        .getSingleOrNull();
+  }
+
+  // Add a new subscriber (with auto-generated UUID)
+  Future<String> addSubscriber(Insertable<Subscriber> subscriber) {
+    return into(subscribersTable).insert(subscriber).then((_) {
+      // Return the ID that was inserted
+      final comp = subscriber as SubscribersTableCompanion;
+      return comp.id.value;
+    });
+  }
+
+  // Add subscriber and return the ID
+  Future<String> insertSubscriber(Insertable<Subscriber> subscriber) async {
+    return await into(subscribersTable).insert(subscriber).then((_) {
+      final comp = subscriber as SubscribersTableCompanion;
+      return comp.id.value;
+    });
   }
 
   // Update a subscriber
@@ -31,133 +73,110 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
     return update(subscribersTable).replace(subscriber);
   }
 
-  // Delete a subscriber
-  Future<int> deleteSubscriber(int id) {
+  // Soft delete a subscriber (mark as deleted)
+  Future<int> deleteSubscriber(String id) {
+    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
+        .write(const SubscribersTableCompanion(
+          isDeleted: Value(true),
+          updatedAt: Value(null), // Will be set by copyWith in service
+        ));
+  }
+
+  // Hard delete (only for cleanup, not normal use)
+  Future<int> hardDeleteSubscriber(String id) {
     return (delete(subscribersTable)..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  // Search subscribers by name or code
-  Future<List<Subscriber>> searchSubscribers(String query) {
+  // Search subscribers by name or code - REQUIRES ownerId
+  Future<List<Subscriber>> searchSubscribers(String query, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
     return (select(subscribersTable)
-          ..where((tbl) => tbl.name.like('%$query%') | tbl.code.like('%$query%')))
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..where((tbl) => tbl.name.like('%$query%') | tbl.code.like('%$query%')))
         .get();
   }
 
-  // Get dirty subscribers (those with dirtyFlag = true)
-  Future<List<Subscriber>> getDirtySubscribers() {
-    return (select(subscribersTable)..where((tbl) => tbl.dirtyFlag.equals(true))).get();
+  // Watch search results - REQUIRES ownerId
+  Stream<List<Subscriber>> watchSearchSubscribers(String query, {required String ownerId}) {
+    if (ownerId.isEmpty) return Stream.value([]);
+    
+    return (select(subscribersTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..where((tbl) => tbl.name.like('%$query%') | tbl.code.like('%$query%')))
+        .watch();
   }
 
-  // Update sync status for a subscriber
-  Future<int> updateSyncStatus(int id, String status) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(syncStatus: Value(status)));
+  // Get dirty subscribers - REQUIRES ownerId
+  Future<List<Subscriber>> getDirtySubscribers({required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(subscribersTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.dirtyFlag.equals(true)))
+        .get();
   }
-  
+
   // Mark a subscriber record as dirty (needing sync)
-  Future<int> markRecordAsDirty(int id) {
+  Future<int> markRecordAsDirty(String id) {
     return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const SubscribersTableCompanion(
-          dirtyFlag: Value(true),
-          lastModified: Value.absent(), // This will use the default timestamp
+        .write(SubscribersTableCompanion(
+          dirtyFlag: const Value(true),
+          updatedAt: Value(DateTime.now()),
         ));
   }
-  
+
   // Clear dirty flag for a subscriber record
-  Future<int> clearDirtyFlag(int id) {
+  Future<int> clearDirtyFlag(String id) {
     return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
         .write(const SubscribersTableCompanion(dirtyFlag: Value(false)));
   }
-  
-  // Mark a subscriber record for manual conflict resolution
-  Future<int> markConflictForManualResolution(int id) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-          conflictResolutionStrategy: Value('manual'),
-          conflictDetectedAt: Value(DateTime.now()),
-        ));
-  }
-  
-  // Update conflict resolution information
-  Future<int> updateConflictResolution(int id, {
-    String? conflictResolutionStrategy,
-    DateTime? conflictResolvedAt,
-    String? conflictOrigin,
-  }) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-          conflictResolutionStrategy: Value(conflictResolutionStrategy),
-          conflictResolvedAt: Value(conflictResolvedAt),
-          conflictOrigin: Value(conflictOrigin),
-        ));
-  }
-  
-  // Mark record as deleted locally
-  Future<int> markDeletedLocally(int id) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-          deletedLocally: Value(true),
-          dirtyFlag: Value(true),
-          lastModified: Value(DateTime.now()),
-        ));
-  }
-  
-  // Undelete a record
-  Future<int> undeleteRecord(int id) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-          deletedLocally: Value(false),
-          dirtyFlag: Value(true),
-          lastModified: Value(DateTime.now()),
-        ));
-  }
-  
-  // Update sync error information
-  Future<int> updateSyncError(int id, String errorMessage) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-          lastSyncError: Value(errorMessage),
-        ));
-  }
-  
-  // Update sync error information with retry count
-  Future<int> updateSyncErrorWithRetryCount(int id, String errorMessage, int retryCount) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-          lastSyncError: Value(errorMessage),
-          syncRetryCount: Value(retryCount),
-        ));
-  }
-  
-  // Update sync retry count
-  Future<int> updateSyncRetryCount(int id, int retryCount) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-          syncRetryCount: Value(retryCount),
-        ));
-  }
-  
-  // Increment sync retry count (handled in service layer with proper read/increment logic)
-  Future<int> incrementSyncRetryCount(int id) {
-    // This will be handled in the service layer where we can read the current value
-    // and increment it properly
-    return Future.value(0);
-  }
-  
-  // Reset sync error and retry count after successful sync
-  Future<int> resetSyncError(int id) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const SubscribersTableCompanion(
-          lastSyncError: Value(null),
-          syncRetryCount: Value(0),
-        ));
-  }
-  
+
   // Update last synced timestamp
-  Future<int> updateLastSyncedAt(int id) {
+  Future<int> updateLastSyncedAt(String id) {
     return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
         .write(SubscribersTableCompanion(
           lastSyncedAt: Value(DateTime.now()),
         ));
+  }
+  
+  // Get subscribers by cabinet - REQUIRES ownerId
+  Future<List<Subscriber>> getSubscribersByCabinet(String cabinet, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(subscribersTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.cabinet.equals(cabinet))
+      ..where((tbl) => tbl.isDeleted.equals(false)))
+        .get();
+  }
+  
+  // Count active subscribers - REQUIRES ownerId
+  Future<int> countActiveSubscribers({required String ownerId}) async {
+    if (ownerId.isEmpty) return 0;
+    
+    final query = selectOnly(subscribersTable)
+      ..addColumns([subscribersTable.id.count()])
+      ..where(subscribersTable.ownerId.equals(ownerId))
+      ..where(subscribersTable.status.equals(1)) // 1 = active
+      ..where(subscribersTable.isDeleted.equals(false));
+    
+    final result = await query.getSingle();
+    return result.read(subscribersTable.id.count()) ?? 0;
+  }
+  
+  // Sum total debt - REQUIRES ownerId
+  Future<double> sumAccumulatedDebt({required String ownerId}) async {
+    if (ownerId.isEmpty) return 0.0;
+    
+    final query = selectOnly(subscribersTable)
+      ..addColumns([subscribersTable.accumulatedDebt.sum()])
+      ..where(subscribersTable.ownerId.equals(ownerId))
+      ..where(subscribersTable.isDeleted.equals(false));
+    
+    final result = await query.getSingle();
+    return result.read(subscribersTable.accumulatedDebt.sum()) ?? 0.0;
   }
 }

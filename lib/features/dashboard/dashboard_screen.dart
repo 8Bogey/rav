@@ -10,6 +10,7 @@ import 'package:mawlid_al_dhaki/core/theme/app_dimens.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_shadows.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/dialogs/subscriber_dialog.dart';
+import 'package:mawlid_al_dhaki/shared/utils/app_transitions.dart';
 import 'package:gap/gap.dart';
 
 // Provider for DashboardService
@@ -345,15 +346,9 @@ boxShadow: [
   Widget _buildAddButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        showGeneralDialog(
+        AppTransitions.showPremiumDialog(
           context: context,
-          barrierDismissible: true,
-          barrierLabel: 'Dismiss',
-          barrierColor: Colors.black54,
-          transitionDuration: const Duration(milliseconds: 150),
-          pageBuilder: (context, animation, secondaryAnimation) {
-            return const SubscriberDialog();
-          },
+          child: const SubscriberDialog(),
         );
       },
       child: Container(

@@ -21,6 +21,7 @@ part 'app_database.g.dart';
     AuditLogTable,
     WhatsappTemplatesTable,
     GeneratorSettingsTable,
+    OutboxTable,
   ],
   daos: [
     SubscribersDao,
@@ -35,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _driftInit());
 
   static QueryExecutor _driftInit() {
-    return driftDatabase(name: 'mawlid_al_dhaki_v1.db');
+    return driftDatabase(name: 'mawlid_al_dhaki_v2.db');
   }
 
   /// Runs a manual ALTER for v1→v2-style migrations; rethrows unless SQLite reports duplicate column.
@@ -62,7 +63,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -74,6 +75,7 @@ class AppDatabase extends _$AppDatabase {
       },
       onUpgrade: (Migrator m, int from, int to) async {
         print('Upgrading database from version $from to $to');
+        
         // Migrate from version 1 to version 2: add sync metadata fields (if not exist)
         if (from < 2) {
           const alterStatements = [
@@ -126,6 +128,63 @@ class AppDatabase extends _$AppDatabase {
           await _migrateAddColumn('ALTER TABLE cabinets_table ADD COLUMN letter TEXT DEFAULT ""');
           print('Database migration to v3 completed successfully');
         }
+        
+        // Migrate to version 4: add Convex sync metadata (ownerId, version, updatedAt, createdAt, isDeleted)
+        if (from < 4) {
+          const v4AlterStatements = [
+            // SubscribersTable - UUID migration + new sync fields
+            'ALTER TABLE subscribers_table ADD COLUMN id TEXT',
+            'ALTER TABLE subscribers_table ADD COLUMN owner_id TEXT',
+            'ALTER TABLE subscribers_table ADD COLUMN version INTEGER DEFAULT 1',
+            'ALTER TABLE subscribers_table ADD COLUMN updated_at INTEGER',
+            'ALTER TABLE subscribers_table ADD COLUMN created_at INTEGER',
+            'ALTER TABLE subscribers_table ADD COLUMN is_deleted INTEGER DEFAULT 0',
+            
+            // CabinetsTable
+            'ALTER TABLE cabinets_table ADD COLUMN id TEXT',
+            'ALTER TABLE cabinets_table ADD COLUMN owner_id TEXT',
+            'ALTER TABLE cabinets_table ADD COLUMN version INTEGER DEFAULT 1',
+            'ALTER TABLE cabinets_table ADD COLUMN updated_at INTEGER',
+            'ALTER TABLE cabinets_table ADD COLUMN created_at INTEGER',
+            'ALTER TABLE cabinets_table ADD COLUMN is_deleted INTEGER DEFAULT 0',
+            
+            // PaymentsTable
+            'ALTER TABLE payments_table ADD COLUMN id TEXT',
+            'ALTER TABLE payments_table ADD COLUMN owner_id TEXT',
+            'ALTER TABLE payments_table ADD COLUMN version INTEGER DEFAULT 1',
+            'ALTER TABLE payments_table ADD COLUMN updated_at INTEGER',
+            'ALTER TABLE payments_table ADD COLUMN created_at INTEGER',
+            'ALTER TABLE payments_table ADD COLUMN is_deleted INTEGER DEFAULT 0',
+            
+            // WorkersTable
+            'ALTER TABLE workers_table ADD COLUMN id TEXT',
+            'ALTER TABLE workers_table ADD COLUMN owner_id TEXT',
+            'ALTER TABLE workers_table ADD COLUMN version INTEGER DEFAULT 1',
+            'ALTER TABLE workers_table ADD COLUMN updated_at INTEGER',
+            'ALTER TABLE workers_table ADD COLUMN created_at INTEGER',
+            'ALTER TABLE workers_table ADD COLUMN is_deleted INTEGER DEFAULT 0',
+            
+            // AuditLogTable
+            'ALTER TABLE audit_log_table ADD COLUMN id TEXT',
+            'ALTER TABLE audit_log_table ADD COLUMN owner_id TEXT',
+            'ALTER TABLE audit_log_table ADD COLUMN version INTEGER DEFAULT 1',
+            'ALTER TABLE audit_log_table ADD COLUMN updated_at INTEGER',
+            'ALTER TABLE audit_log_table ADD COLUMN created_at INTEGER',
+            'ALTER TABLE audit_log_table ADD COLUMN is_deleted INTEGER DEFAULT 0',
+            
+            // WhatsappTemplatesTable
+            'ALTER TABLE whatsapp_templates_table ADD COLUMN id TEXT',
+            'ALTER TABLE whatsapp_templates_table ADD COLUMN owner_id TEXT',
+            'ALTER TABLE whatsapp_templates_table ADD COLUMN version INTEGER DEFAULT 1',
+            'ALTER TABLE whatsapp_templates_table ADD COLUMN updated_at INTEGER',
+            'ALTER TABLE whatsapp_templates_table ADD COLUMN created_at INTEGER',
+            'ALTER TABLE whatsapp_templates_table ADD COLUMN is_deleted INTEGER DEFAULT 0',
+          ];
+          for (final sql in v4AlterStatements) {
+            await _migrateAddColumn(sql);
+          }
+          print('Database migration to v4 completed successfully');
+        }
       },
       beforeOpen: (details) async {
         print('Database opening with version ${details.versionNow}, wasCreated: ${details.wasCreated}');
@@ -145,202 +204,269 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 
-// Subscribers table
+// ============================================================
+// OUTBOX TABLE - For offline write queue (Convex sync)
+// ============================================================
+@DataClassName('OutboxEntry')
+class OutboxTable extends Table {
+  TextColumn get id => text()(); // UUID
+  
+  // Operation details
+  TextColumn get targetTable => text()(); // e.g., 'subscribers', 'payments' (renamed from tableName to avoid conflict)
+  TextColumn get operationType => text()(); // 'create', 'update', 'delete'
+  TextColumn get documentId => text()(); // The Convex document ID
+  TextColumn get payload => text()(); // JSON serialized document data
+  
+  // Status tracking
+  TextColumn get status => text().withDefault(const Constant('pending'))(); // 'pending', 'syncing', 'failed', 'synced'
+  IntColumn get retryCount => integer().withDefault(const Constant(0))();
+  TextColumn get lastError => text().nullable()();
+  
+  // Timestamps
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get syncedAt => dateTime().nullable()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// ============================================================
+// SUBSCRIBERS TABLE - Updated for Convex sync
+// ============================================================
 @DataClassName('Subscriber')
 class SubscribersTable extends Table {
-  IntColumn get id => integer().autoIncrement()();
+  // Global UUID from Convex (primary key)
+  TextColumn get id => text()();
+  
+  // Domain Data
   TextColumn get name => text()();
-  TextColumn get code => text().unique()();
+  TextColumn get code => text()();
   TextColumn get cabinet => text()();
   TextColumn get phone => text()();
-  IntColumn get status =>
-      integer()(); // 0: inactive, 1: active, 2: suspended, 3: disconnected
+  IntColumn get status => integer()(); // 0: inactive, 1: active, 2: suspended, 3: disconnected
   DateTimeColumn get startDate => dateTime()();
   RealColumn get accumulatedDebt => real().withDefault(const Constant(0))();
   TextColumn get tags => text().nullable()();
   TextColumn get notes => text().nullable()();
   
-    // Sync metadata fields for offline-first functionality
-    DateTimeColumn get lastModified => dateTime().nullable()(); // Timestamp of last local modification
-    DateTimeColumn get lastSyncedAt => dateTime().nullable()(); // Timestamp of last successful sync with cloud
-    TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()(); // Status: local_only, sync_pending, synced, conflict
-    BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()(); // Indicates if record has unsynced changes
-    TextColumn get cloudId => text().nullable()(); // Unique identifier in cloud database
-    BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()(); // Soft delete marker for sync purposes
-    TextColumn get permissionsMask => text().nullable()(); // Selective sync markers for Android permissions
-    
-    // Conflict resolution fields
-    TextColumn get conflictOrigin => text().nullable()(); // Origin of conflict (cloud/local/both)
-    DateTimeColumn get conflictDetectedAt => dateTime().nullable()(); // When conflict was detected
-    DateTimeColumn get conflictResolvedAt => dateTime().nullable()(); // When conflict was resolved
-    TextColumn get conflictResolutionStrategy => text().nullable()(); // How conflict was resolved (local_wins/cloud_wins/merge/manual)
-    
-    // Sync error tracking fields
-    TextColumn get lastSyncError => text().nullable()(); // Last sync error message
-    IntColumn get syncRetryCount => integer().withDefault(const Constant(0)).nullable()(); // Number of sync retries
-  }
+  // Legacy sync metadata (kept for v1→v2 compatibility)
+  DateTimeColumn get lastModified => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()();
+  BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get cloudId => text().nullable()();
+  BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get permissionsMask => text().nullable()();
+  
+  // Convex sync metadata (NEW)
+  TextColumn get ownerId => text().nullable()(); // Tenant isolation
+  IntColumn get version => integer().withDefault(const Constant(1))(); // LWW conflict resolution
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))(); // Soft delete
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
 
-  // Cabinets table
-  @DataClassName('Cabinet')
-  class CabinetsTable extends Table {
-    IntColumn get id => integer().autoIncrement()();
-    TextColumn get name => text()();
-    TextColumn get letter => text().withDefault(const Constant(''))(); // Cabinet letter (A, B, C, etc.) - separate from name
-    IntColumn get totalSubscribers => integer()();
-    IntColumn get currentSubscribers => integer()();
-    RealColumn get collectedAmount => real().withDefault(const Constant(0))();
-    IntColumn get delayedSubscribers => integer()();
-    DateTimeColumn get completionDate => dateTime().nullable()();
-    
-    // Sync metadata fields for offline-first functionality
-    DateTimeColumn get lastModified => dateTime().nullable()(); // Timestamp of last local modification
-    DateTimeColumn get lastSyncedAt => dateTime().nullable()(); // Timestamp of last successful sync with cloud
-    TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()(); // Status: local_only, sync_pending, synced, conflict
-    BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()(); // Indicates if record has unsynced changes
-    TextColumn get cloudId => text().nullable()(); // Unique identifier in cloud database
-    BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()(); // Soft delete marker for sync purposes
-    TextColumn get permissionsMask => text().nullable()(); // Selective sync markers for Android permissions
-    
-    // Conflict resolution fields
-    TextColumn get conflictOrigin => text().nullable()(); // Origin of conflict (cloud/local/both)
-    DateTimeColumn get conflictDetectedAt => dateTime().nullable()(); // When conflict was detected
-    DateTimeColumn get conflictResolvedAt => dateTime().nullable()(); // When conflict was resolved
-    TextColumn get conflictResolutionStrategy => text().nullable()(); // How conflict was resolved (local_wins/cloud_wins/merge/manual)
-    
-    // Sync error tracking fields
-    TextColumn get lastSyncError => text().nullable()(); // Last sync error message
-    IntColumn get syncRetryCount => integer().withDefault(const Constant(0)).nullable()(); // Number of sync retries
-  }
+  @override
+  Set<Column> get primaryKey => {id};
+}
 
-  // Payments table
-  @DataClassName('Payment')
-  class PaymentsTable extends Table {
-    IntColumn get id => integer().autoIncrement()();
-    IntColumn get subscriberId => integer().references(SubscribersTable, #id)();
-    RealColumn get amount => real()();
-    TextColumn get worker => text()();
-    DateTimeColumn get date => dateTime()();
-    TextColumn get cabinet => text()();
-    
-    // Sync metadata fields for offline-first functionality
-    DateTimeColumn get lastModified => dateTime().nullable()(); // Timestamp of last local modification
-    DateTimeColumn get lastSyncedAt => dateTime().nullable()(); // Timestamp of last successful sync with cloud
-    TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()(); // Status: local_only, sync_pending, synced, conflict
-    BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()(); // Indicates if record has unsynced changes
-    TextColumn get cloudId => text().nullable()(); // Unique identifier in cloud database
-    BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()(); // Soft delete marker for sync purposes
-    TextColumn get permissionsMask => text().nullable()(); // Selective sync markers for Android permissions
-    
-    // Conflict resolution fields
-    TextColumn get conflictOrigin => text().nullable()(); // Origin of conflict (cloud/local/both)
-    DateTimeColumn get conflictDetectedAt => dateTime().nullable()(); // When conflict was detected
-    DateTimeColumn get conflictResolvedAt => dateTime().nullable()(); // When conflict was resolved
-    TextColumn get conflictResolutionStrategy => text().nullable()(); // How conflict was resolved (local_wins/cloud_wins/merge/manual)
-    
-    // Sync error tracking fields
-    TextColumn get lastSyncError => text().nullable()(); // Last sync error message
-    IntColumn get syncRetryCount => integer().withDefault(const Constant(0)).nullable()(); // Number of sync retries
-  }
+// ============================================================
+// CABINETS TABLE - Updated for Convex sync
+// ============================================================
+@DataClassName('Cabinet')
+class CabinetsTable extends Table {
+  // Global UUID from Convex
+  TextColumn get id => text()();
   
-  // Workers table
-  @DataClassName('Worker')
-  class WorkersTable extends Table {
-    IntColumn get id => integer().autoIncrement()();
-    TextColumn get name => text()();
-    TextColumn get phone => text()();
-    TextColumn get permissions => text()(); // JSON string of permissions
-    RealColumn get todayCollected => real().withDefault(const Constant(0))();
-    RealColumn get monthTotal => real().withDefault(const Constant(0))();
-    
-    // Sync metadata fields for offline-first functionality
-    DateTimeColumn get lastModified => dateTime().nullable()(); // Timestamp of last local modification
-    DateTimeColumn get lastSyncedAt => dateTime().nullable()(); // Timestamp of last successful sync with cloud
-    TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()(); // Status: local_only, sync_pending, synced, conflict
-    BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()(); // Indicates if record has unsynced changes
-    TextColumn get cloudId => text().nullable()(); // Unique identifier in cloud database
-    BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()(); // Soft delete marker for sync purposes
-    TextColumn get permissionsMask => text().nullable()(); // Selective sync markers for Android permissions
-    
-    // Conflict resolution fields
-    TextColumn get conflictOrigin => text().nullable()(); // Origin of conflict (cloud/local/both)
-    DateTimeColumn get conflictDetectedAt => dateTime().nullable()(); // When conflict was detected
-    DateTimeColumn get conflictResolvedAt => dateTime().nullable()(); // When conflict was resolved
-    TextColumn get conflictResolutionStrategy => text().nullable()(); // How conflict was resolved (local_wins/cloud_wins/merge/manual)
-    
-    // Sync error tracking fields
-    TextColumn get lastSyncError => text().nullable()(); // Last sync error message
-    IntColumn get syncRetryCount => integer().withDefault(const Constant(0)).nullable()(); // Number of sync retries
-  }
+  // Domain Data
+  TextColumn get name => text()();
+  TextColumn get letter => text().withDefault(const Constant(''))();
+  IntColumn get totalSubscribers => integer()();
+  IntColumn get currentSubscribers => integer()();
+  RealColumn get collectedAmount => real().withDefault(const Constant(0))();
+  IntColumn get delayedSubscribers => integer()();
+  DateTimeColumn get completionDate => dateTime().nullable()();
   
-  // Audit log table
-  @DataClassName('AuditLogEntry')
-  class AuditLogTable extends Table {
-    IntColumn get id => integer().autoIncrement()();
-    TextColumn get user => text()();
-    TextColumn get action => text()();
-    TextColumn get target => text()();
-    TextColumn get details => text()();
-    TextColumn get type => text()();
-    DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
-    
-    // Sync metadata fields for offline-first functionality
-    DateTimeColumn get lastModified => dateTime().nullable()(); // Timestamp of last local modification
-    DateTimeColumn get lastSyncedAt => dateTime().nullable()(); // Timestamp of last successful sync with cloud
-    TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()(); // Status: local_only, sync_pending, synced, conflict
-    BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()(); // Indicates if record has unsynced changes
-    TextColumn get cloudId => text().nullable()(); // Unique identifier in cloud database
-    BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()(); // Soft delete marker for sync purposes
-    TextColumn get permissionsMask => text().nullable()(); // Selective sync markers for Android permissions
-    
-    // Conflict resolution fields
-    TextColumn get conflictOrigin => text().nullable()(); // Origin of conflict (cloud/local/both)
-    DateTimeColumn get conflictDetectedAt => dateTime().nullable()(); // When conflict was detected
-    DateTimeColumn get conflictResolvedAt => dateTime().nullable()(); // When conflict was resolved
-    TextColumn get conflictResolutionStrategy => text().nullable()(); // How conflict was resolved (local_wins/cloud_wins/merge/manual)
-    
-    // Sync error tracking fields
-    TextColumn get lastSyncError => text().nullable()(); // Last sync error message
-    IntColumn get syncRetryCount => integer().withDefault(const Constant(0)).nullable()(); // Number of sync retries
-  }
+  // Legacy sync metadata
+  DateTimeColumn get lastModified => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()();
+  BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get cloudId => text().nullable()();
+  BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get permissionsMask => text().nullable()();
   
-  // Generator Settings table
-  @DataClassName('GeneratorSettingsData')
-  class GeneratorSettingsTable extends Table {
-    IntColumn get id => integer().autoIncrement()();
-    TextColumn get name => text()();
-    TextColumn get phoneNumber => text()();
-    TextColumn get address => text()();
-    TextColumn get logoPath => text().nullable()();
-    DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-    DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
-  }
+  // Convex sync metadata (NEW)
+  TextColumn get ownerId => text().nullable()();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// ============================================================
+// PAYMENTS TABLE - Updated for Convex sync
+// ============================================================
+@DataClassName('Payment')
+class PaymentsTable extends Table {
+  // Global UUID from Convex
+  TextColumn get id => text()();
   
-  // WhatsApp templates table
-  @DataClassName('WhatsappTemplateData')
-  class WhatsappTemplatesTable extends Table {
-    IntColumn get id => integer().autoIncrement()();
-    TextColumn get title => text()();
-    TextColumn get content => text()();
-    IntColumn get isActive => integer().withDefault(const Constant(0))();
-    DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-    DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
-    
-    // Sync metadata fields for offline-first functionality
-    DateTimeColumn get lastModified => dateTime().nullable()(); // Timestamp of last local modification
-    DateTimeColumn get lastSyncedAt => dateTime().nullable()(); // Timestamp of last successful sync with cloud
-    TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()(); // Status: local_only, sync_pending, synced, conflict
-    BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()(); // Indicates if record has unsynced changes
-    TextColumn get cloudId => text().nullable()(); // Unique identifier in cloud database
-    BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()(); // Soft delete marker for sync purposes
-    TextColumn get permissionsMask => text().nullable()(); // Selective sync markers for Android permissions
-    
-    // Conflict resolution fields
-    TextColumn get conflictOrigin => text().nullable()(); // Origin of conflict (cloud/local/both)
-    DateTimeColumn get conflictDetectedAt => dateTime().nullable()(); // When conflict was detected
-    DateTimeColumn get conflictResolvedAt => dateTime().nullable()(); // When conflict was resolved
-    TextColumn get conflictResolutionStrategy => text().nullable()(); // How conflict was resolved (local_wins/cloud_wins/merge/manual)
-    
-    // Sync error tracking fields
-    TextColumn get lastSyncError => text().nullable()(); // Last sync error message
-    IntColumn get syncRetryCount => integer().withDefault(const Constant(0)).nullable()(); // Number of sync retries
-  }
+  // Domain Data (references by UUID now)
+  TextColumn get subscriberId => text()(); // Changed from IntColumn to TextColumn (UUID)
+  RealColumn get amount => real()();
+  TextColumn get worker => text()();
+  DateTimeColumn get date => dateTime()();
+  TextColumn get cabinet => text()();
+  
+  // Legacy sync metadata
+  DateTimeColumn get lastModified => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()();
+  BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get cloudId => text().nullable()();
+  BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get permissionsMask => text().nullable()();
+  
+  // Convex sync metadata (NEW)
+  TextColumn get ownerId => text().nullable()();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// ============================================================
+// WORKERS TABLE - Updated for Convex sync
+// ============================================================
+@DataClassName('Worker')
+class WorkersTable extends Table {
+  // Global UUID from Convex
+  TextColumn get id => text()();
+  
+  // Domain Data
+  TextColumn get name => text()();
+  TextColumn get phone => text()();
+  TextColumn get permissions => text()(); // JSON string of permissions
+  RealColumn get todayCollected => real().withDefault(const Constant(0))();
+  RealColumn get monthTotal => real().withDefault(const Constant(0))();
+  
+  // Legacy sync metadata
+  DateTimeColumn get lastModified => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()();
+  BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get cloudId => text().nullable()();
+  BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get permissionsMask => text().nullable()();
+  
+  // Convex sync metadata (NEW)
+  TextColumn get ownerId => text().nullable()();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// ============================================================
+// AUDIT LOG TABLE - Updated for Convex sync
+// ============================================================
+@DataClassName('AuditLogEntry')
+class AuditLogTable extends Table {
+  // Global UUID from Convex
+  TextColumn get id => text()();
+  
+  // Domain Data
+  TextColumn get user => text()();
+  TextColumn get action => text()();
+  TextColumn get target => text()();
+  TextColumn get details => text()();
+  TextColumn get type => text()();
+  DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
+  
+  // Legacy sync metadata
+  DateTimeColumn get lastModified => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()();
+  BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get cloudId => text().nullable()();
+  BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get permissionsMask => text().nullable()();
+  
+  // Convex sync metadata (NEW)
+  TextColumn get ownerId => text().nullable()();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// ============================================================
+// GENERATOR SETTINGS TABLE - Per-tenant singleton
+// ============================================================
+@DataClassName('GeneratorSettingsData')
+class GeneratorSettingsTable extends Table {
+  // Global UUID from Convex
+  TextColumn get id => text()();
+  
+  // Domain Data
+  TextColumn get name => text()();
+  TextColumn get phoneNumber => text()();
+  TextColumn get address => text()();
+  TextColumn get logoPath => text().nullable()();
+  
+  // Convex sync metadata (NEW)
+  TextColumn get ownerId => text().nullable()();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// ============================================================
+// WHATSAPP TEMPLATES TABLE - Updated for Convex sync
+// ============================================================
+@DataClassName('WhatsappTemplateData')
+class WhatsappTemplatesTable extends Table {
+  // Global UUID from Convex
+  TextColumn get id => text()();
+  
+  // Domain Data
+  TextColumn get title => text()();
+  TextColumn get content => text()();
+  IntColumn get isActive => integer().withDefault(const Constant(0))();
+  
+  // Legacy sync metadata
+  DateTimeColumn get lastModified => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  TextColumn get syncStatus => text().withDefault(const Constant('local_only')).nullable()();
+  BoolColumn get dirtyFlag => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get cloudId => text().nullable()();
+  BoolColumn get deletedLocally => boolean().withDefault(const Constant(false)).nullable()();
+  TextColumn get permissionsMask => text().nullable()();
+  
+  // Convex sync metadata (NEW)
+  TextColumn get ownerId => text().nullable()();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}

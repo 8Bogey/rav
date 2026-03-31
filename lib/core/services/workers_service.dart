@@ -41,7 +41,14 @@ class WorkersService extends BaseService {
   // Update a worker
   Future<bool> updateWorker(Worker worker) {
     final companion = worker.toCompanion(false);
-    return _dao.updateWorker(companion);
+    final success = _dao.updateWorker(companion);
+    
+    // Mark the record as dirty so it gets synced to Android app
+    if (worker.id > 0) {
+      _dao.markRecordAsDirty(worker.id);
+    }
+    
+    return success;
   }
 
   // Delete a worker

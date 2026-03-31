@@ -8,6 +8,7 @@ import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/dialogs/subscriber_dialog.dart';
+import 'package:mawlid_al_dhaki/shared/utils/app_transitions.dart';
 
 class SubscribersScreen extends ConsumerStatefulWidget {
   const SubscribersScreen({super.key});
@@ -298,7 +299,7 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
                     ),
                   ],
                 ),
-              ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
+              ).animate(delay: 400.ms).fadeIn(duration: 500.ms).slideY(begin: 0.08, curve: Curves.easeOutBack, duration: 600.ms),
             ),
         ],
       ),
@@ -346,15 +347,9 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
         ),
         GestureDetector(
           onTap: () {
-            showGeneralDialog(
+            AppTransitions.showPremiumDialog(
               context: context,
-              barrierDismissible: true,
-              barrierLabel: 'Dismiss',
-              barrierColor: Colors.black54,
-              transitionDuration: const Duration(milliseconds: 150),
-              pageBuilder: (context, animation, secondaryAnimation) {
-                return SubscriberDialog();
-              },
+              child: const SubscriberDialog(),
             );
           },
           child: Container(

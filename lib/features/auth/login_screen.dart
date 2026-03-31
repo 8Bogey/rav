@@ -310,7 +310,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ],
                       ),
-                    ).animate(delay: 400.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, duration: 350.ms),
+                    ).animate(delay: 400.ms).fadeIn(duration: 500.ms).slideY(begin: 0.1, curve: Curves.easeOutBack, duration: 600.ms),
 
                     const SizedBox(height: 32),
 

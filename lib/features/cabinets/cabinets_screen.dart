@@ -9,6 +9,7 @@ import 'package:mawlid_al_dhaki/features/cabinets/providers/cabinets_provider.da
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/router/route_names.dart';
+import 'package:mawlid_al_dhaki/shared/utils/app_transitions.dart';
 
 class CabinetsScreen extends ConsumerStatefulWidget {
   const CabinetsScreen({super.key});
@@ -174,7 +175,8 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
         ),
         GestureDetector(
           onTap: () {
-            _showAddCabinetDialog(context, ref, isDarkMode);
+            AppTransitions.showPremiumDialog(
+                context: context, child: const AddCabinetDialog());
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -312,8 +314,10 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                           color: isDarkMode
                               ? AppColors.darkTextBody
                               : AppColors.textSecondary,
-                          onTap: () => _showEditCabinetDialog(
-                              context, ref, isDarkMode, cabinet),
+                          onTap: () => AppTransitions.showPremiumDialog(
+                            context: context,
+                            child: EditCabinetDialog(cabinet: cabinet),
+                          ),
                           tooltip: 'تعديل',
                         ),
                         const SizedBox(width: 8),
@@ -503,7 +507,7 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 180.ms);
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05, curve: Curves.easeOutQuart);
   }
 
   Widget _buildMetricTile({
@@ -601,232 +605,6 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
     }
   }
 
-  void _showEditCabinetDialog(
-      BuildContext context, WidgetRef ref, bool isDarkMode, Cabinet cabinet) {
-    final nameController = TextEditingController(text: cabinet.name);
-    final letterController = TextEditingController(text: cabinet.letter);
-    final subscribersController =
-        TextEditingController(text: cabinet.totalSubscribers.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor:
-            isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
-        title: Text(
-          'تعديل الكابينة',
-          style: AppTypography.h3.copyWith(
-            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'اسم الكابينة',
-                labelStyle: AppTypography.bodyMd.copyWith(
-                  color:
-                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                ),
-              ),
-              style: AppTypography.bodyMd.copyWith(
-                color:
-                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: letterController,
-              decoration: InputDecoration(
-                labelText: 'حرف الكابينة',
-                labelStyle: AppTypography.bodyMd.copyWith(
-                  color:
-                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                ),
-              ),
-              style: AppTypography.bodyMd.copyWith(
-                color:
-                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: subscribersController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'عدد المشتركين',
-                labelStyle: AppTypography.bodyMd.copyWith(
-                  color:
-                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                ),
-              ),
-              style: AppTypography.bodyMd.copyWith(
-                color:
-                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'إلغاء',
-              style: AppTypography.labelLg.copyWith(
-                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isNotEmpty) {
-                final name = nameController.text;
-                final letter = letterController.text.trim().toUpperCase();
-                final subscribers = int.tryParse(subscribersController.text) ??
-                    cabinet.totalSubscribers;
-
-                await ref.read(cabinetsProvider.notifier).updateCabinet(
-                      cabinet.copyWith(
-                        name: name,
-                        letter: letter,
-                        totalSubscribers: subscribers,
-                      ),
-                    );
-
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
-            child: Text(
-              'حفظ',
-              style: AppTypography.labelLg.copyWith(
-                color: AppColors.textOnPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Format number as IQD currency
-  String _formatIQD(double amount) {
-    // Format with thousand separators
-    final parts = amount.toInt().toString().split('');
-    final buffer = StringBuffer();
-    for (int i = 0; i < parts.length; i++) {
-      if (i > 0 && (parts.length - i) % 3 == 0) {
-        buffer.write(',');
-      }
-      buffer.write(parts[i]);
-    }
-    return '$buffer IQD';
-  }
-
-  void _showAddCabinetDialog(
-      BuildContext context, WidgetRef ref, bool isDarkMode) {
-    final cabinetsState = ref.read(cabinetsProvider);
-
-    // Calculate next available letter (A, B, C, ... Z, AA, AB, ...)
-    String nextLetter = _getNextCabinetLetter(
-        cabinetsState.cabinets.map((c) => c.letter).toList());
-
-    final nameController = TextEditingController();
-    final letterController = TextEditingController(text: nextLetter);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor:
-            isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
-        title: Text(
-          'إضافة كابينة جديدة',
-          style: AppTypography.h3.copyWith(
-            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'اسم الكابينة',
-                labelStyle: AppTypography.bodyMd.copyWith(
-                  color:
-                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                ),
-              ),
-              style: AppTypography.bodyMd.copyWith(
-                color:
-                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: letterController,
-              decoration: InputDecoration(
-                labelText: 'حرف الكابينة',
-                labelStyle: AppTypography.bodyMd.copyWith(
-                  color:
-                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                ),
-              ),
-              style: AppTypography.bodyMd.copyWith(
-                color:
-                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'إلغاء',
-              style: AppTypography.labelLg.copyWith(
-                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isNotEmpty && letterController.text.trim().isNotEmpty) {
-                final name = nameController.text;
-                final letter = letterController.text.trim().toUpperCase();
-
-                await ref.read(cabinetsProvider.notifier).addCabinet(
-                      name: name,
-                      letter: letter,
-                    );
-
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.gold,
-            ),
-            child: Text(
-              'إضافة',
-              style: AppTypography.labelLg.copyWith(
-                color: AppColors.textOnGold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Calculate the next available cabinet letter (A, B, C, ... Z, AA, AB, ...)
   String _getNextCabinetLetter(List<String> existingNames) {
     // Extract single letters from existing cabinets (A, B, C, etc.)
@@ -869,5 +647,253 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
 
     // Navigate to subscribers screen
     context.go(AppRoutes.subscribers);
+  }
+
+  String _formatIQD(double amount) {
+    return amount.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
+  }
+}
+
+class AddCabinetDialog extends ConsumerStatefulWidget {
+  const AddCabinetDialog({super.key});
+
+  @override
+  ConsumerState<AddCabinetDialog> createState() => _AddCabinetDialogState();
+}
+
+class _AddCabinetDialogState extends ConsumerState<AddCabinetDialog> {
+  late final TextEditingController nameController;
+  late final TextEditingController letterController;
+
+  @override
+  void initState() {
+    super.initState();
+    final cabinetsState = ref.read(cabinetsProvider);
+    final existingLetters = cabinetsState.cabinets.map((c) => c.letter).toList();
+    final nextLetter = _getNextLetter(existingLetters);
+    
+    nameController = TextEditingController();
+    letterController = TextEditingController(text: nextLetter);
+  }
+
+  String _getNextLetter(List<String> existingNames) {
+    final Set<String> usedLetters = {};
+    for (final name in existingNames) {
+      if (name.isNotEmpty) {
+        usedLetters.add(name.toUpperCase());
+      }
+    }
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for (int i = 0; i < letters.length; i++) {
+      final letter = letters[i];
+      if (!usedLetters.contains(letter)) return letter;
+    }
+    for (int i = 0; i < letters.length; i++) {
+      for (int j = 0; j < letters.length; j++) {
+        final letter = '${letters[i]}${letters[j]}';
+        if (!usedLetters.contains(letter)) return letter;
+      }
+    }
+    return 'A';
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    letterController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    return AlertDialog(
+      backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+      title: Text(
+        'إضافة كابينة جديدة',
+        style: AppTypography.h3.copyWith(
+          color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nameController,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: 'اسم الكابينة',
+              labelStyle: AppTypography.bodyMd.copyWith(
+                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+              ),
+            ),
+            style: AppTypography.bodyMd.copyWith(
+              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: letterController,
+            decoration: InputDecoration(
+              labelText: 'حرف الكابينة',
+              labelStyle: AppTypography.bodyMd.copyWith(
+                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+              ),
+            ),
+            style: AppTypography.bodyMd.copyWith(
+              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(
+            'إلغاء',
+            style: AppTypography.labelLg.copyWith(
+              color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+            ),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (nameController.text.isNotEmpty && letterController.text.trim().isNotEmpty) {
+              await ref.read(cabinetsProvider.notifier).addCabinet(
+                    name: nameController.text,
+                    letter: letterController.text.trim().toUpperCase(),
+                  );
+              if (context.mounted) Navigator.pop(context);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold),
+          child: Text(
+            'إضافة',
+            style: AppTypography.labelLg.copyWith(color: AppColors.textOnGold),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class EditCabinetDialog extends ConsumerStatefulWidget {
+  final Cabinet cabinet;
+  const EditCabinetDialog({super.key, required this.cabinet});
+
+  @override
+  ConsumerState<EditCabinetDialog> createState() => _EditCabinetDialogState();
+}
+
+class _EditCabinetDialogState extends ConsumerState<EditCabinetDialog> {
+  late final TextEditingController nameController;
+  late final TextEditingController letterController;
+  late final TextEditingController subscribersController;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(text: widget.cabinet.name);
+    letterController = TextEditingController(text: widget.cabinet.letter);
+    subscribersController = TextEditingController(text: widget.cabinet.totalSubscribers.toString());
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    letterController.dispose();
+    subscribersController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    return AlertDialog(
+      backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+      title: Text(
+        'تعديل الكابينة',
+        style: AppTypography.h3.copyWith(
+          color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nameController,
+            decoration: InputDecoration(
+              labelText: 'اسم الكابينة',
+              labelStyle: AppTypography.bodyMd.copyWith(
+                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+              ),
+            ),
+            style: AppTypography.bodyMd.copyWith(
+              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: letterController,
+            decoration: InputDecoration(
+              labelText: 'حرف الكابينة',
+              labelStyle: AppTypography.bodyMd.copyWith(
+                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+              ),
+            ),
+            style: AppTypography.bodyMd.copyWith(
+              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: subscribersController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'عدد المشتركين',
+              labelStyle: AppTypography.bodyMd.copyWith(
+                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+              ),
+            ),
+            style: AppTypography.bodyMd.copyWith(
+              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(
+            'إلغاء',
+            style: AppTypography.labelLg.copyWith(
+              color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+            ),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (nameController.text.isNotEmpty) {
+              await ref.read(cabinetsProvider.notifier).updateCabinet(
+                    widget.cabinet.copyWith(
+                      name: nameController.text,
+                      letter: letterController.text.trim().toUpperCase(),
+                      totalSubscribers: int.tryParse(subscribersController.text) ?? widget.cabinet.totalSubscribers,
+                    ),
+                  );
+              if (context.mounted) Navigator.pop(context);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+          child: Text(
+            'حفظ',
+            style: AppTypography.labelLg.copyWith(color: AppColors.textOnPrimary),
+          ),
+        ),
+      ],
+    );
   }
 }

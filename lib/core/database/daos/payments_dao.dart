@@ -8,22 +8,70 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
     with _$PaymentsDaoMixin {
   PaymentsDao(super.db);
 
-  // Get all payments
-  Future<List<Payment>> getAllPayments() => select(paymentsTable).get();
-
-  // Get payment by ID
-  Future<Payment?> getPaymentById(int id) async {
-    return await (select(paymentsTable)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  // Get all active payments - REQUIRES ownerId
+  Future<List<Payment>> getAllPayments({required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(paymentsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false)))
+        .get();
   }
 
-  // Get payments by subscriber ID
-  Future<List<Payment>> getPaymentsBySubscriberId(int subscriberId) {
-    return (select(paymentsTable)..where((tbl) => tbl.subscriberId.equals(subscriberId))).get();
+  // Watch all active payments - REQUIRES ownerId
+  Stream<List<Payment>> watchAllPayments({required String ownerId}) {
+    if (ownerId.isEmpty) return Stream.value([]);
+    
+    return (select(paymentsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false)))
+        .watch();
+  }
+
+  // Get payment by ID (UUID) - REQUIRES ownerId
+  Future<Payment?> getPaymentById(String id, {required String ownerId}) async {
+    if (ownerId.isEmpty) return null;
+    
+    return await (select(paymentsTable)
+      ..where((tbl) => tbl.id.equals(id))
+      ..where((tbl) => tbl.ownerId.equals(ownerId)))
+        .getSingleOrNull();
+  }
+
+  // Get payments by subscriber ID (UUID) - REQUIRES ownerId
+  Future<List<Payment>> getPaymentsBySubscriberId(String subscriberId, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(paymentsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.subscriberId.equals(subscriberId)))
+        .get();
+  }
+
+  // Watch payments by subscriber - REQUIRES ownerId
+  Stream<List<Payment>> watchPaymentsBySubscriber(String subscriberId, {required String ownerId}) {
+    if (ownerId.isEmpty) return Stream.value([]);
+    
+    return (select(paymentsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.subscriberId.equals(subscriberId)))
+        .watch();
   }
 
   // Add a new payment
-  Future<int> addPayment(Insertable<Payment> payment) {
-    return into(paymentsTable).insert(payment);
+  Future<String> addPayment(Insertable<Payment> payment) async {
+    return await into(paymentsTable).insert(payment).then((_) {
+      final comp = payment as PaymentsTableCompanion;
+      return comp.id.value;
+    });
+  }
+
+  // Insert payment and return ID
+  Future<String> insertPayment(Insertable<Payment> payment) async {
+    return await into(paymentsTable).insert(payment).then((_) {
+      final comp = payment as PaymentsTableCompanion;
+      return comp.id.value;
+    });
   }
 
   // Update a payment
@@ -31,94 +79,110 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
     return update(paymentsTable).replace(payment);
   }
 
-  // Delete a payment
-  Future<int> deletePayment(int id) {
+  // Soft delete a payment
+  Future<int> deletePayment(String id) {
+    return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
+        .write(const PaymentsTableCompanion(
+          isDeleted: Value(true),
+        ));
+  }
+
+  // Hard delete
+  Future<int> hardDeletePayment(String id) {
     return (delete(paymentsTable)..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  // Get dirty payments (those with dirtyFlag = true)
-  Future<List<Payment>> getDirtyPayments() {
-    return (select(paymentsTable)..where((tbl) => tbl.dirtyFlag.equals(true))).get();
+  // Get dirty payments - REQUIRES ownerId
+  Future<List<Payment>> getDirtyPayments({required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(paymentsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.dirtyFlag.equals(true)))
+        .get();
   }
-  
-  // Update sync status for a payment
-  Future<int> updateSyncStatus(int id, String status) {
+
+  // Mark a payment record as dirty
+  Future<int> markRecordAsDirty(String id) {
     return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(PaymentsTableCompanion(syncStatus: Value(status)));
-  }
-  
-  // Mark a payment record as dirty (needing sync)
-  Future<int> markRecordAsDirty(int id) {
-    return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const PaymentsTableCompanion(
-          dirtyFlag: Value(true),
-          lastModified: Value.absent(), // This will use the default timestamp
+        .write(PaymentsTableCompanion(
+          dirtyFlag: const Value(true),
+          updatedAt: Value(DateTime.now()),
         ));
   }
-  
-  // Clear dirty flag for a payment record
-  Future<int> clearDirtyFlag(int id) {
+
+  // Clear dirty flag
+  Future<int> clearDirtyFlag(String id) {
     return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
         .write(const PaymentsTableCompanion(dirtyFlag: Value(false)));
   }
-  
-  // Mark a payment record for manual conflict resolution
-  Future<int> markConflictForManualResolution(int id) {
+
+  // Update last synced timestamp
+  Future<int> updateLastSyncedAt(String id) {
     return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
         .write(PaymentsTableCompanion(
-          conflictResolutionStrategy: Value('manual'),
-          conflictDetectedAt: Value(DateTime.now()),
+          lastSyncedAt: Value(DateTime.now()),
         ));
   }
   
-  // Update conflict resolution information
-  Future<int> updateConflictResolution(int id, {
-    String? conflictResolutionStrategy,
-    DateTime? conflictResolvedAt,
-    String? conflictOrigin,
-  }) {
-    return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(PaymentsTableCompanion(
-          conflictResolutionStrategy: Value(conflictResolutionStrategy),
-          conflictResolvedAt: Value(conflictResolvedAt),
-          conflictOrigin: Value(conflictOrigin),
-        ));
+  // Get payments by date range - REQUIRES ownerId
+  Future<List<Payment>> getPaymentsByDateRange(DateTime start, DateTime end, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(paymentsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.date.isBiggerOrEqualValue(start))
+      ..where((tbl) => tbl.date.isSmallerOrEqualValue(end)))
+        .get();
   }
   
-  // Mark record as deleted locally
-  Future<int> markDeletedLocally(int id) {
-    return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(PaymentsTableCompanion(
-          deletedLocally: Value(true),
-          dirtyFlag: Value(true),
-          lastModified: Value(DateTime.now()),
-        ));
+  // Get payments by worker - REQUIRES ownerId
+  Future<List<Payment>> getPaymentsByWorker(String worker, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(paymentsTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.worker.equals(worker)))
+        .get();
   }
   
-  // Undelete a record
-  Future<int> undeleteRecord(int id) {
-    return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(PaymentsTableCompanion(
-          deletedLocally: Value(false),
-          dirtyFlag: Value(true),
-          lastModified: Value(DateTime.now()),
-        ));
+  // Sum payments amount - REQUIRES ownerId
+  Future<double> sumPaymentsAmount({required String ownerId, DateTime? startDate, DateTime? endDate}) async {
+    if (ownerId.isEmpty) return 0.0;
+    
+    var query = selectOnly(paymentsTable)
+      ..addColumns([paymentsTable.amount.sum()])
+      ..where(paymentsTable.ownerId.equals(ownerId))
+      ..where(paymentsTable.isDeleted.equals(false));
+    
+    if (startDate != null) {
+      query.where(paymentsTable.date.isBiggerOrEqualValue(startDate));
+    }
+    if (endDate != null) {
+      query.where(paymentsTable.date.isSmallerOrEqualValue(endDate));
+    }
+    
+    final result = await query.getSingle();
+    return result.read(paymentsTable.amount.sum()) ?? 0.0;
   }
   
-  // Update sync error information
-  Future<int> updateSyncError(int id, String errorMessage) {
-    return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(PaymentsTableCompanion(
-          lastSyncError: Value(errorMessage),
-          syncRetryCount: Value.absent(), // Increment retry count in service layer
-        ));
-  }
-  
-  // Increment sync retry count
-  Future<int> incrementSyncRetryCount(int id) {
-    return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const PaymentsTableCompanion(
-          syncRetryCount: Value.absent(), // This will need to be handled in service layer
-        ));
+  // Count payments - REQUIRES ownerId
+  Future<int> countPayments({required String ownerId, DateTime? startDate, DateTime? endDate}) async {
+    if (ownerId.isEmpty) return 0;
+    
+    var query = selectOnly(paymentsTable)
+      ..addColumns([paymentsTable.id.count()])
+      ..where(paymentsTable.ownerId.equals(ownerId))
+      ..where(paymentsTable.isDeleted.equals(false));
+    
+    if (startDate != null) {
+      query.where(paymentsTable.date.isBiggerOrEqualValue(startDate));
+    }
+    if (endDate != null) {
+      query.where(paymentsTable.date.isSmallerOrEqualValue(endDate));
+    }
+    
+    final result = await query.getSingle();
+    return result.read(paymentsTable.id.count()) ?? 0;
   }
 }

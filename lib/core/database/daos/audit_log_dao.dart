@@ -8,17 +8,80 @@ class AuditLogDao extends DatabaseAccessor<AppDatabase>
     with _$AuditLogDaoMixin {
   AuditLogDao(super.db);
 
-  // Get all audit log entries
-  Future<List<AuditLogEntry>> getAllAuditLogEntries() => select(auditLogTable).get();
+  // Get all active audit log entries - REQUIRES ownerId
+  Future<List<AuditLogEntry>> getAllAuditLogEntries({required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(auditLogTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false)))
+        .get();
+  }
 
-  // Get audit log entry by ID
-  Future<AuditLogEntry?> getAuditLogEntryById(int id) async {
-    return await (select(auditLogTable)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  // Watch all active audit log entries - REQUIRES ownerId
+  Stream<List<AuditLogEntry>> watchAllAuditLogEntries({required String ownerId}) {
+    if (ownerId.isEmpty) return Stream.value([]);
+    
+    return (select(auditLogTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.isDeleted.equals(false)))
+        .watch();
+  }
+
+  // Get audit log entry by ID (UUID) - REQUIRES ownerId
+  Future<AuditLogEntry?> getAuditLogEntryById(String id, {required String ownerId}) async {
+    if (ownerId.isEmpty) return null;
+    
+    return await (select(auditLogTable)
+      ..where((tbl) => tbl.id.equals(id))
+      ..where((tbl) => tbl.ownerId.equals(ownerId)))
+        .getSingleOrNull();
+  }
+
+  // Get audit log entries by user - REQUIRES ownerId
+  Future<List<AuditLogEntry>> getAuditLogByUser(String user, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(auditLogTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.user.equals(user)))
+        .get();
+  }
+
+  // Get audit log entries by target - REQUIRES ownerId
+  Future<List<AuditLogEntry>> getAuditLogByTarget(String target, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(auditLogTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.target.equals(target)))
+        .get();
+  }
+
+  // Get audit log entries by action type - REQUIRES ownerId
+  Future<List<AuditLogEntry>> getAuditLogByAction(String action, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(auditLogTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.action.equals(action)))
+        .get();
   }
 
   // Add a new audit log entry
-  Future<int> addAuditLogEntry(Insertable<AuditLogEntry> entry) {
-    return into(auditLogTable).insert(entry);
+  Future<String> addAuditLogEntry(Insertable<AuditLogEntry> entry) async {
+    return await into(auditLogTable).insert(entry).then((_) {
+      final comp = entry as AuditLogTableCompanion;
+      return comp.id.value;
+    });
+  }
+
+  // Insert audit log entry and return ID
+  Future<String> insertAuditLogEntry(Insertable<AuditLogEntry> entry) async {
+    return await into(auditLogTable).insert(entry).then((_) {
+      final comp = entry as AuditLogTableCompanion;
+      return comp.id.value;
+    });
   }
 
   // Update an audit log entry
@@ -26,94 +89,80 @@ class AuditLogDao extends DatabaseAccessor<AppDatabase>
     return update(auditLogTable).replace(entry);
   }
 
-  // Delete an audit log entry
-  Future<int> deleteAuditLogEntry(int id) {
+  // Soft delete an audit log entry
+  Future<int> deleteAuditLogEntry(String id) {
+    return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
+        .write(const AuditLogTableCompanion(
+          isDeleted: Value(true),
+        ));
+  }
+
+  // Hard delete
+  Future<int> hardDeleteAuditLogEntry(String id) {
     return (delete(auditLogTable)..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  // Get dirty audit log entries (those with dirtyFlag = true)
-  Future<List<AuditLogEntry>> getDirtyAuditLogEntries() {
-    return (select(auditLogTable)..where((tbl) => tbl.dirtyFlag.equals(true))).get();
+  // Get dirty audit log entries - REQUIRES ownerId
+  Future<List<AuditLogEntry>> getDirtyAuditLogEntries({required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(auditLogTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.dirtyFlag.equals(true)))
+        .get();
   }
-  
-  // Update sync status for an audit log entry
-  Future<int> updateSyncStatus(int id, String status) {
+
+  // Mark an audit log entry as dirty
+  Future<int> markRecordAsDirty(String id) {
     return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
-        .write(AuditLogTableCompanion(syncStatus: Value(status)));
-  }
-  
-  // Mark an audit log entry as dirty (needing sync)
-  Future<int> markRecordAsDirty(int id) {
-    return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const AuditLogTableCompanion(
-          dirtyFlag: Value(true),
-          lastModified: Value.absent(), // This will use the default timestamp
+        .write(AuditLogTableCompanion(
+          dirtyFlag: const Value(true),
+          updatedAt: Value(DateTime.now()),
         ));
   }
-  
-  // Clear dirty flag for an audit log entry
-  Future<int> clearDirtyFlag(int id) {
+
+  // Clear dirty flag
+  Future<int> clearDirtyFlag(String id) {
     return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
         .write(const AuditLogTableCompanion(dirtyFlag: Value(false)));
   }
-  
-  // Mark an audit log entry for manual conflict resolution
-  Future<int> markConflictForManualResolution(int id) {
+
+  // Update last synced timestamp
+  Future<int> updateLastSyncedAt(String id) {
     return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
         .write(AuditLogTableCompanion(
-          conflictResolutionStrategy: Value('manual'),
-          conflictDetectedAt: Value(DateTime.now()),
+          lastSyncedAt: Value(DateTime.now()),
         ));
   }
   
-  // Update conflict resolution information
-  Future<int> updateConflictResolution(int id, {
-    String? conflictResolutionStrategy,
-    DateTime? conflictResolvedAt,
-    String? conflictOrigin,
-  }) {
-    return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
-        .write(AuditLogTableCompanion(
-          conflictResolutionStrategy: Value(conflictResolutionStrategy),
-          conflictResolvedAt: Value(conflictResolvedAt),
-          conflictOrigin: Value(conflictOrigin),
-        ));
+  // Get audit log entries by date range - REQUIRES ownerId
+  Future<List<AuditLogEntry>> getAuditLogByDateRange(DateTime start, DateTime end, {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+    
+    return (select(auditLogTable)
+      ..where((tbl) => tbl.ownerId.equals(ownerId))
+      ..where((tbl) => tbl.timestamp.isBiggerOrEqualValue(start))
+      ..where((tbl) => tbl.timestamp.isSmallerOrEqualValue(end)))
+        .get();
   }
   
-  // Mark record as deleted locally
-  Future<int> markDeletedLocally(int id) {
-    return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
-        .write(AuditLogTableCompanion(
-          deletedLocally: Value(true),
-          dirtyFlag: Value(true),
-          lastModified: Value(DateTime.now()),
-        ));
-  }
-  
-  // Undelete a record
-  Future<int> undeleteRecord(int id) {
-    return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
-        .write(AuditLogTableCompanion(
-          deletedLocally: Value(false),
-          dirtyFlag: Value(true),
-          lastModified: Value(DateTime.now()),
-        ));
-  }
-  
-  // Update sync error information
-  Future<int> updateSyncError(int id, String errorMessage) {
-    return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
-        .write(AuditLogTableCompanion(
-          lastSyncError: Value(errorMessage),
-          syncRetryCount: Value.absent(), // Increment retry count in service layer
-        ));
-  }
-  
-  // Increment sync retry count
-  Future<int> incrementSyncRetryCount(int id) {
-    return (update(auditLogTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const AuditLogTableCompanion(
-          syncRetryCount: Value.absent(), // This will need to be handled in service layer
-        ));
+  // Count audit log entries - REQUIRES ownerId
+  Future<int> countAuditLogEntries({required String ownerId, DateTime? startDate, DateTime? endDate}) async {
+    if (ownerId.isEmpty) return 0;
+    
+    var query = selectOnly(auditLogTable)
+      ..addColumns([auditLogTable.id.count()])
+      ..where(auditLogTable.ownerId.equals(ownerId))
+      ..where(auditLogTable.isDeleted.equals(false));
+    
+    if (startDate != null) {
+      query.where(auditLogTable.timestamp.isBiggerOrEqualValue(startDate));
+    }
+    if (endDate != null) {
+      query.where(auditLogTable.timestamp.isSmallerOrEqualValue(endDate));
+    }
+    
+    final result = await query.getSingle();
+    return result.read(auditLogTable.id.count()) ?? 0;
   }
 }
