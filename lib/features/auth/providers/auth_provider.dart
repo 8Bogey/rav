@@ -6,23 +6,51 @@ import 'package:mawlid_al_dhaki/core/supabase/supabase_provider.dart'
 const bool kDemoAuthLogin =
     bool.fromEnvironment('DEMO_AUTH', defaultValue: true);
 
+/// User role enum for RBAC
+enum UserRole {
+  admin,
+  worker,
+}
+
 class AuthState {
   final bool isAuthenticated;
   final String? errorMessage;
+  final UserRole role;
+  final List<String> permissions;
 
   AuthState({
     required this.isAuthenticated,
     this.errorMessage,
+    this.role = UserRole.admin,
+    this.permissions = const [],
   });
 
   AuthState copyWith({
     bool? isAuthenticated,
     String? errorMessage,
+    UserRole? role,
+    List<String>? permissions,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       errorMessage: errorMessage ?? this.errorMessage,
+      role: role ?? this.role,
+      permissions: permissions ?? this.permissions,
     );
+  }
+
+  /// Check if user has a specific permission
+  bool hasPermission(String permission) {
+    // Admin has all permissions
+    if (role == UserRole.admin || permissions.contains('*')) {
+      return true;
+    }
+    return permissions.contains(permission);
+  }
+
+  /// Check if user has any of the specified permissions
+  bool hasAnyPermission(List<String> requiredPermissions) {
+    return requiredPermissions.any(hasPermission);
   }
 }
 
