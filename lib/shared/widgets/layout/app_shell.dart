@@ -6,6 +6,7 @@ import 'package:mawlid_al_dhaki/core/theme/app_dimens.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/shared/widgets/layout/app_sidebar.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/feedback/sync_status_indicator.dart';
 
 /// Get title for the current route
 String _getRouteTitle(String location) {
@@ -117,6 +118,12 @@ class AppShell extends ConsumerWidget {
                                 onPressed: () {
                                   // Handle notifications
                                 },
+                              ),
+                              const SizedBox(width: 8),
+                              // Sync status indicator
+                              const SyncStatusIndicator(
+                                showLabel: false,
+                                compact: true,
                               ),
                             ],
                           ),
