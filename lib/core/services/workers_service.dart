@@ -2,33 +2,35 @@ import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/workers_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
+import 'package:uuid/uuid.dart';
 
 class WorkersService extends BaseService {
-  late WorkersDao _dao;
+  WorkersService(super.database);
 
-  WorkersService(AppDatabase database) : super(database) {
-    _dao = WorkersDao(database);
-  }
+  WorkersDao get _dao => database.workersDao;
+  static const _uuid = Uuid();
 
   // Get all workers
-  Future<List<Worker>> getAllWorkers() {
-    return _dao.getAllWorkers();
+  Future<List<Worker>> getAllWorkers({required String ownerId}) {
+    return _dao.getAllWorkers(ownerId: ownerId);
   }
 
   // Get worker by ID
-  Future<Worker?> getWorkerById(int id) {
-    return _dao.getWorkerById(id);
+  Future<Worker?> getWorkerById(String id, {required String ownerId}) {
+    return _dao.getWorkerById(id, ownerId: ownerId);
   }
 
   // Get worker by name
-  Future<Worker?> getWorkerByName(String name) {
-    return _dao.getWorkerByName(name);
+  Future<Worker?> getWorkerByName(String name, {required String ownerId}) {
+    return _dao.getWorkerByName(name, ownerId: ownerId);
   }
 
   // Add a new worker
-  Future<int> addWorker(Worker worker) {
-    // For inserts, we want to let the database auto-generate the ID
+  Future<String> addWorker(Worker worker, {required String ownerId}) {
+    final id = _uuid.v4();
     final companion = WorkersTableCompanion(
+      id: Value(id),
+      ownerId: Value(ownerId),
       name: Value(worker.name),
       phone: Value(worker.phone),
       permissions: Value(worker.permissions),
@@ -39,79 +41,27 @@ class WorkersService extends BaseService {
   }
 
   // Update a worker
-  Future<bool> updateWorker(Worker worker) {
-    final companion = worker.toCompanion(false);
-    final success = _dao.updateWorker(companion);
-    
-    // Mark the record as dirty so it gets synced to Android app
-    if (worker.id > 0) {
-      _dao.markRecordAsDirty(worker.id);
-    }
-    
-    return success;
-  }
-
-  // Delete a worker
-  Future<int> deleteWorker(int id) {
-    return _dao.deleteWorker(id);
-  }
-
-  // Get dirty workers (those with dirtyFlag = true)
-  Future<List<Worker>> getDirtyWorkers() {
-    return _dao.getDirtyWorkers();
-  }
-  
-  // Mark a worker record for manual conflict resolution
-  Future<int> markConflictForManualResolution(int id) {
-    return _dao.markConflictForManualResolution(id);
-  }
-  
-  // Update conflict resolution information
-  Future<int> updateConflictResolution(int id, {
-    String? conflictResolutionStrategy,
-    DateTime? conflictResolvedAt,
-    String? conflictOrigin,
-  }) {
-    return _dao.updateConflictResolution(
-      id,
-      conflictResolutionStrategy: conflictResolutionStrategy,
-      conflictResolvedAt: conflictResolvedAt,
-      conflictOrigin: conflictOrigin,
+  Future<bool> updateWorker(Worker worker, {required String ownerId}) {
+    final companion = worker.toCompanion(false).copyWith(
+      ownerId: Value(ownerId),
+      updatedAt: Value(DateTime.now()),
     );
+    return _dao.updateWorker(companion);
   }
-  
-  // Mark record as deleted locally
-  Future<int> markDeletedLocally(int id) {
-    return _dao.markDeletedLocally(id);
+
+  // Soft delete a worker
+  Future<bool> deleteWorker(String id, {required String ownerId}) {
+    final companion = WorkersTableCompanion(
+      id: Value(id),
+      ownerId: Value(ownerId),
+      isDeleted: const Value(true),
+      updatedAt: Value(DateTime.now()),
+    );
+    return _dao.updateWorker(companion);
   }
-  
-  // Undelete a record
-  Future<int> undeleteRecord(int id) {
-    return _dao.undeleteRecord(id);
-  }
-  
-  // Update sync error information
-  Future<int> updateSyncError(int id, String errorMessage) {
-    return _dao.updateSyncError(id, errorMessage);
-  }
-  
-  // Increment sync retry count
-  Future<int> incrementSyncRetryCount(int id) {
-    return _dao.incrementSyncRetryCount(id);
-  }
-  
-  // Update sync status
-  Future<int> updateSyncStatus(int id, String status) {
-    return _dao.updateSyncStatus(id, status);
-  }
-  
-  // Mark record as dirty
-  Future<int> markRecordAsDirty(int id) {
-    return _dao.markRecordAsDirty(id);
-  }
-  
-  // Clear dirty flag
-  Future<int> clearDirtyFlag(int id) {
-    return _dao.clearDirtyFlag(id);
+
+  // Watch all workers (reactive stream)
+  Stream<List<Worker>> watchWorkers({required String ownerId}) {
+    return _dao.watchAllWorkers(ownerId: ownerId);
   }
 }

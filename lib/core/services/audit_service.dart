@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 import '../database/database_provider.dart';
 import '../database/app_database.dart';
-import '../../features/auth/providers/auth_provider.dart';
+import '../auth/auth_provider.dart';
 
 /// Audit action types
 enum AuditAction {
@@ -127,27 +129,46 @@ class AuditService {
     return authState.isAuthenticated ? 'المستخدم' : 'النظام';
   }
 
+  /// Get current ownerId from auth state
+  String? _getCurrentOwnerId() {
+    try {
+      return _ref.read(currentUserIdProvider);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Log an audit entry
-  Future<int> log({
+  Future<String> log({
     required AuditAction action,
     required String target,
     String? details,
     String? type,
+    String? ownerId, // Add ownerId parameter
   }) async {
     try {
       final dao = _ref.read(auditLogDaoProvider);
-      final id = await dao.addAuditLogEntry(AuditLogTableCompanion.insert(
-        user: _currentUser,
-        action: action.value,
-        target: target,
-        details: details ?? '',
-        type: type ?? 'user',
-      ));
-      return id;
+      
+      // Get ownerId from auth if not provided
+      final ownerIdToUse = ownerId ?? _getCurrentOwnerId() ?? '';
+      final id = const Uuid().v4();
+      
+      // Create the audit log entry with UUID and ownerId
+      final companion = AuditLogTableCompanion(
+        id: Value(id),
+        ownerId: Value(ownerIdToUse),
+        user: Value(_currentUser),
+        action: Value(action.value),
+        target: Value(target),
+        details: Value(details ?? ''),
+        type: Value(type ?? 'user'),
+      );
+      
+      return await dao.addAuditLogEntry(companion);
     } catch (e) {
       // Log error but don't throw - audit logging shouldn't break operations
       print('AuditService: Failed to log entry: $e');
-      return -1;
+      return '-1'; // Return string instead of int for error case
     }
   }
 
@@ -156,7 +177,7 @@ class AuditService {
   // ============================================================
 
   /// Log a create action
-  Future<int> logCreate(String entityType, String entityName,
+  Future<String> logCreate(String entityType, String entityName,
       {String? details}) {
     return log(
       action: AuditAction.create,
@@ -166,7 +187,7 @@ class AuditService {
   }
 
   /// Log an update action
-  Future<int> logUpdate(String entityType, String entityName,
+  Future<String> logUpdate(String entityType, String entityName,
       {String? details}) {
     return log(
       action: AuditAction.update,
@@ -176,7 +197,7 @@ class AuditService {
   }
 
   /// Log a delete action
-  Future<int> logDelete(String entityType, String entityName,
+  Future<String> logDelete(String entityType, String entityName,
       {String? details}) {
     return log(
       action: AuditAction.delete,
@@ -186,7 +207,7 @@ class AuditService {
   }
 
   /// Log a payment action
-  Future<int> logPayment(String details) {
+  Future<String> logPayment(String details) {
     return log(
       action: AuditAction.payment,
       target: 'دفعة',
@@ -195,7 +216,7 @@ class AuditService {
   }
 
   /// Log a cut connection action
-  Future<int> logCutConnection(String subscriberName, {String? reason}) {
+  Future<String> logCutConnection(String subscriberName, {String? reason}) {
     return log(
       action: AuditAction.cutConnection,
       target: 'مشترك: $subscriberName',
@@ -204,7 +225,7 @@ class AuditService {
   }
 
   /// Log a restore connection action
-  Future<int> logRestoreConnection(String subscriberName) {
+  Future<String> logRestoreConnection(String subscriberName) {
     return log(
       action: AuditAction.restoreConnection,
       target: 'مشترك: $subscriberName',
@@ -212,7 +233,7 @@ class AuditService {
   }
 
   /// Log a login action
-  Future<int> logLogin(String userName) {
+  Future<String> logLogin(String userName) {
     return log(
       action: AuditAction.login,
       target: 'مستخدم: $userName',
@@ -220,7 +241,7 @@ class AuditService {
   }
 
   /// Log a logout action
-  Future<int> logLogout(String userName) {
+  Future<String> logLogout(String userName) {
     return log(
       action: AuditAction.logout,
       target: 'مستخدم: $userName',
@@ -228,7 +249,7 @@ class AuditService {
   }
 
   /// Log an export action
-  Future<int> logExport(String exportType, {String? details}) {
+  Future<String> logExport(String exportType, {String? details}) {
     return log(
       action: AuditAction.export,
       target: 'تصدير: $exportType',
@@ -237,7 +258,7 @@ class AuditService {
   }
 
   /// Log an import action
-  Future<int> logImport(String importType, {String? details}) {
+  Future<String> logImport(String importType, {String? details}) {
     return log(
       action: AuditAction.import,
       target: 'استيراد: $importType',
@@ -246,7 +267,7 @@ class AuditService {
   }
 
   /// Log a settings change
-  Future<int> logSettingsChange(String settingName,
+  Future<String> logSettingsChange(String settingName,
       {String? oldValue, String? newValue}) {
     final details = (oldValue != null && newValue != null)
         ? 'من "$oldValue" إلى "$newValue"'
@@ -266,7 +287,8 @@ class AuditService {
   Future<List<AuditLogEntry>> getRecentEntries({int count = 10}) async {
     try {
       final dao = _ref.read(auditLogDaoProvider);
-      final entries = await dao.getAllAuditLogEntries();
+      final ownerId = _getCurrentOwnerId() ?? '';
+      final entries = await dao.getAllAuditLogEntries(ownerId: ownerId);
       entries.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       return entries.take(count).toList();
     } catch (e) {
@@ -279,7 +301,8 @@ class AuditService {
   Future<List<AuditLogEntry>> getEntriesByAction(AuditAction action) async {
     try {
       final dao = _ref.read(auditLogDaoProvider);
-      final entries = await dao.getAllAuditLogEntries();
+      final ownerId = _getCurrentOwnerId() ?? '';
+      final entries = await dao.getAllAuditLogEntries(ownerId: ownerId);
       return entries.where((e) => e.action == action.value).toList()
         ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
     } catch (e) {
@@ -292,7 +315,8 @@ class AuditService {
   Future<List<AuditLogEntry>> getEntriesByUser(String userName) async {
     try {
       final dao = _ref.read(auditLogDaoProvider);
-      final entries = await dao.getAllAuditLogEntries();
+      final ownerId = _getCurrentOwnerId() ?? '';
+      final entries = await dao.getAllAuditLogEntries(ownerId: ownerId);
       return entries.where((e) => e.user == userName).toList()
         ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
     } catch (e) {
@@ -308,7 +332,8 @@ class AuditService {
   ) async {
     try {
       final dao = _ref.read(auditLogDaoProvider);
-      final entries = await dao.getAllAuditLogEntries();
+      final ownerId = _getCurrentOwnerId() ?? '';
+      final entries = await dao.getAllAuditLogEntries(ownerId: ownerId);
       return entries
           .where((e) => e.timestamp.isAfter(start) && e.timestamp.isBefore(end))
           .toList()
@@ -323,7 +348,8 @@ class AuditService {
   Future<int> cleanupOldEntries({int daysOld = 90}) async {
     try {
       final dao = _ref.read(auditLogDaoProvider);
-      final entries = await dao.getAllAuditLogEntries();
+      final ownerId = _getCurrentOwnerId() ?? '';
+      final entries = await dao.getAllAuditLogEntries(ownerId: ownerId);
       final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
 
       int deletedCount = 0;

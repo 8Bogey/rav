@@ -1,118 +1,58 @@
 import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/whatsapp_templates_dao.dart';
-import 'package:mawlid_al_dhaki/core/services/subscribers_service.dart';
+import 'package:mawlid_al_dhaki/core/services/base_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
 
-class WhatsappTemplate {
-  final int id;
-  final String title;
-  final String content;
-  final bool isActive;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  // Sync metadata fields
-  final DateTime? lastModified;
-  final String? syncStatus;
-  final bool? dirtyFlag;
-  final String? cloudId;
-  final bool? deletedLocally;
-  final String? permissionsMask;
+class WhatsappService extends BaseService {
+  WhatsappService(super.database);
 
-  WhatsappTemplate({
-    required this.id,
-    required this.title,
-    required this.content,
-    required this.isActive,
-    required this.createdAt,
-    required this.updatedAt,
-    this.lastModified,
-    this.syncStatus,
-    this.dirtyFlag,
-    this.cloudId,
-    this.deletedLocally,
-    this.permissionsMask,
-  });
-
-  factory WhatsappTemplate.fromDatabase(WhatsappTemplateData data) {
-    return WhatsappTemplate(
-      id: data.id,
-      title: data.title,
-      content: data.content,
-      isActive: data.isActive == 1,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-      lastModified: data.lastModified,
-      syncStatus: data.syncStatus,
-      dirtyFlag: data.dirtyFlag,
-      cloudId: data.cloudId,
-      deletedLocally: data.deletedLocally,
-      permissionsMask: data.permissionsMask,
-    );
-  }
-
-  WhatsappTemplatesTableCompanion toCompanion(bool forInsert) {
-    return WhatsappTemplatesTableCompanion(
-      id: forInsert ? const Value.absent() : Value(id),
-      title: Value(title),
-      content: Value(content),
-      isActive: Value(isActive ? 1 : 0),
-      createdAt: forInsert ? const Value.absent() : Value(createdAt),
-      updatedAt: Value(DateTime.now()),
-      // Sync metadata fields
-      lastModified: Value(lastModified),
-      syncStatus: Value(syncStatus),
-      dirtyFlag: Value(dirtyFlag),
-      cloudId: Value(cloudId),
-      deletedLocally: Value(deletedLocally),
-      permissionsMask: Value(permissionsMask),
-    );
-  }
-}
-
-class WhatsappService {
-  final AppDatabase database;
-  late SubscribersService _subscribersService;
-  late WhatsappTemplatesDao _templatesDao;
-
-  WhatsappService(this.database) {
-    _subscribersService = SubscribersService(database);
-    _templatesDao = WhatsappTemplatesDao(database);
-  }
+  WhatsappTemplatesDao get _dao => database.whatsappTemplatesDao;
+  static const _uuid = Uuid();
 
   // Get all WhatsApp templates
-  Future<List<WhatsappTemplate>> getAllTemplates() async {
-    final templates = await _templatesDao.getAllTemplates();
-    return templates.map((data) => WhatsappTemplate.fromDatabase(data)).toList();
+  Future<List<WhatsappTemplateData>> getAllTemplates({required String ownerId}) {
+    return _dao.getAllTemplates(ownerId: ownerId);
   }
 
   // Get active WhatsApp template
-  Future<WhatsappTemplate?> getActiveTemplate() async {
-    final template = await _templatesDao.getActiveTemplate();
-    return template != null ? WhatsappTemplate.fromDatabase(template) : null;
+  Future<WhatsappTemplateData?> getActiveTemplate({required String ownerId}) {
+    return _dao.getActiveTemplate(ownerId: ownerId);
   }
 
   // Add a new WhatsApp template
-  Future<int> addTemplate(WhatsappTemplate template) {
-    final companion = template.toCompanion(true);
-    return _templatesDao.addTemplate(companion);
+  Future<String> addTemplate({
+    required String title,
+    required String content,
+    required bool isActive,
+    required String ownerId,
+  }) {
+    final id = _uuid.v4();
+    final companion = WhatsappTemplatesTableCompanion(
+      id: Value(id),
+      ownerId: Value(ownerId),
+      title: Value(title),
+      content: Value(content),
+      isActive: Value(isActive ? 1 : 0),
+    );
+    return _dao.addTemplate(companion);
   }
 
   // Update a WhatsApp template
-  Future<bool> updateTemplate(WhatsappTemplate template) {
-    final companion = template.toCompanion(false);
-    return _templatesDao.updateTemplate(companion);
+  Future<bool> updateTemplate(WhatsappTemplatesTableCompanion companion) {
+    return _dao.updateTemplate(companion);
   }
 
-  // Delete a WhatsApp template
-  Future<int> deleteTemplate(int id) {
-    return _templatesDao.deleteTemplate(id);
+  // Soft delete a WhatsApp template
+  Future<int> deleteTemplate(String id) {
+    return _dao.deleteTemplate(id);
   }
 
   // Get subscribers count
-  Future<int> getSubscribersCount() async {
-    final subscribers = await _subscribersService.getAllSubscribers();
+  Future<int> getSubscribersCount({required String ownerId}) async {
+    final subscribers = await database.subscribersDao.getAllSubscribers(ownerId: ownerId);
     return subscribers.length;
   }
 
@@ -175,62 +115,8 @@ class WhatsappService {
     }
   }
 
-  // Get dirty templates (those with dirtyFlag = true)
-  Future<List<WhatsappTemplateData>> getDirtyTemplates() {
-    return _templatesDao.getDirtyTemplates();
-  }
-  
-  // Mark a template record for manual conflict resolution
-  Future<int> markConflictForManualResolution(int id) {
-    return _templatesDao.markConflictForManualResolution(id);
-  }
-  
-  // Update conflict resolution information
-  Future<int> updateConflictResolution(int id, {
-    String? conflictResolutionStrategy,
-    DateTime? conflictResolvedAt,
-    String? conflictOrigin,
-  }) {
-    return _templatesDao.updateConflictResolution(
-      id,
-      conflictResolutionStrategy: conflictResolutionStrategy,
-      conflictResolvedAt: conflictResolvedAt,
-      conflictOrigin: conflictOrigin,
-    );
-  }
-  
-  // Mark record as deleted locally
-  Future<int> markDeletedLocally(int id) {
-    return _templatesDao.markDeletedLocally(id);
-  }
-  
-  // Undelete a record
-  Future<int> undeleteRecord(int id) {
-    return _templatesDao.undeleteRecord(id);
-  }
-  
-  // Update sync error information
-  Future<int> updateSyncError(int id, String errorMessage) {
-    return _templatesDao.updateSyncError(id, errorMessage);
-  }
-  
-  // Increment sync retry count
-  Future<int> incrementSyncRetryCount(int id) {
-    return _templatesDao.incrementSyncRetryCount(id);
-  }
-  
-  // Update sync status
-  Future<int> updateSyncStatus(int id, String status) {
-    return _templatesDao.updateSyncStatus(id, status);
-  }
-  
-  // Mark record as dirty
-  Future<int> markRecordAsDirty(int id) {
-    return _templatesDao.markRecordAsDirty(id);
-  }
-  
-  // Clear dirty flag
-  Future<int> clearDirtyFlag(int id) {
-    return _templatesDao.clearDirtyFlag(id);
+  // Watch all templates (reactive stream)
+  Stream<List<WhatsappTemplateData>> watchTemplates({required String ownerId}) {
+    return _dao.watchAllTemplates(ownerId: ownerId);
   }
 }

@@ -83,7 +83,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      if (!ConvexConfig.isInitialized) {
+      if (!AppConvexConfig.isInitialized) {
         state = state.copyWith(
           isLoading: false,
           isAuthenticated: false,
@@ -91,14 +91,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return;
       }
 
-      final identity = ConvexConfig.client.auth.getUserIdentity();
-      
-      if (identity != null) {
+      // Check if authenticated using the isAuthenticated getter
+      if (AppConvexConfig.isAuthenticated) {
+        // For now, use placeholder values - in production you'd query Convex for user info
         state = AuthState(
           isAuthenticated: true,
-          userId: identity.subject,
-          email: identity.email,
-          name: identity.name,
+          userId: 'user', // Placeholder
+          email: null,
+          name: null,
           role: UserRole.admin, // Default role, will be updated from worker profile
           permissions: [], // Will be loaded from worker profile
           isLoading: false,
@@ -145,7 +145,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       // Convex auth would be handled here
       // For now, just check if client is authenticated
-      if (ConvexConfig.isAuthenticated) {
+      if (AppConvexConfig.isAuthenticated) {
         await initialize();
       } else {
         state = state.copyWith(
@@ -166,7 +166,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      ConvexConfig.client.auth.signOut();
+      await AppConvexConfig.clearAuth();
       state = const AuthState();
     } catch (e) {
       state = state.copyWith(

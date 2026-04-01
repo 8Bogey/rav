@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_database.dart';
 
+export '../auth/auth_provider.dart' show currentUserIdProvider;
+
 /// Provider for the AppDatabase instance.
 ///
 /// This is a singleton provider that creates and manages the database

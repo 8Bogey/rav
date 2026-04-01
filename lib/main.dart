@@ -3,10 +3,10 @@ import 'package:window_manager/window_manager.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/router/app_router.dart';
-import 'package:mawlid_al_dhaki/core/router/glitch_page_transition.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
-import 'package:mawlid_al_dhaki/core/supabase/supabase_service.dart';
+import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
+import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 
 Future<void> main() async {
@@ -42,11 +42,16 @@ Future<void> main() async {
     );
   }
 
-  // Initialize Supabase
-  try {
-    await SupabaseService.initialize();
-  } catch (e) {
-    print('Failed to initialize Supabase: $e');
+  // Initialize Convex client (if URL is configured in .env)
+  final convexUrl = const String.fromEnvironment('CONVEX_URL', defaultValue: '');
+  if (convexUrl.isNotEmpty) {
+    try {
+      await AppConvexConfig.initialize(convexUrl);
+    } catch (e) {
+      debugPrint('Failed to initialize Convex: $e');
+    }
+  } else {
+    debugPrint('CONVEX_URL not set, skipping Convex initialization');
   }
 
   runApp(const ProviderScope(child: AppRoot()));
@@ -66,15 +71,7 @@ class AppRoot extends ConsumerWidget {
       themeMode: themeMode,
       theme: ThemeData(
         primarySwatch: Colors.green,
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: GlitchPageTransitionsBuilder(),
-            TargetPlatform.iOS: GlitchPageTransitionsBuilder(),
-            TargetPlatform.macOS: GlitchPageTransitionsBuilder(),
-            TargetPlatform.windows: GlitchPageTransitionsBuilder(),
-            TargetPlatform.linux: GlitchPageTransitionsBuilder(),
-          },
-        ),
+        // Use default page transitions (removed glitch dependency)
         // Apply the color scheme from PRD
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
@@ -95,15 +92,6 @@ class AppRoot extends ConsumerWidget {
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: GlitchPageTransitionsBuilder(),
-            TargetPlatform.iOS: GlitchPageTransitionsBuilder(),
-            TargetPlatform.macOS: GlitchPageTransitionsBuilder(),
-            TargetPlatform.windows: GlitchPageTransitionsBuilder(),
-            TargetPlatform.linux: GlitchPageTransitionsBuilder(),
-          },
-        ),
         // Apply dark color scheme from PRD
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.darkBgSidebar,

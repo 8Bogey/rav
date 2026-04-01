@@ -1,9 +1,10 @@
 import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 class GeneratorSettings {
-  final int id;
+  final String id;
   final String name;
   final String phoneNumber;
   final String address;
@@ -33,38 +34,21 @@ class GeneratorSettings {
     );
   }
 
-  GeneratorSettingsTableCompanion toCompanion(bool forInsert) {
+  GeneratorSettingsTableCompanion toCompanion() {
     return GeneratorSettingsTableCompanion(
-      id: forInsert ? const Value.absent() : Value(id),
+      id: Value(id),
       name: Value(name),
       phoneNumber: Value(phoneNumber),
       address: Value(address),
       logoPath: Value(logoPath),
-      createdAt: forInsert ? const Value.absent() : Value(createdAt),
       updatedAt: Value(DateTime.now()),
     );
   }
 }
 
-// Extension to add database table for generator settings
-extension GeneratorSettingsTable on AppDatabase {
-  Future<void> createGeneratorSettingsTable() async {
-    await customStatement('''
-      CREATE TABLE IF NOT EXISTS generator_settings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        phone_number TEXT NOT NULL,
-        address TEXT NOT NULL,
-        logo_path TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    ''');
-  }
-}
-
 class SettingsService {
   final AppDatabase database;
+  static const _uuid = Uuid();
 
   SettingsService(this.database);
 
@@ -76,7 +60,7 @@ class SettingsService {
       if (results.isEmpty) {
         // Create default settings if none exist
         final defaultSettings = GeneratorSettings(
-          id: 1,
+          id: _uuid.v4(),
           name: 'المولد الذكي',
           phoneNumber: '07701234567',
           address: 'بغداد - المنصور - شارع الحرية',
@@ -87,6 +71,7 @@ class SettingsService {
         
         await database.into(database.generatorSettingsTable).insert(
           GeneratorSettingsTableCompanion.insert(
+            id: defaultSettings.id,
             name: defaultSettings.name,
             phoneNumber: defaultSettings.phoneNumber,
             address: defaultSettings.address,
@@ -102,7 +87,7 @@ class SettingsService {
     } catch (e) {
       // Return default settings on error
       return GeneratorSettings(
-        id: 1,
+        id: _uuid.v4(),
         name: 'المولد الذكي',
         phoneNumber: '07701234567',
         address: 'بغداد - المنصور - شارع الحرية',
@@ -117,14 +102,7 @@ class SettingsService {
   Future<bool> updateGeneratorSettings(GeneratorSettings settings) async {
     try {
       await database.into(database.generatorSettingsTable).insertOnConflictUpdate(
-        GeneratorSettingsTableCompanion(
-          id: Value(settings.id),
-          name: Value(settings.name),
-          phoneNumber: Value(settings.phoneNumber),
-          address: Value(settings.address),
-          logoPath: Value(settings.logoPath),
-          updatedAt: Value(DateTime.now()),
-        ),
+        settings.toCompanion(),
       );
       return true;
     } catch (e) {

@@ -9,7 +9,6 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mawlid_al_dhaki/core/sync/outbox_processor.dart';
 
 /// Connectivity state
 enum ConnectivityState {
@@ -64,13 +63,11 @@ class NetworkStatus {
 
 /// Network status notifier
 class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
-  final OutboxProcessor? _outboxProcessor;
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
-  NetworkStatusNotifier({OutboxProcessor? outboxProcessor})
-      : _outboxProcessor = outboxProcessor,
-        super(const NetworkStatus()) {
+  NetworkStatusNotifier()
+      : super(const NetworkStatus()) {
     _init();
   }
 
@@ -96,12 +93,6 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
     state = state.copyWith(
       connectivity: isOnline ? ConnectivityState.online : ConnectivityState.offline,
     );
-
-    // Trigger outbox processing when coming online
-    if (isOnline && _outboxProcessor != null) {
-      debugPrint('NetworkStatusNotifier: Online - triggering outbox processing');
-      _outboxProcessor!.processPendingEntries();
-    }
   }
 
   /// Update sync status
@@ -115,20 +106,14 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
 
   /// Update pending outbox count
   Future<void> updatePendingCount() async {
-    if (_outboxProcessor != null) {
-      final count = await _outboxProcessor!.getPendingCount();
-      state = state.copyWith(pendingOutboxCount: count);
-    }
+    // TODO: Implement when outbox is ready
+    state = state.copyWith(pendingOutboxCount: 0);
   }
 
   /// Force sync now
   Future<void> forceSyncNow() async {
-    if (_outboxProcessor != null && state.isOnline) {
-      state = state.copyWith(syncStatus: SyncStatusState.syncing);
-      await _outboxProcessor!.processPendingEntries();
-      await updatePendingCount();
-      state = state.copyWith(syncStatus: SyncStatusState.completed);
-    }
+    // TODO: Implement when outbox is ready
+    state = state.copyWith(syncStatus: SyncStatusState.completed);
   }
 
   @override

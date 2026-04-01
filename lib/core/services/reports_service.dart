@@ -5,20 +5,18 @@ import 'package:mawlid_al_dhaki/core/services/workers_service.dart';
 
 class ReportsService {
   final AppDatabase database;
-  late SubscribersService _subscribersService;
-  late CabinetsService _cabinetsService;
-  late WorkersService _workersService;
+  final String ownerId;
 
-  ReportsService(this.database) {
-    _subscribersService = SubscribersService(database);
-    _cabinetsService = CabinetsService(database);
-    _workersService = WorkersService(database);
-  }
+  ReportsService(this.database, {required this.ownerId});
+
+  SubscribersService get _subscribersService => SubscribersService(database);
+  CabinetsService get _cabinetsService => CabinetsService(database);
+  WorkersService get _workersService => WorkersService(database);
 
   // Get payment ratio data for pie chart
   Future<Map<String, double>> getPaymentRatioData() async {
     try {
-      final subscribers = await _subscribersService.getAllSubscribers();
+      final subscribers = await _subscribersService.getAllSubscribers(ownerId: ownerId);
       
       int paid = 0;
       int partial = 0;
@@ -74,7 +72,7 @@ class ReportsService {
   // Get monthly progress data for line chart
   Future<List<double>> getMonthlyProgressData() async {
     try {
-      final cabinets = await _cabinetsService.getAllCabinets();
+      final cabinets = await _cabinetsService.getAllCabinets(ownerId: ownerId);
       
       // Calculate progress based on subscribers per cabinet
       List<double> progressData = [];
@@ -100,7 +98,7 @@ class ReportsService {
 
   // Get workers report data
   Future<List<Map<String, dynamic>>> getWorkersReportData() async {
-    final workers = await _workersService.getAllWorkers();
+    final workers = await _workersService.getAllWorkers(ownerId: ownerId);
     return workers.map((worker) {
       return {
         'name': worker.name,
@@ -113,7 +111,7 @@ class ReportsService {
 
   // Get debtors report data
   Future<List<Map<String, dynamic>>> getDebtorsReportData() async {
-    final subscribers = await _subscribersService.getAllSubscribers();
+    final subscribers = await _subscribersService.getAllSubscribers(ownerId: ownerId);
     return subscribers.where((subscriber) => subscriber.accumulatedDebt > 0).map((subscriber) {
       return {
         'name': subscriber.name,
@@ -126,7 +124,7 @@ class ReportsService {
 
   // Get cabinets report data
   Future<List<Map<String, dynamic>>> getCabinetsReportData() async {
-    final cabinets = await _cabinetsService.getAllCabinets();
+    final cabinets = await _cabinetsService.getAllCabinets(ownerId: ownerId);
     return cabinets.map((cabinet) {
       return {
         'name': cabinet.name,

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/cabinets_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
+import 'package:uuid/uuid.dart';
 
 class CabinetsService extends BaseService {
   CabinetsService(super.database);
@@ -9,24 +10,28 @@ class CabinetsService extends BaseService {
   CabinetsDao get _dao => database.cabinetsDao;
 
   // Get all cabinets
-  Future<List<Cabinet>> getAllCabinets() {
-    return _dao.getAllCabinets();
+  Future<List<Cabinet>> getAllCabinets({required String ownerId}) {
+    return _dao.getAllCabinets(ownerId: ownerId);
   }
 
   // Get cabinet by ID
-  Future<Cabinet?> getCabinetById(int id) {
-    return _dao.getCabinetById(id);
+  Future<Cabinet?> getCabinetById(String id, {required String ownerId}) {
+    return _dao.getCabinetById(id, ownerId: ownerId);
   }
 
   // Get cabinet by name
-  Future<Cabinet?> getCabinetByName(String name) {
-    return _dao.getCabinetByName(name);
+  Future<Cabinet?> getCabinetByName(String name, {required String ownerId}) {
+    return _dao.getCabinetByName(name, ownerId: ownerId);
   }
 
   // Add a new cabinet
-  Future<int> addCabinet(Cabinet cabinet) {
-    // For inserts, we want to let the database auto-generate the ID
+  Future<String> addCabinet(Cabinet cabinet, {required String ownerId}) {
+    // Generate a UUID for the new cabinet
+    final id = const Uuid().v4();
+    
     final companion = CabinetsTableCompanion(
+      id: Value(id),
+      ownerId: Value(ownerId),
       name: Value(cabinet.name),
       letter: Value(cabinet.letter),
       totalSubscribers: Value(cabinet.totalSubscribers),
@@ -34,82 +39,43 @@ class CabinetsService extends BaseService {
       collectedAmount: Value(cabinet.collectedAmount),
       delayedSubscribers: Value(cabinet.delayedSubscribers),
       completionDate: Value(cabinet.completionDate),
+      createdAt: Value(DateTime.now()),
+      updatedAt: Value(DateTime.now()),
     );
     return _dao.addCabinet(companion);
   }
 
   // Update a cabinet
-  Future<bool> updateCabinet(Cabinet cabinet) {
-    final companion = cabinet.toCompanion(false);
+  Future<bool> updateCabinet(Cabinet cabinet, {required String ownerId}) {
+    final companion = cabinet.toCompanion(false).copyWith(
+      ownerId: Value(ownerId),
+      updatedAt: Value(DateTime.now()),
+    );
     return _dao.updateCabinet(companion);
   }
 
   // Delete a cabinet
-  Future<int> deleteCabinet(int id) {
+  Future<int> deleteCabinet(String id) {
     return _dao.deleteCabinet(id);
   }
 
   // Get dirty cabinets (those with dirtyFlag = true)
-  Future<List<Cabinet>> getDirtyCabinets() {
-    return _dao.getDirtyCabinets();
-  }
-  
-  // Mark a cabinet record for manual conflict resolution
-  Future<int> markConflictForManualResolution(int id) {
-    return _dao.markConflictForManualResolution(id);
-  }
-  
-  // Update conflict resolution information
-  Future<int> updateConflictResolution(int id, {
-    String? conflictResolutionStrategy,
-    DateTime? conflictResolvedAt,
-    String? conflictOrigin,
-  }) {
-    return _dao.updateConflictResolution(
-      id,
-      conflictResolutionStrategy: conflictResolutionStrategy,
-      conflictResolvedAt: conflictResolvedAt,
-      conflictOrigin: conflictOrigin,
-    );
-  }
-  
-  // Mark record as deleted locally
-  Future<int> markDeletedLocally(int id) {
-    return _dao.markDeletedLocally(id);
-  }
-  
-  // Undelete a record
-  Future<int> undeleteRecord(int id) {
-    return _dao.undeleteRecord(id);
-  }
-  
-  // Update sync error information
-  Future<int> updateSyncError(int id, String errorMessage) {
-    return _dao.updateSyncError(id, errorMessage);
-  }
-  
-  // Increment sync retry count
-  Future<int> incrementSyncRetryCount(int id) {
-    return _dao.incrementSyncRetryCount(id);
-  }
-  
-  // Reset sync error and retry count after successful sync
-  Future<int> resetSyncError(int id) {
-    return _dao.resetSyncError(id);
-  }
-  
-  // Update sync status
-  Future<int> updateSyncStatus(int id, String status) {
-    return _dao.updateSyncStatus(id, status);
+  Future<List<Cabinet>> getDirtyCabinets({required String ownerId}) {
+    return _dao.getDirtyCabinets(ownerId: ownerId);
   }
   
   // Mark record as dirty
-  Future<int> markRecordAsDirty(int id) {
+  Future<int> markRecordAsDirty(String id) {
     return _dao.markRecordAsDirty(id);
   }
   
   // Clear dirty flag
-  Future<int> clearDirtyFlag(int id) {
+  Future<int> clearDirtyFlag(String id) {
     return _dao.clearDirtyFlag(id);
+  }
+  
+  // Update last synced timestamp
+  Future<int> updateLastSyncedAt(String id) {
+    return _dao.updateLastSyncedAt(id);
   }
 }

@@ -8,7 +8,7 @@ import 'package:mawlid_al_dhaki/core/services/print_service.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
-import 'package:mawlid_al_dhaki/core/supabase/supabase_provider.dart';
+import 'package:mawlid_al_dhaki/core/sync/network_status_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Settings section provider
@@ -66,7 +66,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
-    final syncState = ref.watch(syncProvider);
+    final syncState = ref.watch(networkStatusProvider);
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -260,7 +260,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildContentArea(
       {required BuildContext context,
       required bool isDarkMode,
-      required SyncState syncState,
+      required SyncStatusState syncState,
       required WidgetRef ref}) {
     final selectedSection = ref.watch(settingsSectionProvider);
 
@@ -317,7 +317,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildSectionContent(String section,
       {required bool isDarkMode,
-      required SyncState syncState,
+      required SyncStatusState syncState,
       required WidgetRef ref,
       required BuildContext context}) {
     switch (section) {
@@ -1588,7 +1588,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildSyncSection(
       {required bool isDarkMode,
-      required SyncState syncState,
+      required SyncStatusState syncState,
       required WidgetRef ref,
       required BuildContext context}) {
     return Column(
@@ -1705,7 +1705,7 @@ class SettingsScreen extends ConsumerWidget {
                       onPressed: syncState.isSyncing
                           ? null
                           : () {
-                              ref.read(syncProvider.notifier).syncToCloud();
+                              ref.read(networkStatusProvider.notifier).syncToCloud();
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -1729,7 +1729,7 @@ class SettingsScreen extends ConsumerWidget {
                       onPressed: syncState.isSyncing
                           ? null
                           : () {
-                              ref.read(syncProvider.notifier).syncFromCloud();
+                              ref.read(networkStatusProvider.notifier).syncFromCloud();
                             },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(
@@ -1760,7 +1760,7 @@ class SettingsScreen extends ConsumerWidget {
                   onPressed: syncState.isSyncing
                       ? null
                       : () {
-                          ref.read(syncProvider.notifier).syncBothDirections();
+                          ref.read(networkStatusProvider.notifier).syncBothDirections();
                         },
                   child: Text(
                     'مزامنة ثنائي الاتجاه',

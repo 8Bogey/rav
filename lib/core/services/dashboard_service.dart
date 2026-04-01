@@ -5,18 +5,17 @@ import 'package:mawlid_al_dhaki/core/services/cabinets_service.dart';
 
 class DashboardService {
   final AppDatabase database;
-  late SubscribersService _subscribersService;
-  late CabinetsService _cabinetsService;
+  final String ownerId;
 
-  DashboardService(this.database) {
-    _subscribersService = SubscribersService(database);
-    _cabinetsService = CabinetsService(database);
-  }
+  DashboardService(this.database, {required this.ownerId});
+
+  SubscribersService get _subscribersService => SubscribersService(database);
+  CabinetsService get _cabinetsService => CabinetsService(database);
 
   // Get total number of subscribers
   Future<int> getTotalSubscribers() async {
     try {
-      final subscribers = await _subscribersService.getAllSubscribers();
+      final subscribers = await _subscribersService.getAllSubscribers(ownerId: ownerId);
       return subscribers.length;
     } catch (e) {
       return 0;
@@ -26,7 +25,7 @@ class DashboardService {
   // Get active subscribers (subscribers with no accumulated debt)
   Future<int> getActiveSubscribers() async {
     try {
-      final subscribers = await _subscribersService.getAllSubscribers();
+      final subscribers = await _subscribersService.getAllSubscribers(ownerId: ownerId);
       return subscribers.where((s) => s.accumulatedDebt <= 0).length;
     } catch (e) {
       return 0;
@@ -103,7 +102,7 @@ class DashboardService {
   // Get total number of cabinets
   Future<int> getTotalCabinets() async {
     try {
-      final cabinets = await _cabinetsService.getAllCabinets();
+      final cabinets = await _cabinetsService.getAllCabinets(ownerId: ownerId);
       return cabinets.length;
     } catch (e) {
       return 0;
@@ -113,7 +112,7 @@ class DashboardService {
   // Get completed cabinets (100% progress)
   Future<int> getCompletedCabinets() async {
     try {
-      final cabinets = await _cabinetsService.getAllCabinets();
+      final cabinets = await _cabinetsService.getAllCabinets(ownerId: ownerId);
       int completed = 0;
       for (var cabinet in cabinets) {
         if (cabinet.totalSubscribers > 0 && 
@@ -153,7 +152,7 @@ class DashboardService {
   // Get subscribers who haven't paid (have debt)
   Future<int> getNonPayingSubscribers() async {
     try {
-      final subscribers = await _subscribersService.getAllSubscribers();
+      final subscribers = await _subscribersService.getAllSubscribers(ownerId: ownerId);
       return subscribers.where((s) => s.accumulatedDebt > 0).length;
     } catch (e) {
       return 0;
@@ -286,7 +285,7 @@ class DashboardService {
   // Get payment status distribution for pie chart
   Future<Map<String, int>> getPaymentStatusDistribution() async {
     try {
-      final subscribers = await _subscribersService.getAllSubscribers();
+      final subscribers = await _subscribersService.getAllSubscribers(ownerId: ownerId);
       
       int paid = 0;
       int partial = 0;
@@ -315,7 +314,7 @@ class DashboardService {
   // Get cabinets with progress
   Future<List<Map<String, dynamic>>> getCabinetsWithProgress() async {
     try {
-      final cabinets = await _cabinetsService.getAllCabinets();
+      final cabinets = await _cabinetsService.getAllCabinets(ownerId: ownerId);
       
       return cabinets.take(5).map((cabinet) {
         double progress = cabinet.totalSubscribers > 0 
@@ -352,7 +351,7 @@ class DashboardService {
   // Get alerts (subscribers with high debt)
   Future<List<Map<String, dynamic>>> getAlerts() async {
     try {
-      final subscribers = await _subscribersService.getAllSubscribers();
+      final subscribers = await _subscribersService.getAllSubscribers(ownerId: ownerId);
       
       List<Map<String, dynamic>> alerts = [];
       
