@@ -9,8 +9,8 @@
  * Usage:
  *   export const getActiveCabinets = withTenantQuery({
  *     args: { ... },  // NO ownerId needed
- *     handler: async (ctx, args, ownerId) => {
- *       // Use ownerId directly - it's already validated
+ *     handler: async (ctx, args, tenantId) => {
+ *       // Use tenantId directly - it's already validated
  *       return await ctx.db.query("cabinets")...
  *     }
  *   });
@@ -138,18 +138,18 @@ export function withTenantMutation<
  * Create a filtered query for tenant data
  * 
  * Usage:
- *   const q = tenantQuery(ctx, "cabinets", ownerId);
+ *   const q = tenantQuery(ctx, "cabinets", tenantId);
  *   const results = await q.filter((q) => q.eq(q.field("isDeleted"), false)).collect();
  */
 export function tenantQuery(
   ctx: { db: any },
   tableName: keyof DataModel,
-  ownerId: string,
+  tenantId: string,
   indexName?: string
 ): GenericExpression<DataModel[keyof DataModel]> {
   const baseQuery = indexName
-    ? ctx.db.query(tableName).withIndex(indexName, (q) => q.eq("ownerId", ownerId))
-    : ctx.db.query(tableName).withIndex("by_ownerId", (q) => q.eq("ownerId", ownerId));
+    ? ctx.db.query(tableName).withIndex(indexName, (q) => q.eq("ownerId", tenantId))
+    : ctx.db.query(tableName).withIndex("by_ownerId", (q) => q.eq("ownerId", tenantId));
   
   return baseQuery;
 }
@@ -161,7 +161,7 @@ export class TenantQueryBuilder {
   constructor(
     private ctx: { db: any },
     private tableName: keyof DataModel,
-    private ownerId: string
+    private tenantId: string
   ) {}
 
   /**
@@ -170,7 +170,7 @@ export class TenantQueryBuilder {
   byOwnerId(indexName: string = "by_ownerId") {
     return this.ctx.db
       .query(this.tableName)
-      .withIndex(indexName, (q) => q.eq("ownerId", this.ownerId));
+      .withIndex(indexName, (q) => q.eq("ownerId", this.tenantId));
   }
 
   /**
@@ -194,7 +194,7 @@ export class TenantQueryBuilder {
 export function createTenantQuery(
   ctx: { db: any },
   tableName: keyof DataModel,
-  ownerId: string
+  tenantId: string
 ) {
-  return new TenantQueryBuilder(ctx, tableName, ownerId);
+  return new TenantQueryBuilder(ctx, tableName, tenantId);
 }
