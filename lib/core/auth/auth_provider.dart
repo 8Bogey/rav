@@ -1,10 +1,11 @@
 /**
- * Auth Provider for Riverpod
+ * Auth Provider for Riverpod with Auth0 integration
  * 
- * Manages authentication state and user session.
- * Uses Convex for authentication.
+ * Manages authentication state and user session via Auth0.
+ * Bridges Auth0 identity to Convex for tenant isolation.
  */
 
+import 'package:auth0_flutter/auth0_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
@@ -18,9 +19,10 @@ enum UserRole {
 /// Auth state
 class AuthState {
   final bool isAuthenticated;
-  final String? userId;
+  final String? userId; // Auth0 sub
   final String? email;
   final String? name;
+  final String? picture;
   final UserRole role;
   final List<String> permissions;
   final bool isLoading;
@@ -31,6 +33,7 @@ class AuthState {
     this.userId,
     this.email,
     this.name,
+    this.picture,
     this.role = UserRole.admin,
     this.permissions = const [],
     this.isLoading = false,
@@ -42,6 +45,7 @@ class AuthState {
     String? userId,
     String? email,
     String? name,
+    String? picture,
     UserRole? role,
     List<String>? permissions,
     bool? isLoading,
@@ -52,177 +56,94 @@ class AuthState {
       userId: userId ?? this.userId,
       email: email ?? this.email,
       name: name ?? this.name,
+      picture: picture ?? this.picture,
       role: role ?? this.role,
       permissions: permissions ?? this.permissions,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
   }
-
-  /// Check if user has a specific permission
-  bool hasPermission(String permission) {
-    // Admin has all permissions
-    if (role == UserRole.admin || permissions.contains('*')) {
-      return true;
-    }
-    return permissions.contains(permission);
-  }
-
-  /// Check if user has all specified permissions
-  bool hasAllPermissions(List<String> requiredPermissions) {
-    return requiredPermissions.every(hasPermission);
-  }
 }
 
 /// Auth notifier for managing auth state
 class AuthNotifier extends StateNotifier<AuthState> {
+  final Auth0 _auth0 = Auth0(
+    'dev-hennzyl8c1leuws2.us.auth0.com', 
+    'gdGUvXRCjz41MNnaMPZ77M1ZCIC1IFS7'
+  );
+
   AuthNotifier() : super(const AuthState());
 
-  /// Initialize auth state from Convex
+  /// Initialize auth state (check for existing session)
   Future<void> initialize() async {
     state = state.copyWith(isLoading: true);
-
     try {
-      if (!AppConvexConfig.isInitialized) {
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: false,
-        );
-        return;
-      }
-
-      // Check if authenticated using the isAuthenticated getter
-      if (AppConvexConfig.isAuthenticated) {
-        // For now, use placeholder values - in production you'd query Convex for user info
-        state = AuthState(
-          isAuthenticated: true,
-          userId: 'user', // Placeholder
-          email: null,
-          name: null,
-          role: UserRole.admin, // Default role, will be updated from worker profile
-          permissions: [], // Will be loaded from worker profile
-          isLoading: false,
-        );
-
-        // Load user profile to get role and permissions
-        await _loadUserProfile();
+      final credentials = await _auth0.credentialsManager.credentials();
+      if (credentials != null) {
+        await _updateConvexAndState(credentials);
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: false,
-        );
+        state = state.copyWith(isLoading: false, isAuthenticated: false);
       }
     } catch (e) {
-      debugPrint('AuthNotifier: Error initializing: $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      debugPrint('AuthNotifier: No existing session: $e');
+      state = state.copyWith(isLoading: false, isAuthenticated: false);
     }
   }
 
-  /// Load user profile from Convex to get role and permissions
-  Future<void> _loadUserProfile() async {
-    if (!state.isAuthenticated || state.userId == null) return;
-
-    try {
-      // Query worker by ownerId
-      // Note: This would need to be implemented as a query in Convex
-      // For now, we'll default to admin role
-      state = state.copyWith(
-        role: UserRole.admin,
-        permissions: ['*'], // Admin has all permissions
-      );
-    } catch (e) {
-      debugPrint('AuthNotifier: Error loading profile: $e');
-    }
-  }
-
-  /// Sign in (would use Convex auth)
+  /// Sign in with Auth0
   Future<void> signIn() async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
-      // Convex auth would be handled here
-      // For now, just check if client is authenticated
-      if (AppConvexConfig.isAuthenticated) {
-        await initialize();
-      } else {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Not authenticated',
-        );
-      }
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
+      final credentials = await _auth0.webAuthentication().login(
+        audience: 'https://dev-hennzyl8c1leuws2.us.auth0.com/userinfo',
       );
+      await _updateConvexAndState(credentials);
+    } catch (e) {
+      debugPrint('AuthNotifier: Sign in error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   /// Sign out
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true);
-
     try {
+      await _auth0.webAuthentication().logout();
       await AppConvexConfig.clearAuth();
       state = const AuthState();
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  /// Update role
-  void setRole(UserRole role) {
-    state = state.copyWith(role: role);
-  }
+  /// Internal helper to sync Auth0 token to Convex and update local state
+  Future<void> _updateConvexAndState(Credentials credentials) async {
+    // 1. Pass the Auth0 ID Token to Convex
+    // This allows Convex to verify the user identity and enforce tenant isolation.
+    await AppConvexConfig.setAuth(credentials.idToken);
 
-  /// Update permissions
-  void setPermissions(List<String> permissions) {
-    state = state.copyWith(permissions: permissions);
-  }
-
-  /// Clear error
-  void clearError() {
-    state = state.copyWith(error: null);
+    final user = credentials.user;
+    state = AuthState(
+      isAuthenticated: true,
+      userId: user.sub,
+      email: user.email,
+      name: user.name,
+      picture: user.pictureUrl?.toString(),
+      role: UserRole.admin, // In SaaS, the first user is usually admin
+      permissions: ['*'],
+      isLoading: false,
+    );
   }
 }
 
 /// Provider for auth state
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier();
+  final notifier = AuthNotifier();
+  // Don't auto-initialize here to avoid circular dependencies if we use it in main
+  return notifier;
 });
 
 /// Provider for current user ID (ownerId)
 final currentUserIdProvider = Provider<String?>((ref) {
   return ref.watch(authStateProvider).userId;
-});
-
-/// Provider for checking if user is admin
-final isAdminProvider = Provider<bool>((ref) {
-  return ref.watch(authStateProvider).role == UserRole.admin;
-});
-
-/// Provider for checking if user is worker
-final isWorkerProvider = Provider<bool>((ref) {
-  return ref.watch(authStateProvider).role == UserRole.worker;
-});
-
-/// Provider for permission check
-final hasPermissionProvider = Provider.family<bool, String>((ref, permission) {
-  return ref.watch(authStateProvider).hasPermission(permission);
-});
-
-/// Provider for auth loading state
-final isAuthLoadingProvider = Provider<bool>((ref) {
-  return ref.watch(authStateProvider).isLoading;
-});
-
-/// Provider for auth error
-final authErrorProvider = Provider<String?>((ref) {
-  return ref.watch(authStateProvider).error;
 });
