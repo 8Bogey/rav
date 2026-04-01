@@ -54,7 +54,7 @@ dependencies:
 
   # ── Cloud Sync ────────────────────────────────────────────────
   supabase_flutter: ^2.8.0       # ✅ مزامنة سحابية (keeping for compatibility)
-  convex_flutter: ^3.0.1        # ✅ Convex client (new)
+  convex_flutter: ^3.0.1         # ✅ Convex client
 
   # ── Icons & SVG ───────────────────────────────────────────────
   phosphor_flutter: ^2.1.0       # ✅ أيقونات Outlined رفيقة 20px (مطابق Bitepoint)
