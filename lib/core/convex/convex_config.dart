@@ -1,9 +1,9 @@
-/**
- * Convex Client Configuration
- * 
- * Initializes and provides the Convex client for the Flutter app.
- * Used for real-time subscriptions and mutations.
- */
+// Convex Client Configuration
+// 
+// Initializes and provides the Convex client for the Flutter app.
+// Used for real-time subscriptions and mutations.
+
+import 'dart:async';
 
 import 'package:convex_flutter/convex_flutter.dart';
 import 'package:flutter/foundation.dart';
