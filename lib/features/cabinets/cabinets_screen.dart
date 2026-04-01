@@ -20,7 +20,7 @@ class CabinetsScreen extends ConsumerStatefulWidget {
 
 class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
   // Track which cabinet is pending delete confirmation
-  int? _pendingDeleteCabinetId;
+  String? _pendingDeleteCabinetId;
 
   @override
   Widget build(BuildContext context) {
@@ -337,7 +337,7 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                             color: isPendingDelete
                                 ? Colors.white
                                 : AppColors.statusDanger,
-                            onTap: () => _handleDeleteTap(ref, cabinet.id),
+                            onTap: () => _handleDeleteTap(ref, cabinet.id.toString()),
                             tooltip: isPendingDelete ? 'تأكيد الحذف' : 'حذف',
                           ),
                         ),
@@ -590,7 +590,7 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
     );
   }
 
-  void _handleDeleteTap(WidgetRef ref, int cabinetId) {
+  void _handleDeleteTap(WidgetRef ref, String cabinetId) {
     if (_pendingDeleteCabinetId == cabinetId) {
       // Confirm delete
       ref.read(cabinetsProvider.notifier).deleteCabinet(cabinetId);

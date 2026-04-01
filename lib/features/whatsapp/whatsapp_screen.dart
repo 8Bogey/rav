@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/services/service_providers.dart';
-
-// Re-export for convenience
-export 'package:mawlid_al_dhaki/core/services/whatsapp_service.dart' show WhatsappTemplate;
+import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 
 
 
@@ -19,11 +18,12 @@ class WhatsappScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
     final whatsappService = ref.watch(whatsappServiceProvider);
+    final ownerId = ref.watch(currentUserIdProvider) ?? '';
     
     return FutureBuilder(
       future: Future.wait([
-        whatsappService.getAllTemplates(),
-        whatsappService.getSubscribersCount(),
+        whatsappService.getAllTemplates(ownerId: ownerId),
+        whatsappService.getSubscribersCount(ownerId: ownerId),
         whatsappService.getMessagesLog(),
       ]),
       builder: (context, snapshot) {
@@ -110,7 +110,7 @@ class WhatsappScreen extends ConsumerWidget {
         
         // Extract data from snapshot
         final data = snapshot.data as List<dynamic>;
-        final templates = data[0] as List<WhatsappTemplate>;
+        final templates = data[0] as List<dynamic>;
         final subscribersCount = data[1] as int;
         final messagesLog = data[2] as List<Map<String, dynamic>>;
         
@@ -230,7 +230,7 @@ class WhatsappScreen extends ConsumerWidget {
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  Widget _buildTemplatesColumn(List<WhatsappTemplate> templates, {required bool isDarkMode}) {
+  Widget _buildTemplatesColumn(List<dynamic> templates, {required bool isDarkMode}) {
     return Expanded(
       flex: 1,
       child: Container(

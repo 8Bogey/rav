@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
+import '../../../core/auth/auth_provider.dart';
 
 /// State for payments
 class PaymentsState {
@@ -8,8 +9,8 @@ class PaymentsState {
   final bool isLoading;
   final String? error;
   final String? filterByMonth; // Format: 'YYYY-MM'
-  final int? filterBySubscriberId;
-  final int? filterByWorkerId;
+  final String? filterBySubscriberId;
+  final String? filterByWorkerId;
 
   const PaymentsState({
     this.payments = const [],
@@ -25,8 +26,8 @@ class PaymentsState {
     bool? isLoading,
     String? error,
     String? filterByMonth,
-    int? filterBySubscriberId,
-    int? filterByWorkerId,
+    String? filterBySubscriberId,
+    String? filterByWorkerId,
     bool clearError = false,
     bool clearFilters = false,
   }) {
@@ -52,9 +53,11 @@ class PaymentsState {
 class PaymentsNotifier extends StateNotifier<PaymentsState> {
   final Ref _ref;
   late PaymentsService _service;
+  String _ownerId = '';
 
   PaymentsNotifier(this._ref) : super(const PaymentsState()) {
     _service = _ref.read(paymentsServiceProvider);
+    _ownerId = _ref.read(currentUserIdProvider) ?? '';
     loadPayments();
   }
 
@@ -63,7 +66,7 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      var payments = await _service.getAllPayments();
+      var payments = await _service.getAllPayments(ownerId: _ownerId);
 
       // Apply filters
       if (state.filterByMonth != null) {
@@ -102,7 +105,7 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
   }
 
   /// Filter by subscriber
-  Future<void> filterBySubscriber(int? subscriberId) async {
+  Future<void> filterBySubscriber(String? subscriberId) async {
     state = state.copyWith(filterBySubscriberId: subscriberId);
     await loadPayments();
   }
@@ -114,24 +117,28 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
   }
 
   /// Add a new payment
-  Future<int> addPayment({
-    required int subscriberId,
+  Future<String> addPayment({
+    required String subscriberId,
     required double amount,
     required String worker,
     required String cabinet,
     DateTime? date,
   }) async {
     try {
+      // Create payment with required fields - service will override with proper values
       final payment = Payment(
-        id: 0, // Will be auto-generated
+        id: '',
+        ownerId: _ownerId,
         subscriberId: subscriberId,
         amount: amount,
         worker: worker,
         cabinet: cabinet,
         date: date ?? DateTime.now(),
+        version: 1,
+        isDeleted: false,
       );
       
-      final id = await _service.addPayment(payment);
+      final id = await _service.addPayment(payment, ownerId: _ownerId);
 
       await loadPayments();
       return id;
@@ -144,7 +151,7 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
   /// Update an existing payment
   Future<void> updatePayment(Payment payment) async {
     try {
-      await _service.updatePayment(payment);
+      await _service.updatePayment(payment, ownerId: _ownerId);
       await loadPayments();
     } catch (e) {
       state = state.copyWith(error: 'فشل تحديث الدفعة: $e');
@@ -153,9 +160,9 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
   }
 
   /// Delete a payment
-  Future<void> deletePayment(int id) async {
+  Future<void> deletePayment(String id) async {
     try {
-      await _service.deletePayment(id);
+      await _service.deletePayment(id, ownerId: _ownerId);
       await loadPayments();
     } catch (e) {
       state = state.copyWith(error: 'فشل حذف الدفعة: $e');
@@ -163,43 +170,14 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
     }
   }
 
+  /// Get payment by ID
+  Future<Payment?> getPaymentById(String id) async {
+    return await _service.getPaymentById(id, ownerId: _ownerId);
+  }
+
   /// Get payments by subscriber ID
-  Future<List<Payment>> getPaymentsBySubscriberId(int subscriberId) async {
-    return await _service.getPaymentsBySubscriberId(subscriberId);
-  }
-
-  /// Get total amount for a month
-  Future<double> getMonthlyTotal(String month) async {
-    final payments = await _service.getAllPayments();
-
-    double total = 0;
-    for (var payment in payments) {
-      final monthStr =
-          '${payment.date.year}-${payment.date.month.toString().padLeft(2, '0')}';
-      if (monthStr == month) {
-        total += payment.amount;
-      }
-    }
-
-    return total;
-  }
-
-  /// Get today's total
-  Future<double> getTodayTotal() async {
-    final payments = await _service.getAllPayments();
-
-    final today = DateTime.now();
-    final todayStart = DateTime(today.year, today.month, today.day);
-
-    double total = 0;
-    for (var payment in payments) {
-      if (payment.date.isAfter(todayStart) ||
-          payment.date.isAtSameMomentAs(todayStart)) {
-        total += payment.amount;
-      }
-    }
-
-    return total;
+  Future<List<Payment>> getPaymentsBySubscriberId(String subscriberId) async {
+    return await _service.getPaymentsBySubscriberId(subscriberId, ownerId: _ownerId);
   }
 }
 
@@ -211,27 +189,30 @@ final paymentsProvider =
 
 /// Provider for a single payment by ID
 final paymentByIdProvider =
-    FutureProvider.family<Payment?, int>((ref, id) async {
+    FutureProvider.family<Payment?, String>((ref, id) async {
   final service = ref.watch(paymentsServiceProvider);
-  return await service.getPaymentById(id);
+  final ownerId = ref.watch(currentUserIdProvider) ?? '';
+  return await service.getPaymentById(id, ownerId: ownerId);
 });
 
 /// Provider for payments by subscriber
 final paymentsBySubscriberProvider =
-    FutureProvider.family<List<Payment>, int>((ref, subscriberId) async {
+    FutureProvider.family<List<Payment>, String>((ref, subscriberId) async {
   final service = ref.watch(paymentsServiceProvider);
-  return await service.getPaymentsBySubscriberId(subscriberId);
+  final ownerId = ref.watch(currentUserIdProvider) ?? '';
+  return await service.getPaymentsBySubscriberId(subscriberId, ownerId: ownerId);
 });
 
-/// Provider for monthly totals
-final monthlyTotalProvider =
-    FutureProvider.family<double, String>((ref, month) async {
-  final notifier = ref.read(paymentsProvider.notifier);
-  return await notifier.getMonthlyTotal(month);
+/// Provider for total payments amount
+final totalPaymentsProvider = Provider<double>((ref) {
+  final payments = ref.watch(paymentsProvider).payments;
+  return payments.fold(0.0, (double sum, p) => sum + p.amount);
 });
 
-/// Provider for today's total
-final todayTotalProvider = FutureProvider<double>((ref) async {
-  final notifier = ref.read(paymentsProvider.notifier);
-  return await notifier.getTodayTotal();
+/// Provider for monthly payments total
+final monthlyPaymentsProvider = Provider.family<double, String>((ref, month) {
+  final payments = ref.watch(paymentsProvider).payments;
+  return payments
+      .where((p) => '${p.date.year}-${p.date.month.toString().padLeft(2, '0')}' == month)
+      .fold(0.0, (double sum, p) => sum + p.amount);
 });

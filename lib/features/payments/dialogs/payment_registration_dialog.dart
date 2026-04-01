@@ -481,7 +481,7 @@ class _PaymentRegistrationDialogState
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
+                  child: DropdownButton<String>(
                     value: _selectedWorkerId,
                     isExpanded: true,
                     hint: Text(
@@ -493,7 +493,7 @@ class _PaymentRegistrationDialogState
                       ),
                     ),
                     items: workersState.workers.map((worker) {
-                      return DropdownMenuItem<int>(
+                      return DropdownMenuItem<String>(
                         value: worker.id,
                         child: Text(
                           worker.name,

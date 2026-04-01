@@ -7,11 +7,13 @@ import 'package:mawlid_al_dhaki/core/services/reports_service.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 
 // Provider for ReportsService
 final reportsServiceProvider = Provider((ref) {
   final database = ref.read(databaseProvider);
-  return ReportsService(database);
+  final ownerId = ref.read(currentUserIdProvider) ?? '';
+  return ReportsService(database, ownerId: ownerId);
 });
 
 

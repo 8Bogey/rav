@@ -59,6 +59,12 @@ class NetworkStatus {
 
   bool get isOnline => connectivity == ConnectivityState.online;
   bool get hasPendingSync => pendingOutboxCount > 0;
+  
+  // Legacy compatibility getters for old Supabase sync code
+  bool get isSyncing => syncStatus == SyncStatusState.syncing;
+  String? get errorMessage => lastError;
+  String? get lastConflictSummaryAr => null;
+  int get manualConflictAttentionCount => 0;
 }
 
 /// Network status notifier
@@ -113,6 +119,27 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
   /// Force sync now
   Future<void> forceSyncNow() async {
     // TODO: Implement when outbox is ready
+    state = state.copyWith(syncStatus: SyncStatusState.completed);
+  }
+
+  /// Sync to cloud (placeholder for Convex)
+  Future<void> syncToCloud() async {
+    state = state.copyWith(syncStatus: SyncStatusState.syncing);
+    // TODO: Implement Convex sync
+    state = state.copyWith(syncStatus: SyncStatusState.completed);
+  }
+
+  /// Sync from cloud (placeholder for Convex)
+  Future<void> syncFromCloud() async {
+    state = state.copyWith(syncStatus: SyncStatusState.syncing);
+    // TODO: Implement Convex sync
+    state = state.copyWith(syncStatus: SyncStatusState.completed);
+  }
+
+  /// Sync both directions (placeholder for Convex)
+  Future<void> syncBothDirections() async {
+    state = state.copyWith(syncStatus: SyncStatusState.syncing);
+    // TODO: Implement Convex sync
     state = state.copyWith(syncStatus: SyncStatusState.completed);
   }
 

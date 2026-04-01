@@ -1,6 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mawlid_al_dhaki/core/supabase/supabase_provider.dart'
-    show supabaseServiceProvider, syncProvider;
 
 /// When `false` (build with `--dart-define=DEMO_AUTH=false`), demo login is rejected until real auth is wired.
 const bool kDemoAuthLogin =
@@ -81,45 +79,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return;
     }
     
-    // Successful authentication - start background sync
+    // Successful authentication
     state = state.copyWith(
       isAuthenticated: true,
       errorMessage: null,
     );
-    
-    // Trigger initial sync after successful login (don't await - runs in background)
-    _startBackgroundSync();
   }
   
-  void _startBackgroundSync() {
-    try {
-      final supabaseService = _ref.read(supabaseServiceProvider);
-      // Start background sync with connectivity monitoring
-      supabaseService.startBackgroundSync();
-      
-      // Also trigger an initial bidirectional sync - wrap in async to prevent error propagation
-      Future.microtask(() async {
-        try {
-          await _ref.read(syncProvider.notifier).syncBothDirections();
-          print('Background sync completed successfully');
-        } catch (e) {
-          print('Background sync error (non-blocking): $e');
-        }
-      });
-      
-      print('Background sync started successfully');
-    } catch (e) {
-      // Don't fail login if sync fails - just log the error
-      print('Background sync error (non-blocking): $e');
-    }
-  }
-
   void logout() {
-    try {
-      _ref.read(supabaseServiceProvider).stopBackgroundSync();
-    } catch (_) {
-      // Avoid failing logout if Supabase was never initialized
-    }
     state = state.copyWith(
       isAuthenticated: false,
       errorMessage: null,

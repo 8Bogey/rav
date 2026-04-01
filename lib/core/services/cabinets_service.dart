@@ -41,6 +41,8 @@ class CabinetsService extends BaseService {
       completionDate: Value(cabinet.completionDate),
       createdAt: Value(DateTime.now()),
       updatedAt: Value(DateTime.now()),
+      version: const Value(1),
+      isDeleted: const Value(false),
     );
     return _dao.addCabinet(companion);
   }
@@ -54,28 +56,14 @@ class CabinetsService extends BaseService {
     return _dao.updateCabinet(companion);
   }
 
-  // Delete a cabinet
-  Future<int> deleteCabinet(String id) {
-    return _dao.deleteCabinet(id);
-  }
-
-  // Get dirty cabinets (those with dirtyFlag = true)
-  Future<List<Cabinet>> getDirtyCabinets({required String ownerId}) {
-    return _dao.getDirtyCabinets(ownerId: ownerId);
-  }
-  
-  // Mark record as dirty
-  Future<int> markRecordAsDirty(String id) {
-    return _dao.markRecordAsDirty(id);
-  }
-  
-  // Clear dirty flag
-  Future<int> clearDirtyFlag(String id) {
-    return _dao.clearDirtyFlag(id);
-  }
-  
-  // Update last synced timestamp
-  Future<int> updateLastSyncedAt(String id) {
-    return _dao.updateLastSyncedAt(id);
+  // Delete a cabinet (soft delete)
+  Future<bool> deleteCabinet(String id, {required String ownerId}) {
+    final companion = CabinetsTableCompanion(
+      id: Value(id),
+      ownerId: Value(ownerId),
+      isDeleted: const Value(true),
+      updatedAt: Value(DateTime.now()),
+    );
+    return _dao.updateCabinet(companion);
   }
 }

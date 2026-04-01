@@ -125,7 +125,7 @@ class AuditService {
   /// Get the current authenticated user's name
   /// Note: AuthState doesn't store user info yet, so we use a default
   String get _currentUser {
-    final authState = _ref.read(authProvider);
+    final authState = _ref.read(authStateProvider);
     return authState.isAuthenticated ? 'المستخدم' : 'النظام';
   }
 

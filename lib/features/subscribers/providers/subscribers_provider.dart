@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 
 /// State for subscribers list
 class SubscribersState {
@@ -61,9 +62,10 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   /// Load all subscribers from database
   Future<void> loadSubscribers() async {
     state = state.copyWith(isLoading: true, clearError: true);
+    final ownerId = _ref.read(currentUserIdProvider) ?? '';
 
     try {
-      final subscribers = await _service.getAllSubscribers();
+      final subscribers = await _service.getAllSubscribers(ownerId: ownerId);
 
       state = state.copyWith(
         subscribers: subscribers,
@@ -81,14 +83,15 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   Future<void> searchSubscribers(String query) async {
     state =
         state.copyWith(isLoading: true, searchQuery: query, clearError: true);
+    final ownerId = _ref.read(currentUserIdProvider) ?? '';
 
     try {
       List<Subscriber> subscribers;
 
       if (query.isEmpty) {
-        subscribers = await _service.getAllSubscribers();
+        subscribers = await _service.getAllSubscribers(ownerId: ownerId);
       } else {
-        subscribers = await _service.searchSubscribers(query);
+        subscribers = await _service.searchSubscribers(query, ownerId: ownerId);
       }
 
       // Apply status filter if set
@@ -112,9 +115,10 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   /// Filter subscribers by status
   Future<void> filterByStatus(int? status) async {
     state = state.copyWith(isLoading: true, clearError: true);
+    final ownerId = _ref.read(currentUserIdProvider) ?? '';
 
     try {
-      var subscribers = await _service.getAllSubscribers();
+      var subscribers = await _service.getAllSubscribers(ownerId: ownerId);
 
       if (status != null) {
         subscribers = subscribers.where((s) => s.status == status).toList();
@@ -142,9 +146,10 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   /// Filter subscribers by cabinet
   Future<void> filterByCabinet(String? cabinet) async {
     state = state.copyWith(isLoading: true, clearError: true);
+    final ownerId = _ref.read(currentUserIdProvider) ?? '';
 
     try {
-      var subscribers = await _service.getAllSubscribers();
+      var subscribers = await _service.getAllSubscribers(ownerId: ownerId);
 
       if (cabinet != null && cabinet.isNotEmpty) {
         subscribers = subscribers.where((s) => s.cabinet == cabinet).toList();
@@ -172,9 +177,10 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   /// Clear all filters
   Future<void> clearFilters() async {
     state = state.copyWith(isLoading: true, clearError: true);
+    final ownerId = _ref.read(currentUserIdProvider) ?? '';
 
     try {
-      final subscribers = await _service.getAllSubscribers();
+      final subscribers = await _service.getAllSubscribers(ownerId: ownerId);
 
       state = state.copyWith(
         subscribers: subscribers,
@@ -192,7 +198,7 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   }
 
   /// Add a new subscriber
-  Future<int> addSubscriber({
+  Future<String> addSubscriber({
     required String name,
     required String code,
     required String cabinet,
@@ -204,8 +210,10 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
     String? notes,
   }) async {
     try {
+      final ownerId = _ref.read(currentUserIdProvider) ?? '';
       final subscriber = Subscriber(
-        id: 0, // Will be auto-generated
+        id: '', // Will be auto-generated
+        ownerId: ownerId,
         name: name,
         code: code,
         cabinet: cabinet,
@@ -215,9 +223,11 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
         accumulatedDebt: accumulatedDebt,
         tags: tags,
         notes: notes,
+        version: 1,
+        isDeleted: false,
       );
       
-      final id = await _service.addSubscriber(subscriber);
+      final id = await _service.addSubscriber(subscriber, ownerId: ownerId);
 
       // Refresh the list
       await loadSubscribers();
@@ -232,7 +242,8 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   /// Update an existing subscriber
   Future<void> updateSubscriber(Subscriber subscriber) async {
     try {
-      await _service.updateSubscriber(subscriber);
+      final ownerId = _ref.read(currentUserIdProvider) ?? '';
+      await _service.updateSubscriber(subscriber, ownerId: ownerId);
 
       // Refresh the list
       await loadSubscribers();
@@ -243,9 +254,10 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   }
 
   /// Delete a subscriber
-  Future<void> deleteSubscriber(int id) async {
+  Future<void> deleteSubscriber(String id) async {
     try {
-      await _service.deleteSubscriber(id);
+      final ownerId = _ref.read(currentUserIdProvider) ?? '';
+      await _service.deleteSubscriber(id, ownerId: ownerId);
 
       // Refresh the list
       await loadSubscribers();
@@ -256,13 +268,15 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   }
 
   /// Get subscriber by ID
-  Future<Subscriber?> getSubscriberById(int id) async {
-    return await _service.getSubscriberById(id);
+  Future<Subscriber?> getSubscriberById(String id) async {
+    final ownerId = _ref.read(currentUserIdProvider) ?? '';
+    return await _service.getSubscriberById(id, ownerId: ownerId);
   }
 
   /// Get subscriber by code
   Future<Subscriber?> getSubscriberByCode(String code) async {
-    return await _service.getSubscriberByCode(code);
+    final ownerId = _ref.read(currentUserIdProvider) ?? '';
+    return await _service.getSubscriberByCode(code, ownerId: ownerId);
   }
 }
 
@@ -274,15 +288,17 @@ final subscribersProvider =
 
 /// Provider for a single subscriber by ID
 final subscriberByIdProvider =
-    FutureProvider.family<Subscriber?, int>((ref, id) async {
+    FutureProvider.family<Subscriber?, String>((ref, id) async {
   final service = ref.watch(subscribersServiceProvider);
-  return await service.getSubscriberById(id);
+  final ownerId = ref.read(currentUserIdProvider) ?? '';
+  return await service.getSubscriberById(id, ownerId: ownerId);
 });
 
 /// Provider for subscribers count by status
 final subscribersCountProvider = FutureProvider<Map<int, int>>((ref) async {
   final service = ref.watch(subscribersServiceProvider);
-  final subscribers = await service.getAllSubscribers();
+  final ownerId = ref.read(currentUserIdProvider) ?? '';
+  final subscribers = await service.getAllSubscribers(ownerId: ownerId);
 
   final counts = <int, int>{};
   for (var subscriber in subscribers) {

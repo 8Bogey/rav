@@ -40,6 +40,10 @@ class SubscribersService extends BaseService {
       accumulatedDebt: Value(subscriber.accumulatedDebt),
       tags: Value(subscriber.tags),
       notes: Value(subscriber.notes),
+      version: const Value(1),
+      isDeleted: const Value(false),
+      createdAt: Value(DateTime.now()),
+      updatedAt: Value(DateTime.now()),
     );
     return _dao.addSubscriber(companion);
   }

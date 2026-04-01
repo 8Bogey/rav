@@ -9,6 +9,7 @@ import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_dimens.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_shadows.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/dialogs/subscriber_dialog.dart';
 import 'package:mawlid_al_dhaki/shared/utils/app_transitions.dart';
 import 'package:gap/gap.dart';
@@ -16,7 +17,8 @@ import 'package:gap/gap.dart';
 // Provider for DashboardService
 final dashboardServiceProvider = Provider((ref) {
   final database = ref.read(databaseProvider);
-  return DashboardService(database);
+  final ownerId = ref.read(currentUserIdProvider) ?? '';
+  return DashboardService(database, ownerId: ownerId);
 });
 
 class DashboardScreen extends ConsumerWidget {

@@ -477,7 +477,7 @@ class _PaymentRegistrationDialogState
       // Register payment through collection notifier
       final collectionNotifier = ref.read(collectionProvider.notifier);
       await collectionNotifier.registerPayment(
-        subscriberId: widget.subscriber.id,
+        subscriberId: widget.subscriber.id.toString(),
         amount: amount,
         workerName: _selectedWorker!.name,
         cabinetName: cabinet,

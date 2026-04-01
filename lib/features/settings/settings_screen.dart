@@ -260,7 +260,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildContentArea(
       {required BuildContext context,
       required bool isDarkMode,
-      required SyncStatusState syncState,
+      required NetworkStatus syncState,
       required WidgetRef ref}) {
     final selectedSection = ref.watch(settingsSectionProvider);
 
@@ -317,7 +317,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildSectionContent(String section,
       {required bool isDarkMode,
-      required SyncStatusState syncState,
+      required NetworkStatus syncState,
       required WidgetRef ref,
       required BuildContext context}) {
     switch (section) {
@@ -1472,7 +1472,7 @@ class SettingsScreen extends ConsumerWidget {
 
       // Save generator settings
       final settings = GeneratorSettings(
-        id: 1,
+        id: '',
         name: name,
         phoneNumber: phone,
         address: address,
@@ -1588,7 +1588,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildSyncSection(
       {required bool isDarkMode,
-      required SyncStatusState syncState,
+      required NetworkStatus syncState,
       required WidgetRef ref,
       required BuildContext context}) {
     return Column(

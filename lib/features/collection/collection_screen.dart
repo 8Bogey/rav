@@ -7,6 +7,7 @@ import 'package:mawlid_al_dhaki/core/services/settings_service.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 import 'package:mawlid_al_dhaki/features/collection/payment_registration_dialog.dart';
 import 'package:mawlid_al_dhaki/features/payments/providers/payments_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
@@ -78,8 +79,10 @@ final amperePriceInitProvider = FutureProvider<void>((ref) async {
 /// Notifier for managing collection state
 class CollectionNotifier extends StateNotifier<CollectionState> {
   final Ref _ref;
+  String _ownerId = '';
 
   CollectionNotifier(this._ref) : super(const CollectionState()) {
+    _ownerId = _ref.read(currentUserIdProvider) ?? '';
     loadCollection();
   }
 
@@ -88,7 +91,7 @@ class CollectionNotifier extends StateNotifier<CollectionState> {
 
     try {
       final dao = _ref.read(subscribersDaoProvider);
-      final subscribers = await dao.getAllSubscribers();
+      final subscribers = await dao.getAllSubscribers(ownerId: _ownerId);
 
       // Categorize subscribers based on their debt status
       // For now, using accumulatedDebt to determine status:
@@ -133,7 +136,7 @@ class CollectionNotifier extends StateNotifier<CollectionState> {
 
   /// Register a payment for a subscriber
   Future<void> registerPayment({
-    required int subscriberId,
+    required String subscriberId,
     required double amount,
     required String workerName,
     required String cabinetName,
@@ -154,7 +157,7 @@ class CollectionNotifier extends StateNotifier<CollectionState> {
 
       // Get subscriber to update their debt
       final subscriber =
-          await subscribersNotifier.getSubscriberById(subscriberId);
+          await subscribersNotifier.getSubscriberById(subscriberId.toString());
       if (subscriber != null) {
         // Update subscriber's accumulated debt
         final updatedSubscriber = subscriber.copyWith(

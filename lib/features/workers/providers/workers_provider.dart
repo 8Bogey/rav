@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
+import '../../../core/auth/auth_provider.dart';
 
 /// Worker permissions model
 class WorkerPermissions {
@@ -95,9 +96,11 @@ class WorkersState {
 class WorkersNotifier extends StateNotifier<WorkersState> {
   final Ref _ref;
   late WorkersService _service;
+  String _ownerId = '';
 
   WorkersNotifier(this._ref) : super(const WorkersState()) {
     _service = _ref.read(workersServiceProvider);
+    _ownerId = _ref.read(currentUserIdProvider) ?? '';
     loadWorkers();
   }
 
@@ -106,7 +109,7 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      final workers = await _service.getAllWorkers();
+      final workers = await _service.getAllWorkers(ownerId: _ownerId);
 
       state = state.copyWith(
         workers: workers,
@@ -121,7 +124,7 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
   }
 
   /// Add a new worker
-  Future<int> addWorker({
+  Future<String> addWorker({
     required String name,
     required String phone,
     String permissions = '{"canCollect":true,"canView":true,"canEdit":false}',
@@ -130,15 +133,18 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
   }) async {
     try {
       final worker = Worker(
-        id: 0, // Will be auto-generated
+        id: '',
+        ownerId: _ownerId,
         name: name,
         phone: phone,
         permissions: permissions,
         todayCollected: todayCollected,
         monthTotal: monthTotal,
+        version: 1,
+        isDeleted: false,
       );
       
-      final id = await _service.addWorker(worker);
+      final id = await _service.addWorker(worker, ownerId: _ownerId);
 
       await loadWorkers();
       return id;
@@ -151,7 +157,7 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
   /// Update an existing worker
   Future<void> updateWorker(Worker worker) async {
     try {
-      await _service.updateWorker(worker);
+      await _service.updateWorker(worker, ownerId: _ownerId);
       await loadWorkers();
     } catch (e) {
       state = state.copyWith(error: 'فشل تحديث العامل: $e');
@@ -161,7 +167,7 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
 
   /// Update worker permissions
   Future<void> updatePermissions(
-      int workerId, WorkerPermissions permissions) async {
+      String workerId, WorkerPermissions permissions) async {
     try {
       final worker = await getWorkerById(workerId);
       if (worker != null) {
@@ -171,30 +177,13 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
       }
     } catch (e) {
       state = state.copyWith(error: 'فشل تحديث الصلاحيات: $e');
-      rethrow;
-    }
-  }
-
-  /// Update worker collection stats
-  Future<void> updateCollectionStats(int workerId, double amount) async {
-    try {
-      final worker = await getWorkerById(workerId);
-      if (worker != null) {
-        await updateWorker(worker.copyWith(
-          todayCollected: worker.todayCollected + amount,
-          monthTotal: worker.monthTotal + amount,
-        ));
-      }
-    } catch (e) {
-      // Silently fail - stats update shouldn't break payment
-      print('Failed to update worker stats: $e');
     }
   }
 
   /// Delete a worker
-  Future<void> deleteWorker(int id) async {
+  Future<void> deleteWorker(String id) async {
     try {
-      await _service.deleteWorker(id);
+      await _service.deleteWorker(id, ownerId: _ownerId);
       await loadWorkers();
     } catch (e) {
       state = state.copyWith(error: 'فشل حذف العامل: $e');
@@ -203,23 +192,8 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
   }
 
   /// Get worker by ID
-  Future<Worker?> getWorkerById(int id) async {
-    return await _service.getWorkerById(id);
-  }
-
-  /// Get worker by name
-  Future<Worker?> getWorkerByName(String name) async {
-    return await _service.getWorkerByName(name);
-  }
-
-  /// Parse permissions from worker
-  WorkerPermissions parsePermissions(Worker worker) {
-    try {
-      final json = jsonDecode(worker.permissions) as Map<String, dynamic>;
-      return WorkerPermissions.fromJson(json);
-    } catch (e) {
-      return const WorkerPermissions();
-    }
+  Future<Worker?> getWorkerById(String id) async {
+    return await _service.getWorkerById(id, ownerId: _ownerId);
   }
 }
 
@@ -230,25 +204,14 @@ final workersProvider =
 });
 
 /// Provider for a single worker by ID
-final workerByIdProvider = FutureProvider.family<Worker?, int>((ref, id) async {
+final workerByIdProvider =
+    FutureProvider.family<Worker?, String>((ref, id) async {
   final service = ref.watch(workersServiceProvider);
-  return await service.getWorkerById(id);
+  final ownerId = ref.watch(currentUserIdProvider) ?? '';
+  return await service.getWorkerById(id, ownerId: ownerId);
 });
 
-/// Provider for worker permissions
-final workerPermissionsProvider =
-    Provider.family<WorkerPermissions, int>((ref, workerId) {
-  final workers = ref.watch(workersProvider).workers;
-  final worker = workers.where((w) => w.id == workerId).firstOrNull;
-
-  if (worker == null) {
-    return const WorkerPermissions();
-  }
-
-  try {
-    final json = jsonDecode(worker.permissions) as Map<String, dynamic>;
-    return WorkerPermissions.fromJson(json);
-  } catch (e) {
-    return const WorkerPermissions();
-  }
+/// Provider for total workers count
+final workersCountProvider = Provider<int>((ref) {
+  return ref.watch(workersProvider).workers.length;
 });

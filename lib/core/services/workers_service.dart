@@ -36,6 +36,10 @@ class WorkersService extends BaseService {
       permissions: Value(worker.permissions),
       todayCollected: Value(worker.todayCollected),
       monthTotal: Value(worker.monthTotal),
+      version: const Value(1),
+      isDeleted: const Value(false),
+      createdAt: Value(DateTime.now()),
+      updatedAt: Value(DateTime.now()),
     );
     return _dao.addWorker(companion);
   }

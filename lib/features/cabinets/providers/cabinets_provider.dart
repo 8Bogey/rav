@@ -3,6 +3,7 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/cabinets_service.dart';
 import '../../../core/services/service_providers.dart';
+import '../../../core/auth/auth_provider.dart';
 
 /// State for cabinets list
 class CabinetsState {
@@ -41,9 +42,11 @@ class CabinetsState {
 class CabinetsNotifier extends StateNotifier<CabinetsState> {
   final Ref _ref;
   late CabinetsService _service;
+  String _ownerId = '';
 
   CabinetsNotifier(this._ref) : super(const CabinetsState()) {
     _service = _ref.read(cabinetsServiceProvider);
+    _ownerId = _ref.read(currentUserIdProvider) ?? '';
     loadCabinets();
   }
 
@@ -52,7 +55,7 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      var cabinets = await _service.getAllCabinets();
+      var cabinets = await _service.getAllCabinets(ownerId: _ownerId);
 
       // Sort by completion percentage (highest first)
       if (state.sortBy == 'completion') {
@@ -88,7 +91,7 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
   }
 
   /// Add a new cabinet
-  Future<int> addCabinet({
+  Future<String> addCabinet({
     required String name,
     required String letter,
     int totalSubscribers = 0,
@@ -99,7 +102,7 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
   }) async {
     try {
       final cabinet = Cabinet(
-        id: 0, // Will be auto-generated
+        id: '',
         name: name,
         letter: letter,
         totalSubscribers: totalSubscribers,
@@ -107,9 +110,11 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
         collectedAmount: collectedAmount,
         delayedSubscribers: delayedSubscribers,
         completionDate: completionDate,
+        version: 1,
+        isDeleted: false,
       );
       
-      final id = await _service.addCabinet(cabinet);
+      final id = await _service.addCabinet(cabinet, ownerId: _ownerId);
 
       await loadCabinets();
       return id;
@@ -122,7 +127,7 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
   /// Update an existing cabinet
   Future<void> updateCabinet(Cabinet cabinet) async {
     try {
-      await _service.updateCabinet(cabinet);
+      await _service.updateCabinet(cabinet, ownerId: _ownerId);
       await loadCabinets();
     } catch (e) {
       state = state.copyWith(error: 'فشل تحديث الكابينة: $e');
@@ -131,9 +136,9 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
   }
 
   /// Delete a cabinet
-  Future<void> deleteCabinet(int id) async {
+  Future<void> deleteCabinet(String id) async {
     try {
-      await _service.deleteCabinet(id);
+      await _service.deleteCabinet(id, ownerId: _ownerId);
       await loadCabinets();
     } catch (e) {
       state = state.copyWith(error: 'فشل حذف الكابينة: $e');
@@ -142,18 +147,18 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
   }
 
   /// Get cabinet by ID
-  Future<Cabinet?> getCabinetById(int id) async {
-    return await _service.getCabinetById(id);
+  Future<Cabinet?> getCabinetById(String id) async {
+    return await _service.getCabinetById(id, ownerId: _ownerId);
   }
 
   /// Get cabinet by name
   Future<Cabinet?> getCabinetByName(String name) async {
-    return await _service.getCabinetByName(name);
+    return await _service.getCabinetByName(name, ownerId: _ownerId);
   }
 
   /// Get cabinet by letter
   Future<Cabinet?> getCabinetByLetter(String letter) async {
-    final cabinets = await _service.getAllCabinets();
+    final cabinets = await _service.getAllCabinets(ownerId: _ownerId);
     try {
       return cabinets.firstWhere((c) => (c.letter?.toUpperCase() ?? c.name.toUpperCase()) == letter.toUpperCase());
     } catch (e) {
@@ -192,9 +197,10 @@ final cabinetsProvider =
 
 /// Provider for a single cabinet by ID
 final cabinetByIdProvider =
-    FutureProvider.family<Cabinet?, int>((ref, id) async {
-  final dao = ref.watch(cabinetsDaoProvider);
-  return await dao.getCabinetById(id);
+    FutureProvider.family<Cabinet?, String>((ref, id) async {
+  final service = ref.watch(cabinetsServiceProvider);
+  final ownerId = ref.watch(currentUserIdProvider) ?? '';
+  return await service.getCabinetById(id, ownerId: ownerId);
 });
 
 /// Provider for cabinet completion stats

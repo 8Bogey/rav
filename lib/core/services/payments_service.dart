@@ -36,6 +36,10 @@ class PaymentsService extends BaseService {
       worker: Value(payment.worker),
       date: Value(payment.date),
       cabinet: Value(payment.cabinet),
+      version: const Value(1),
+      isDeleted: const Value(false),
+      createdAt: Value(DateTime.now()),
+      updatedAt: Value(DateTime.now()),
     );
     return _dao.addPayment(companion);
   }

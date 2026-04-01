@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
+import '../../../core/auth/auth_provider.dart';
 
 /// Audit action types
 enum AuditAction {
@@ -126,9 +127,11 @@ class AuditLogState {
 class AuditLogNotifier extends StateNotifier<AuditLogState> {
   final Ref _ref;
   late AuditLogService _service;
+  String _ownerId = '';
 
   AuditLogNotifier(this._ref) : super(const AuditLogState()) {
     _service = _ref.read(auditLogServiceProvider);
+    _ownerId = _ref.read(currentUserIdProvider) ?? '';
     loadAuditLog();
   }
 
@@ -201,7 +204,7 @@ class AuditLogNotifier extends StateNotifier<AuditLogState> {
   }
 
   /// Log an action
-  Future<int> logAction({
+  Future<String> logAction({
     required String user,
     required AuditAction action,
     required String target,
@@ -209,14 +212,18 @@ class AuditLogNotifier extends StateNotifier<AuditLogState> {
     String? type,
   }) async {
     try {
+      // Create entry - service will handle ID generation
       final entry = AuditLogEntry(
-        id: 0, // Will be auto-generated
+        id: '',
+        ownerId: _ownerId,
         user: user,
         action: action.value,
         target: target,
         details: details ?? '',
         type: type ?? 'user',
         timestamp: DateTime.now(),
+        version: 1,
+        isDeleted: false,
       );
       
       final id = await _service.addAuditLogEntry(entry);
