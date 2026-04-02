@@ -294,10 +294,9 @@ class Auth0Service {
         _accessToken = data['access_token'];
         _idToken = data['id_token'];
         
-        // Extract user ID from ID token or generate one
+        // Extract user ID from ID token (JWT subject claim)
         if (_idToken != null) {
-          // In production, you'd decode the JWT to get the subject
-          _userId = 'auth0-user-${DateTime.now().millisecondsSinceEpoch}';
+          _userId = _extractSubjectFromIdToken(_idToken!);
         }
         
         // Save tokens
@@ -311,34 +310,55 @@ class Auth0Service {
           accessToken: _accessToken,
         );
       } else {
-        debugPrint('[Auth0Service] Token exchange failed: ${response.body}');
+        debugPrint('[Auth0Service] Token exchange failed: ${response.statusCode} ${response.body}');
         
-        // Fallback to demo mode
-        _accessToken = 'auth0-token-${DateTime.now().millisecondsSinceEpoch}';
-        _userId = 'auth0-user-${DateTime.now().millisecondsSinceEpoch}';
-        await _saveTokens();
+        // Return actual error instead of silently falling back to demo mode
+        String errorMessage;
+        try {
+          final errorData = jsonDecode(response.body);
+          errorMessage = errorData['error_description'] ?? errorData['error'] ?? 'Token exchange failed';
+        } catch (_) {
+          errorMessage = 'Token exchange failed with status ${response.statusCode}';
+        }
         
         return Auth0Result(
-          success: true,
-          userId: _userId,
-          accessToken: _accessToken,
-          isDemoMode: true,
+          success: false,
+          error: errorMessage,
+          fallbackToDemo: true, // Still offer demo mode as fallback option
         );
       }
     } catch (e) {
       debugPrint('[Auth0Service] Token exchange error: $e');
       
-      // Fallback to demo mode
-      _accessToken = 'auth0-token-${DateTime.now().millisecondsSinceEpoch}';
-      _userId = 'auth0-user-${DateTime.now().millisecondsSinceEpoch}';
-      await _saveTokens();
-      
+      // Return actual error - don't silently create fake tokens
       return Auth0Result(
-        success: true,
-        userId: _userId,
-        accessToken: _accessToken,
-        isDemoMode: true,
+        success: false,
+        error: 'فشل الاتصال بالخادم: $e',
+        fallbackToDemo: true,
       );
+    }
+  }
+  
+  /// Extract subject claim from JWT ID token
+  String? _extractSubjectFromIdToken(String idToken) {
+    try {
+      // JWT format: header.payload.signature
+      final parts = idToken.split('.');
+      if (parts.length < 2) return null;
+      
+      // Decode the payload (base64url)
+      final payload = parts[1];
+      // Add padding if needed
+      final paddedLength = (4 - payload.length % 4) % 4;
+      final paddedPayload = payload + ('=' * paddedLength);
+      final decoded = utf8.decode(base64Url.decode(paddedPayload));
+      final payloadJson = jsonDecode(decoded);
+      
+      // Return the subject claim
+      return payloadJson['sub'];
+    } catch (e) {
+      debugPrint('[Auth0Service] Failed to decode ID token: $e');
+      return null;
     }
   }
   

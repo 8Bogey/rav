@@ -10,6 +10,7 @@ import { v } from "convex/values";
 export const savePayment = mutation({
   args: {
     id: v.optional(v.id("payments")),
+    convexId: v.optional(v.string()), // Client's local ID or Convex mapping
     version: v.number(),
     ownerId: v.string(),
     subscriberId: v.string(),
@@ -39,9 +40,15 @@ export const savePayment = mutation({
     }
 
     const now = Date.now();
+    
+    // Determine Convex document ID
+    let documentId = args.id;
+    if (!documentId && args.cloudId && /^[a-z0-9]{12,}$/.test(args.cloudId)) {
+      documentId = args.cloudId as any;
+    }
 
-    if (args.id) {
-      const existing = await ctx.db.get(args.id);
+    if (documentId) {
+      const existing = await ctx.db.get(documentId);
       if (!existing) {
         throw new Error("Not found: Document does not exist");
       }
@@ -59,16 +66,16 @@ export const savePayment = mutation({
         };
       }
 
-      const { id, ...updateData } = args;
-      await ctx.db.patch(id, {
+      const { id, convexId, ...updateData } = args;
+      await ctx.db.patch(documentId, {
         ...updateData,
         updatedAt: now,
         version: args.version,
       });
 
-      return { success: true, id: args.id, version: args.version };
+      return { success: true, id: documentId, version: args.version };
     } else {
-      const { id, ...insertData } = args;
+      const { id, convexId, ...insertData } = args;
       const newId = await ctx.db.insert("payments", {
         ...insertData,
         createdAt: now,

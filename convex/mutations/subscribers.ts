@@ -14,7 +14,11 @@ import { v } from "convex/values";
 
 export const saveSubscriber = mutation({
   args: {
+    // Accept either Convex document ID (v.id) or string identifier for client-side tracking
+    // When updating existing: pass Convex ID via convexId field
+    // When creating new: omit both id and convexId
     id: v.optional(v.id("subscribers")),
+    convexId: v.optional(v.string()), // Client's local ID (UUID) or Convex mapping
     version: v.number(),
     ownerId: v.string(),
     name: v.string(),
@@ -50,10 +54,27 @@ export const saveSubscriber = mutation({
     }
 
     const now = Date.now();
+    
+    // Determine the Convex document ID to use
+    // Priority: explicit id > cloudId (stored Convex ID) > create new
+    let documentId = args.id;
+    
+    // If no explicit Convex ID but we have cloudId, try to use it for update
+    if (!documentId && args.cloudId) {
+      try {
+        // Try to get the document by cloudId lookup (requires index)
+        // For now, if cloudId looks like a Convex ID, use it directly
+        if (/^[a-z0-9]{12,}$/.test(args.cloudId)) {
+          documentId = args.cloudId as any; // Type assertion for Convex ID
+        }
+      } catch (e) {
+        // Ignore lookup errors
+      }
+    }
 
-    if (args.id) {
+    if (documentId) {
       // UPDATE: Check if document exists and version is newer
-      const existing = await ctx.db.get(args.id);
+      const existing = await ctx.db.get(documentId);
       if (!existing) {
         throw new Error("Not found: Document does not exist");
       }
@@ -73,17 +94,17 @@ export const saveSubscriber = mutation({
       }
 
       // Update existing document
-      const { id, ...updateData } = args;
-      await ctx.db.patch(id, {
+      const { id, convexId, ...updateData } = args;
+      await ctx.db.patch(documentId, {
         ...updateData,
         updatedAt: now,
         version: args.version,
       });
       
-      return { success: true, id: args.id, version: args.version };
+      return { success: true, id: documentId, version: args.version };
     } else {
       // CREATE: Insert new document
-      const { id, ...insertData } = args;
+      const { id, convexId, ...insertData } = args;
       const newId = await ctx.db.insert("subscribers", {
         ...insertData,
         createdAt: now,
