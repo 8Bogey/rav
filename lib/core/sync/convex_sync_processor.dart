@@ -1,21 +1,33 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:drift/drift.dart';
-import 'package:convex_flutter/convex_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
+import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 
 /// Processor for syncing local Drift Outbox entries to Convex Cloud.
 /// Implements Local-First: write locally, sync in background.
 class ConvexSyncProcessor {
   final AppDatabase database;
-  final ConvexClient client = AppConvexConfig.client;
   
   bool _isProcessing = false;
   Timer? _syncTimer;
 
   ConvexSyncProcessor(this.database);
+
+  /// Check if sync should proceed.
+  /// In demo mode (kDemoAuthLogin=true), allow sync if Convex is initialized.
+  /// In production, require real authentication.
+  bool get _canSync {
+    if (!AppConvexConfig.isInitialized) return false;
+    
+    // In demo mode, allow sync even without real auth token
+    if (kDemoAuthLogin) return true;
+    
+    // Production: require real authentication
+    return AppConvexConfig.isAuthenticated;
+  }
 
   /// Start the background sync loop.
   void start() {
@@ -33,7 +45,11 @@ class ConvexSyncProcessor {
 
   /// Manually trigger an outbox processing run.
   Future<void> processOutbox() async {
-    if (_isProcessing || !AppConvexConfig.isAuthenticated) return;
+    if (_isProcessing) return;
+    if (!_canSync) {
+      debugPrint('ConvexSyncProcessor: Skipping - not initialized or demo mode not allowed');
+      return;
+    }
     
     _isProcessing = true;
     try {
@@ -67,16 +83,10 @@ class ConvexSyncProcessor {
       final Map<String, dynamic> payload = jsonDecode(entry.payload);
       final String mutationName = _getMutationName(entry.targetTable, entry.operationType);
       
-      // Execute Convex mutation
-      // NOTE: ownerId is injected by the withTenantMutation wrapper on server side.
-      final result = await client.mutation(
-        name: mutationName, 
-        args: payload,
-      );
-
-      final decodedResult = jsonDecode(result);
+      // Execute Convex mutation via HTTP
+      final result = await AppConvexConfig.mutation(mutationName, payload);
       
-      if (decodedResult['success'] == true) {
+      if (result['success'] == true) {
         // Mark as synced
         await database.update(database.outboxTable).replace(
           entry.copyWith(
@@ -87,7 +97,7 @@ class ConvexSyncProcessor {
         );
         debugPrint('ConvexSyncProcessor: Synced ${entry.targetTable} id: ${entry.documentId}');
       } else {
-        throw Exception(decodedResult['reason'] ?? 'Convex mutation failed');
+        throw Exception(result['reason'] ?? 'Convex mutation failed');
       }
     } catch (e) {
       debugPrint('ConvexSyncProcessor Entry Error: $e');
@@ -106,13 +116,32 @@ class ConvexSyncProcessor {
   }
 
   String _getMutationName(String table, String operation) {
-    // Maps table + op to Convex mutation name (e.g., 'subscribers' + 'create' -> 'saveSubscriber')
-    // All our Convex mutations follow the 'save[Object]' pattern.
-    if (table.endsWith('s')) {
-      final singular = table.substring(0, table.length - 1);
-      final capitalized = singular[0].toUpperCase() + singular.substring(1);
-      return 'save$capitalized';
+    // Handle special table names
+    final tableMappings = {
+      'subscribers': 'Subscriber',
+      'payments': 'Payment',
+      'cabinets': 'Cabinet',
+      'workers': 'Worker',
+      'auditLog': 'AuditLog',
+      'whatsappTemplates': 'WhatsappTemplate',
+      'generatorSettings': 'GeneratorSetting',
+    };
+    
+    // For delete operations, use delete mutation
+    if (operation == 'delete') {
+      final singular = tableMappings[table] ?? _toSingular(table);
+      return 'delete$singular';
     }
-    return 'save${table[0].toUpperCase() + table.substring(1)}';
+    
+    // For create/update, use save mutation
+    final singular = tableMappings[table] ?? _toSingular(table);
+    return 'save$singular';
+  }
+  
+  String _toSingular(String table) {
+    if (table.endsWith('s')) {
+      return table[0].toUpperCase() + table.substring(1, table.length - 1);
+    }
+    return table[0].toUpperCase() + table.substring(1);
   }
 }
