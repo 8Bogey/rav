@@ -26,14 +26,15 @@ class Auth0Config {
   static const String loginUrl = 'https://$domain/authorize';
 }
 
-/// Generate random string for PKCE
+/// Generate random string for PKCE (only unreserved characters)
 String _generateRandomString(int length) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  // Use only unreserved characters: A-Z, a-z, 0-9, -, _, ., ~
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   final random = Random.secure();
   return List.generate(length, (_) => chars[random.nextInt(chars.length)]).join();
 }
 
-/// Generate code verifier for PKCE
+/// Generate code verifier for PKCE (43-128 characters, only unreserved)
 String _generateCodeVerifier() {
   return _generateRandomString(128);
 }
@@ -42,7 +43,11 @@ String _generateCodeVerifier() {
 String _generateCodeChallenge(String codeVerifier) {
   final bytes = utf8.encode(codeVerifier);
   final digest = sha256.convert(bytes);
-  return base64Url.encode(digest.bytes);
+  // Use base64Url encoding without padding, then make URL safe
+  return base64Url.encode(digest.bytes)
+      .replaceAll('+', '-')
+      .replaceAll('/', '_')
+      .replaceAll('=', '');
 }
 
 /// Auth0 Service for handling authentication
