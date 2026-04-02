@@ -65,15 +65,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._ref) : super(AuthState(isAuthenticated: false, userId: null));
 
   Future<void> login(String password) async {
-    // Use real Auth0 authentication
+    // Use Auth0 authentication (with demo fallback for desktop)
     final result = await Auth0Service.instance.login();
     
     if (!result.success) {
-      state = state.copyWith(
-        isAuthenticated: false,
-        errorMessage: 'فشل تسجيل الدخول: ${result.error ?? "خطأ غير معروف"}',
-      );
-      return;
+      // Check if we should fall back to demo mode
+      if (result.fallbackToDemo || !kDemoAuthLogin) {
+        state = state.copyWith(
+          isAuthenticated: false,
+          errorMessage: result.error ?? 'فشل تسجيل الدخول',
+        );
+        return;
+      }
+      
+      // Fall back to demo mode for development
+      return _demoLogin();
+    }
+    
+    // If demo mode was triggered, use demo login
+    if (result.isDemoMode) {
+      return _demoLogin();
     }
     
     // Auth0 login successful - wire token to Convex
@@ -89,6 +100,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
     
     debugPrint('[AuthNotifier] Auth0 login successful, userId: ${result.userId}');
+  }
+  
+  /// Demo login fallback for development
+  Future<void> _demoLogin() async {
+    final demoUserId = 'demo-user-${DateTime.now().millisecondsSinceEpoch}';
+    
+    try {
+      if (AppConvexConfig.isInitialized) {
+        await AppConvexConfig.setAuth('demo-token-$demoUserId');
+        debugPrint('[AuthNotifier] Convex auth set for demo: $demoUserId');
+      }
+    } catch (e) {
+      debugPrint('[AuthNotifier] setAuth error (non-fatal): $e');
+    }
+    
+    state = AuthState(
+      isAuthenticated: true,
+      userId: demoUserId,
+      errorMessage: null,
+    );
+    
+    debugPrint('[AuthNotifier] Demo login successful');
   }
   
   void logout() async {
