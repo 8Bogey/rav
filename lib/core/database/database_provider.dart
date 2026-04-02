@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_database.dart';
+import '../sync/convex_sync_processor.dart';
+import '../sync/sync_down_processor.dart';
 
 export '../auth/auth_provider.dart' show currentUserIdProvider;
 
@@ -18,8 +20,14 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   // Create the database instance
   final database = AppDatabase();
 
+  // Start background sync processors
+  final upSyncProcessor = ConvexSyncProcessor(database)..start();
+  final downSyncProcessor = SyncDownProcessor(database)..start();
+
   // Ensure database is closed when provider is disposed
   ref.onDispose(() {
+    upSyncProcessor.stop();
+    downSyncProcessor.stop();
     database.close();
   });
 
