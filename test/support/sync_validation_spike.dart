@@ -1,4 +1,4 @@
-import 'package:mawlid_al_dhaki/core/supabase/sync_conflict.dart';
+import 'package:mawlid_al_dhaki/core/sync/sync_conflict.dart';
 
 /// Test helper: in-memory sync metadata / conflict simulation (not production sync).
 class SyncValidationSpike {

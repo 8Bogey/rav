@@ -53,8 +53,9 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.24
 
   # ── Cloud Sync ────────────────────────────────────────────────
-  supabase_flutter: ^2.8.0       # ✅ مزامنة سحابية (keeping for compatibility)
+  # supabase_flutter: ^2.8.0       # ❌ REMOVED - using Convex instead
   convex_flutter: ^3.0.1         # ✅ Convex client
+  auth0_flutter: ^2.0.0          # ✅ Auth0 authentication
 
   # ── Icons & SVG ───────────────────────────────────────────────
   phosphor_flutter: ^2.1.0       # ✅ أيقونات Outlined رفيقة 20px (مطابق Bitepoint)
@@ -98,9 +99,9 @@ dependencies:
   screen_retriever: ^0.1.9       # ✅ معلومات الشاشة للتمركز
 
   # ── Print / PDF ───────────────────────────────────────────────
-  pdf: ^3.11.0                   # ✅ توليد PDF للتقارير
-  printing: ^5.13.1              # ✅ طباعة PDF
-  esc_pos_utils_plus: ^2.0.4     # ✅ طباعة إيصالات ESC/POS
+  # pdf: ^3.11.0                   # ✅ توليد PDF للتقارير
+  # printing: ^5.13.1              # ✅ طباعة PDF
+  # esc_pos_utils_plus: ^2.0.4     # ✅ طباعة إيصالات ESC/POS
   # flutter_thermal_printer: ^0.3.2 # ✅ طابعة حرارية
 
   # ── Files ─────────────────────────────────────────────────────

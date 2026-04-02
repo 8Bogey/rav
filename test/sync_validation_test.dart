@@ -3,7 +3,7 @@ import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'support/sync_validation_spike.dart';
-import 'package:mawlid_al_dhaki/core/supabase/sync_conflict.dart';
+import 'package:mawlid_al_dhaki/core/sync/sync_conflict.dart';
 
 void main() {
   group('Sync Validation Spike Tests', () {
@@ -63,7 +63,7 @@ void main() {
           'name': 'John Doe',
           'email': 'john.doe@example.com', // Modified in cloud
         },
-        lastModified: DateTime.now().add(Duration(minutes: 5)), // Cloud version is newer
+        lastModified: DateTime.now().add(const Duration(minutes: 5)), // Cloud version is newer
         syncStatus: 'synced',
         dirtyFlag: false,
         cloudId: localRecord.id.toString(),
@@ -88,7 +88,7 @@ void main() {
           localRecordId: 1,
           cloudRecordId: 'cloud_1',
           tableName: 'subscribers',
-          localLastModified: DateTime.now().subtract(Duration(minutes: 10)),
+          localLastModified: DateTime.now().subtract(const Duration(minutes: 10)),
           cloudLastModified: DateTime.now(),
           conflictType: ConflictType.concurrentModification,
           conflictDetectedAt: DateTime.now(),
@@ -169,7 +169,7 @@ void main() {
           localRecordId: 2,
           cloudRecordId: 'cloud_2',
           tableName: 'subscribers',
-          localLastModified: DateTime.now().subtract(Duration(minutes: 5)),
+          localLastModified: DateTime.now().subtract(const Duration(minutes: 5)),
           cloudLastModified: DateTime.now(),
           conflictType: ConflictType.deleteModifyConflict,
           conflictDetectedAt: DateTime.now(),
