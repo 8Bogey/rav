@@ -14,7 +14,6 @@ import '../../features/reports/reports_screen.dart';
 import '../../features/whatsapp/whatsapp_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/audit/audit_screen.dart';
-import '../../features/auth/providers/auth_provider.dart';
 import '../../shared/widgets/layout/app_shell.dart';
 
 /// Route permission requirements

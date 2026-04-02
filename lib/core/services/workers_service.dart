@@ -2,12 +2,14 @@ import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/workers_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
+import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
 import 'package:uuid/uuid.dart';
 
 class WorkersService extends BaseService {
   WorkersService(super.database);
 
   WorkersDao get _dao => database.workersDao;
+  late final OutboxService _outbox = OutboxService(database);
   static const _uuid = Uuid();
 
   // Get all workers
@@ -28,6 +30,7 @@ class WorkersService extends BaseService {
   // Add a new worker
   Future<String> addWorker(Worker worker, {required String ownerId}) {
     final id = _uuid.v4();
+    final now = DateTime.now();
     final companion = WorkersTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
@@ -38,29 +41,92 @@ class WorkersService extends BaseService {
       monthTotal: Value(worker.monthTotal),
       version: const Value(1),
       isDeleted: const Value(false),
-      createdAt: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
+      createdAt: Value(now),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'workers',
+      operationType: 'create',
+      documentId: id,
+      payload: {
+        'id': id,
+        'ownerId': ownerId,
+        'name': worker.name,
+        'phone': worker.phone,
+        'permissions': worker.permissions,
+        'todayCollected': worker.todayCollected,
+        'monthTotal': worker.monthTotal,
+        'version': 1,
+        'isDeleted': false,
+        'updatedAt': now.millisecondsSinceEpoch,
+        'createdAt': now.millisecondsSinceEpoch,
+      },
+    );
+    
     return _dao.addWorker(companion);
   }
 
   // Update a worker
   Future<bool> updateWorker(Worker worker, {required String ownerId}) {
+    final now = DateTime.now();
+    final newVersion = (worker.version ?? 0) + 1;
     final companion = worker.toCompanion(false).copyWith(
       ownerId: Value(ownerId),
-      updatedAt: Value(DateTime.now()),
+      version: Value(newVersion),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'workers',
+      operationType: 'update',
+      documentId: worker.id,
+      payload: {
+        'id': worker.id,
+        'ownerId': ownerId,
+        'name': worker.name,
+        'phone': worker.phone,
+        'permissions': worker.permissions,
+        'todayCollected': worker.todayCollected,
+        'monthTotal': worker.monthTotal,
+        'version': newVersion,
+        'isDeleted': worker.isDeleted,
+        'updatedAt': now.millisecondsSinceEpoch,
+        'createdAt': worker.createdAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch,
+      },
+    );
+    
     return _dao.updateWorker(companion);
   }
 
   // Soft delete a worker
-  Future<bool> deleteWorker(String id, {required String ownerId}) {
+  Future<bool> deleteWorker(String id, {required String ownerId}) async {
+    final now = DateTime.now();
+    final existing = await _dao.getWorkerById(id, ownerId: ownerId);
+    final newVersion = (existing?.version ?? 0) + 1;
+    
     final companion = WorkersTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
       isDeleted: const Value(true),
-      updatedAt: Value(DateTime.now()),
+      version: Value(newVersion),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'workers',
+      operationType: 'delete',
+      documentId: id,
+      payload: {
+        'id': id,
+        'ownerId': ownerId,
+        'version': newVersion,
+      },
+    );
+    
     return _dao.updateWorker(companion);
   }
 

@@ -37,7 +37,7 @@ class _PaymentRegistrationDialogState
   final _notesController = TextEditingController();
 
   double _amount = 0;
-  int? _selectedWorkerId;
+  String? _selectedWorkerId;
   bool _isLoading = false;
   bool _printReceipt = true;
 

@@ -54,7 +54,8 @@ dependencies:
 
   # ── Cloud Sync ────────────────────────────────────────────────
   # supabase_flutter: ^2.8.0       # ❌ REMOVED - using Convex instead
-  convex_flutter: ^3.0.1         # ✅ Convex client
+  # convex_flutter: ^3.0.1         # ❌ VERSION ISSUE - using http instead
+  http: ^1.2.0                     # ✅ Direct HTTP calls to Convex
   auth0_flutter: ^2.0.0          # ✅ Auth0 authentication
 
   # ── Icons & SVG ───────────────────────────────────────────────
@@ -99,8 +100,8 @@ dependencies:
   screen_retriever: ^0.1.9       # ✅ معلومات الشاشة للتمركز
 
   # ── Print / PDF ───────────────────────────────────────────────
-  # pdf: ^3.11.0                   # ✅ توليد PDF للتقارير
-  # printing: ^5.13.1              # ✅ طباعة PDF
+  pdf: ^3.11.0                   # ✅ توليد PDF للتقارير
+  printing: ^5.13.1              # ✅ طباعة PDF
   # esc_pos_utils_plus: ^2.0.4     # ✅ طباعة إيصالات ESC/POS
   # flutter_thermal_printer: ^0.3.2 # ✅ طابعة حرارية
 

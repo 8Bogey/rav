@@ -8,7 +8,6 @@ import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/dialogs/subscriber_dialog.dart';
-import 'package:mawlid_al_dhaki/shared/utils/app_transitions.dart';
 
 class SubscribersScreen extends ConsumerStatefulWidget {
   const SubscribersScreen({super.key});

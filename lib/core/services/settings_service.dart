@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
+import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -11,6 +12,9 @@ class GeneratorSettings {
   final String logoPath;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? ownerId;
+  final int version;
+  final bool isDeleted;
 
   GeneratorSettings({
     required this.id,
@@ -20,6 +24,9 @@ class GeneratorSettings {
     required this.logoPath,
     required this.createdAt,
     required this.updatedAt,
+    this.ownerId,
+    this.version = 1,
+    this.isDeleted = false,
   });
 
   factory GeneratorSettings.fromDatabase(GeneratorSettingsData data) {
@@ -31,53 +38,93 @@ class GeneratorSettings {
       logoPath: data.logoPath ?? '',
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
+      ownerId: data.ownerId,
+      version: data.version,
+      isDeleted: data.isDeleted,
     );
   }
 
   GeneratorSettingsTableCompanion toCompanion() {
     return GeneratorSettingsTableCompanion(
       id: Value(id),
+      ownerId: Value(ownerId),
       name: Value(name),
       phoneNumber: Value(phoneNumber),
       address: Value(address),
       logoPath: Value(logoPath),
+      version: Value(version),
+      isDeleted: Value(isDeleted),
       updatedAt: Value(DateTime.now()),
+      createdAt: Value(createdAt),
     );
   }
 }
 
 class SettingsService {
   final AppDatabase database;
+  late final OutboxService _outbox;
   static const _uuid = Uuid();
 
-  SettingsService(this.database);
+  SettingsService(this.database) {
+    _outbox = OutboxService(database);
+  }
 
   // Get generator settings
-  Future<GeneratorSettings?> getGeneratorSettings() async {
+  Future<GeneratorSettings?> getGeneratorSettings({String? ownerId}) async {
     try {
       final results = await database.select(database.generatorSettingsTable).get();
       
       if (results.isEmpty) {
         // Create default settings if none exist
+        final now = DateTime.now();
         final defaultSettings = GeneratorSettings(
           id: _uuid.v4(),
           name: 'المولد الذكي',
           phoneNumber: '07701234567',
           address: 'بغداد - المنصور - شارع الحرية',
           logoPath: '',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
+          createdAt: now,
+          updatedAt: now,
+          ownerId: ownerId,
+          version: 1,
+          isDeleted: false,
         );
         
         await database.into(database.generatorSettingsTable).insert(
           GeneratorSettingsTableCompanion.insert(
             id: defaultSettings.id,
+            ownerId: Value(ownerId),
             name: defaultSettings.name,
             phoneNumber: defaultSettings.phoneNumber,
             address: defaultSettings.address,
             logoPath: Value(defaultSettings.logoPath),
+            version: const Value(1),
+            isDeleted: const Value(false),
+            createdAt: Value(now),
+            updatedAt: Value(now),
           ),
         );
+        
+        // Add to outbox for Convex sync
+        if (ownerId != null) {
+          _outbox.addEntry(
+            targetTable: 'generatorSettings',
+            operationType: 'create',
+            documentId: defaultSettings.id,
+            payload: {
+              'id': defaultSettings.id,
+              'ownerId': ownerId,
+              'name': defaultSettings.name,
+              'phoneNumber': defaultSettings.phoneNumber,
+              'address': defaultSettings.address,
+              'logoPath': defaultSettings.logoPath,
+              'version': 1,
+              'isDeleted': false,
+              'updatedAt': now.millisecondsSinceEpoch,
+              'createdAt': now.millisecondsSinceEpoch,
+            },
+          );
+        }
         
         return defaultSettings;
       }
@@ -86,24 +133,64 @@ class SettingsService {
       return GeneratorSettings.fromDatabase(data);
     } catch (e) {
       // Return default settings on error
+      final now = DateTime.now();
       return GeneratorSettings(
         id: _uuid.v4(),
         name: 'المولد الذكي',
         phoneNumber: '07701234567',
         address: 'بغداد - المنصور - شارع الحرية',
         logoPath: '',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        createdAt: now,
+        updatedAt: now,
+        ownerId: ownerId,
+        version: 1,
+        isDeleted: false,
       );
     }
   }
 
   // Update generator settings
-  Future<bool> updateGeneratorSettings(GeneratorSettings settings) async {
+  Future<bool> updateGeneratorSettings(GeneratorSettings settings, {String? ownerId}) async {
     try {
-      await database.into(database.generatorSettingsTable).insertOnConflictUpdate(
-        settings.toCompanion(),
+      final now = DateTime.now();
+      final updatedSettings = GeneratorSettings(
+        id: settings.id,
+        name: settings.name,
+        phoneNumber: settings.phoneNumber,
+        address: settings.address,
+        logoPath: settings.logoPath,
+        createdAt: settings.createdAt,
+        updatedAt: now,
+        ownerId: settings.ownerId ?? ownerId,
+        version: settings.version + 1,
+        isDeleted: false,
       );
+      
+      await database.into(database.generatorSettingsTable).insertOnConflictUpdate(
+        updatedSettings.toCompanion(),
+      );
+      
+      // Add to outbox for Convex sync
+      if (ownerId != null) {
+        _outbox.addEntry(
+          targetTable: 'generatorSettings',
+          operationType: 'update',
+          documentId: settings.id,
+          payload: {
+            'id': settings.id,
+            'ownerId': ownerId,
+            'name': settings.name,
+            'phoneNumber': settings.phoneNumber,
+            'address': settings.address,
+            'logoPath': settings.logoPath,
+            'version': settings.version + 1,
+            'isDeleted': false,
+            'updatedAt': now.millisecondsSinceEpoch,
+            'createdAt': settings.createdAt.millisecondsSinceEpoch,
+          },
+        );
+      }
+      
       return true;
     } catch (e) {
       return false;

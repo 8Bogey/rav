@@ -2,12 +2,14 @@ import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/subscribers_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
+import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
 import 'package:uuid/uuid.dart';
 
 class SubscribersService extends BaseService {
   SubscribersService(super.database);
 
   SubscribersDao get _dao => database.subscribersDao;
+  late final OutboxService _outbox = OutboxService(database);
   static const _uuid = Uuid();
 
   // Get all subscribers
@@ -28,6 +30,7 @@ class SubscribersService extends BaseService {
   // Add a new subscriber
   Future<String> addSubscriber(Subscriber subscriber, {required String ownerId}) {
     final id = _uuid.v4();
+    final now = DateTime.now();
     final companion = SubscribersTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
@@ -42,29 +45,101 @@ class SubscribersService extends BaseService {
       notes: Value(subscriber.notes),
       version: const Value(1),
       isDeleted: const Value(false),
-      createdAt: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
+      createdAt: Value(now),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'subscribers',
+      operationType: 'create',
+      documentId: id,
+      payload: {
+        'id': id,
+        'ownerId': ownerId,
+        'name': subscriber.name,
+        'code': subscriber.code,
+        'cabinet': subscriber.cabinet,
+        'phone': subscriber.phone,
+        'status': subscriber.status,
+        'startDate': subscriber.startDate.millisecondsSinceEpoch,
+        'accumulatedDebt': subscriber.accumulatedDebt,
+        'tags': subscriber.tags,
+        'notes': subscriber.notes,
+        'version': 1,
+        'isDeleted': false,
+        'updatedAt': now.millisecondsSinceEpoch,
+        'createdAt': now.millisecondsSinceEpoch,
+      },
+    );
+    
     return _dao.addSubscriber(companion);
   }
 
   // Update a subscriber
   Future<bool> updateSubscriber(Subscriber subscriber, {required String ownerId}) {
+    final now = DateTime.now();
+    final newVersion = (subscriber.version ?? 0) + 1;
     final companion = subscriber.toCompanion(false).copyWith(
       ownerId: Value(ownerId),
-      updatedAt: Value(DateTime.now()),
+      version: Value(newVersion),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'subscribers',
+      operationType: 'update',
+      documentId: subscriber.id,
+      payload: {
+        'id': subscriber.id,
+        'ownerId': ownerId,
+        'name': subscriber.name,
+        'code': subscriber.code,
+        'cabinet': subscriber.cabinet,
+        'phone': subscriber.phone,
+        'status': subscriber.status,
+        'startDate': subscriber.startDate.millisecondsSinceEpoch,
+        'accumulatedDebt': subscriber.accumulatedDebt,
+        'tags': subscriber.tags,
+        'notes': subscriber.notes,
+        'version': newVersion,
+        'isDeleted': subscriber.isDeleted,
+        'updatedAt': now.millisecondsSinceEpoch,
+        'createdAt': subscriber.createdAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch,
+      },
+    );
+    
     return _dao.updateSubscriber(companion);
   }
 
   // Soft delete a subscriber
-  Future<bool> deleteSubscriber(String id, {required String ownerId}) {
+  Future<bool> deleteSubscriber(String id, {required String ownerId}) async {
+    final now = DateTime.now();
+    // Get current subscriber to increment version
+    final existing = await _dao.getSubscriberById(id, ownerId: ownerId);
+    final newVersion = (existing?.version ?? 0) + 1;
+    
     final companion = SubscribersTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
       isDeleted: const Value(true),
-      updatedAt: Value(DateTime.now()),
+      version: Value(newVersion),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'subscribers',
+      operationType: 'delete',
+      documentId: id,
+      payload: {
+        'id': id,
+        'ownerId': ownerId,
+        'version': newVersion,
+      },
+    );
+    
     return _dao.updateSubscriber(companion);
   }
 

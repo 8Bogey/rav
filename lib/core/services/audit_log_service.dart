@@ -3,14 +3,17 @@ import 'package:uuid/uuid.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/audit_log_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
+import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
 
 class AuditLogService extends BaseService {
   late AuditLogDao _dao;
+  late final OutboxService _outbox;
   final String ownerId; // Add ownerId field
   static const uuid = Uuid(); // UUID generator
 
   AuditLogService(AppDatabase database, {required this.ownerId}) : super(database) {
     _dao = AuditLogDao(database);
+    _outbox = OutboxService(database);
   }
 
   // Get all audit log entries
@@ -26,8 +29,10 @@ class AuditLogService extends BaseService {
   // Add a new audit log entry
   Future<String> addAuditLogEntry(AuditLogEntry entry) {
     // For inserts, generate a UUID and add ownerId
+    final id = uuid.v4();
+    final now = DateTime.now();
     final companion = AuditLogTableCompanion(
-      id: Value(uuid.v4()), // Generate UUID
+      id: Value(id), // Generate UUID
       ownerId: Value(ownerId), // Add ownerId
       user: Value(entry.user),
       action: Value(entry.action),
@@ -35,7 +40,33 @@ class AuditLogService extends BaseService {
       details: Value(entry.details),
       type: Value(entry.type),
       timestamp: Value(entry.timestamp),
+      version: const Value(1),
+      isDeleted: const Value(false),
+      createdAt: Value(now),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'auditLog',
+      operationType: 'create',
+      documentId: id,
+      payload: {
+        'id': id,
+        'ownerId': ownerId,
+        'user': entry.user,
+        'action': entry.action,
+        'target': entry.target,
+        'details': entry.details,
+        'type': entry.type,
+        'timestamp': entry.timestamp.millisecondsSinceEpoch,
+        'version': 1,
+        'isDeleted': false,
+        'updatedAt': now.millisecondsSinceEpoch,
+        'createdAt': now.millisecondsSinceEpoch,
+      },
+    );
+    
     return _dao.addAuditLogEntry(companion);
   }
 

@@ -7,7 +7,6 @@ import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
-import 'package:mawlid_al_dhaki/features/cabinets/providers/cabinets_provider.dart';
 import 'package:mawlid_al_dhaki/core/services/audit_service.dart';
 
 /// Add/Edit Subscriber Dialog

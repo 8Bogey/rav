@@ -8,7 +8,7 @@ import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/features/workers/providers/workers_provider.dart'
-    show WorkersProvider, WorkerPermissions, workersProvider;
+    show WorkerPermissions, workersProvider;
 
 class WorkersScreen extends ConsumerWidget {
   const WorkersScreen({super.key});

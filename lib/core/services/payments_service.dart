@@ -2,12 +2,14 @@ import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/payments_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
+import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
 import 'package:uuid/uuid.dart';
 
 class PaymentsService extends BaseService {
   PaymentsService(super.database);
 
   PaymentsDao get _dao => database.paymentsDao;
+  late final OutboxService _outbox = OutboxService(database);
   static const _uuid = Uuid();
 
   // Get all payments
@@ -28,6 +30,7 @@ class PaymentsService extends BaseService {
   // Add a new payment
   Future<String> addPayment(Payment payment, {required String ownerId}) {
     final id = _uuid.v4();
+    final now = DateTime.now();
     final companion = PaymentsTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
@@ -38,29 +41,92 @@ class PaymentsService extends BaseService {
       cabinet: Value(payment.cabinet),
       version: const Value(1),
       isDeleted: const Value(false),
-      createdAt: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
+      createdAt: Value(now),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'payments',
+      operationType: 'create',
+      documentId: id,
+      payload: {
+        'id': id,
+        'ownerId': ownerId,
+        'subscriberId': payment.subscriberId,
+        'amount': payment.amount,
+        'worker': payment.worker,
+        'date': payment.date.millisecondsSinceEpoch,
+        'cabinet': payment.cabinet,
+        'version': 1,
+        'isDeleted': false,
+        'updatedAt': now.millisecondsSinceEpoch,
+        'createdAt': now.millisecondsSinceEpoch,
+      },
+    );
+    
     return _dao.addPayment(companion);
   }
 
   // Update a payment
   Future<bool> updatePayment(Payment payment, {required String ownerId}) {
+    final now = DateTime.now();
+    final newVersion = (payment.version ?? 0) + 1;
     final companion = payment.toCompanion(false).copyWith(
       ownerId: Value(ownerId),
-      updatedAt: Value(DateTime.now()),
+      version: Value(newVersion),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'payments',
+      operationType: 'update',
+      documentId: payment.id,
+      payload: {
+        'id': payment.id,
+        'ownerId': ownerId,
+        'subscriberId': payment.subscriberId,
+        'amount': payment.amount,
+        'worker': payment.worker,
+        'date': payment.date.millisecondsSinceEpoch,
+        'cabinet': payment.cabinet,
+        'version': newVersion,
+        'isDeleted': payment.isDeleted,
+        'updatedAt': now.millisecondsSinceEpoch,
+        'createdAt': payment.createdAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch,
+      },
+    );
+    
     return _dao.updatePayment(companion);
   }
 
   // Soft delete a payment
-  Future<bool> deletePayment(String id, {required String ownerId}) {
+  Future<bool> deletePayment(String id, {required String ownerId}) async {
+    final now = DateTime.now();
+    final existing = await _dao.getPaymentById(id, ownerId: ownerId);
+    final newVersion = (existing?.version ?? 0) + 1;
+    
     final companion = PaymentsTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
       isDeleted: const Value(true),
-      updatedAt: Value(DateTime.now()),
+      version: Value(newVersion),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'payments',
+      operationType: 'delete',
+      documentId: id,
+      payload: {
+        'id': id,
+        'ownerId': ownerId,
+        'version': newVersion,
+      },
+    );
+    
     return _dao.updatePayment(companion);
   }
 
