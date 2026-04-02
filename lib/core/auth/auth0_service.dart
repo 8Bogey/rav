@@ -1,6 +1,6 @@
-import 'dart:io';
+import 'dart:io' show Platform, Process;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Auth0 Configuration
@@ -14,8 +14,8 @@ class Auth0Config {
   static const String clientId = 'gdGUvXRCjz41MNnaMPZ77M1ZCIC1IFS7';
   static const String audience = 'https://hearty-meadowlark-390.convex.cloud';
   
-  // Callback URL for desktop apps
-  static const String redirectUri = 'mawlid://login';
+  // Callback URL for web apps
+  static const String redirectUri = 'http://localhost:5173';
   
   // Auth0 Universal Login URL
   static const String loginUrl = 'https://$domain/authorize?'
@@ -73,37 +73,33 @@ class Auth0Service {
   /// Login with Auth0 using URL launcher
   /// 
   /// This opens the Auth0 Universal Login page in the default browser.
-  /// For desktop, we use a callback URL scheme to receive the auth code.
+  /// For web/desktop, we use the redirect URI to receive the auth code.
   Future<Auth0Result> login() async {
-    if (!_platformSupportsWebAuth) {
-      // Fallback for platforms without web auth support
-      return _loginWithDeviceFlow();
-    }
-    
     try {
-      // Use url_launcher to open Auth0 login page
+      // Open Auth0 login page in browser
       final uri = Uri.parse(Auth0Config.loginUrl);
       
       // Try to launch the URL
       try {
-        await Process.run('cmd', ['/c', 'start', '', uri.toString()]);
-        debugPrint('[Auth0Service] Opened Auth0 login page');
-      } catch (_) {
-        // On non-Windows platforms, try url_launcher
-        // ignore: unused_local_variable
-        final canLaunch = await _canLaunchUrl(uri);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+          debugPrint('[Auth0Service] Opened Auth0 login page in browser');
+        } else if (Platform.isWindows) {
+          await Process.run('cmd', ['/c', 'start', '', uri.toString()]);
+        } else if (Platform.isLinux) {
+          await Process.run('xdg-open', [uri.toString()]);
+        } else if (Platform.isMacOS) {
+          await Process.run('open', [uri.toString()]);
+        }
+      } catch (e) {
+        debugPrint('[Auth0Service] Could not open browser: $e');
       }
       
-      // For desktop apps, we need a different approach
-      // Since we can't get the callback in a desktop app easily,
-      // we'll use a simpler approach: prompt user for a manual token
-      // or use the device code flow
-      
+      // Since we can't get the callback in most cases,
+      // return a fallback result for demo mode
       return Auth0Result(
         success: false,
-        error: 'يرجى استخدام المصادقة عبر المتصفح. إذا لم يفتح المتصفح، '
-            'سيتم تفعيل وضع العرض التوضيحي.',
-        // Fall back to demo mode
+        error: 'تم فتح صفحة تسجيل الدخول. يرجى تسجيل الدخول ثم العودة للتطبيق.',
         fallbackToDemo: true,
       );
     } catch (e) {
@@ -112,16 +108,6 @@ class Auth0Service {
         success: false,
         error: e.toString(),
       );
-    }
-  }
-  
-  /// Check if URL can be launched
-  Future<bool> _canLaunchUrl(Uri uri) async {
-    try {
-      // Simple check - in practice, we'd use url_launcher package
-      return true;
-    } catch (e) {
-      return false;
     }
   }
   
@@ -163,9 +149,14 @@ class Auth0Service {
           'returnTo=${Auth0Config.redirectUri}';
       
       try {
-        await Process.run('cmd', ['/c', 'start', '', logoutUrl]);
+        final uri = Uri.parse(logoutUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else if (Platform.isWindows) {
+          await Process.run('cmd', ['/c', 'start', '', logoutUrl]);
+        }
       } catch (_) {
-        // Ignore errors on non-Windows
+        // Ignore errors
       }
       
       _accessToken = null;
