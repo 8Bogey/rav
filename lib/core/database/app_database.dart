@@ -45,18 +45,13 @@ class AppDatabase extends _$AppDatabase {
       final dbFolder = await getApplicationDocumentsDirectory();
       final dbPath = p.join(dbFolder.path, 'mawlid_al_dhaki');
       
-      print('[DB] Database path: $dbPath');
-      
       // Ensure directory exists
       final dir = Directory(dbPath);
       if (!dir.existsSync()) {
-        print('[DB] Creating directory: $dbPath');
         dir.createSync(recursive: true);
       }
       
       final file = File(p.join(dbPath, 'mawlid_al_dhaki_v2.db'));
-      print('[DB] Database file: ${file.path}');
-      print('[DB] Database exists: ${file.existsSync()}');
       return NativeDatabase.createInBackground(file);
     });
   }
