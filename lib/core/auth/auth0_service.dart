@@ -6,12 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Auth0 Configuration
 /// 
 /// These values come from convex/auth.config.ts and the Auth0 dashboard.
-/// - Domain: dev-hennzyl8c1leuws2.us.auth0.com
-/// - Client ID: gdGUvXRCjz41MNnaMPZ77M1ZCIC1IFS7
+/// - Domain: dev-cqkioj1eiksobor3.us.auth0.com
+/// - Client ID: DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB
 /// - Audience: The Convex deployment URL (for JWT token generation)
 class Auth0Config {
-  static const String domain = 'dev-hennzyl8c1leuws2.us.auth0.com';
-  static const String clientId = 'gdGUvXRCjz41MNnaMPZ77M1ZCIC1IFS7';
+  static const String domain = 'dev-cqkioj1eiksobor3.us.auth0.com';
+  static const String clientId = 'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB';
   static const String audience = 'https://hearty-meadowlark-390.convex.cloud';
   
   // Callback URL for web apps
