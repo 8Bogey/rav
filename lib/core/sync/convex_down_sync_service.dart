@@ -156,7 +156,7 @@ class ConvexDownSyncService {
           delayedSubscribers: Value(change['delayedSubscribers'] as int? ?? 0),
           completionDate: Value(change['completionDate'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['completionDate'] as int)
-              : const Value(null)),
+              : null),
           version: Value(incomingVersion),
           isDeleted: Value(change['isDeleted'] as bool? ?? false),
           updatedAt: Value(change['updatedAt'] != null
@@ -202,12 +202,12 @@ class ConvexDownSyncService {
           cabinet: Value(change['cabinet'] as String? ?? ''),
           version: Value(incomingVersion),
           isDeleted: Value(change['isDeleted'] as bool? ?? false),
-          updatedAt: change['updatedAt'] != null
+          updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
-              : now,
-          createdAt: change['createdAt'] != null
+              : now),
+          createdAt: Value(change['createdAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['createdAt'] as int)
-              : now,
+              : now),
         );
 
         if (existing != null) {
@@ -243,12 +243,12 @@ class ConvexDownSyncService {
           monthTotal: Value(change['monthTotal'] as double? ?? 0),
           version: Value(incomingVersion),
           isDeleted: Value(change['isDeleted'] as bool? ?? false),
-          updatedAt: change['updatedAt'] != null
+          updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
-              : now,
-          createdAt: change['createdAt'] != null
+              : now),
+          createdAt: Value(change['createdAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['createdAt'] as int)
-              : now,
+              : now),
         );
 
         if (existing != null) {
