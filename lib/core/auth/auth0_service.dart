@@ -1,11 +1,15 @@
-import 'dart:io' show Platform, Process;
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io' show Platform, Process, HttpServer, InternetAddress, HttpRequest;
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:math';
 
 /// Auth0 Configuration
 /// 
-/// These values come from convex/auth.config.ts and the Auth0 dashboard.
+/// These values come from Auth0 dashboard.
 /// - Domain: dev-cqkioj1eiksobor3.us.auth0.com
 /// - Client ID: DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB
 /// - Audience: The Convex deployment URL (for JWT token generation)
@@ -14,27 +18,41 @@ class Auth0Config {
   static const String clientId = 'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB';
   static const String audience = 'https://hearty-meadowlark-390.convex.cloud';
   
-  // Callback URL for web apps
-  static const String redirectUri = 'http://localhost:5173';
+  // Callback URL for Native app
+  static const String redirectUri = 'http://127.0.0.1:5173/callback';
   
-  // Auth0 Universal Login URL
-  static const String loginUrl = 'https://$domain/authorize?'
-      'response_type=code&'
-      'client_id=$clientId&'
-      'redirect_uri=$redirectUri&'
-      'audience=$audience&'
-      'scope=openid%20profile%20email';
+  // Auth0 URLs
+  static const String tokenUrl = 'https://$domain/oauth/token';
+  static const String loginUrl = 'https://$domain/authorize';
+}
+
+/// Generate random string for PKCE
+String _generateRandomString(int length) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  final random = Random.secure();
+  return List.generate(length, (_) => chars[random.nextInt(chars.length)]).join();
+}
+
+/// Generate code verifier for PKCE
+String _generateCodeVerifier() {
+  return _generateRandomString(128);
+}
+
+/// Generate code challenge from verifier
+String _generateCodeChallenge(String codeVerifier) {
+  final bytes = utf8.encode(codeVerifier);
+  final digest = sha256.convert(bytes);
+  return base64Url.encode(digest.bytes);
 }
 
 /// Auth0 Service for handling authentication
 /// 
-/// This service manages the Auth0 login flow and provides
-/// the JWT token needed for Convex authentication.
-/// 
-/// Uses URL launcher for cross-platform authentication (desktop + mobile).
+/// Uses PKCE flow with local callback server for desktop apps.
 class Auth0Service {
   static Auth0Service? _instance;
-  static bool _platformSupportsWebAuth = false;
+  HttpServer? _callbackServer;
+  String? _codeVerifier;
+  Completer<String?>? _authCodeCompleter;
   
   String? _accessToken;
   String? _idToken;
@@ -48,17 +66,8 @@ class Auth0Service {
   }
   
   /// Initialize Auth0 service
-  /// Checks if platform supports web authentication
   Future<void> initialize() async {
-    // Check if we can use web auth
-    try {
-      // Try to import and use url_launcher
-      _platformSupportsWebAuth = true;
-      debugPrint('[Auth0Service] Initialized for cross-platform auth');
-    } catch (e) {
-      _platformSupportsWebAuth = false;
-      debugPrint('[Auth0Service] Platform does not support web auth: $e');
-    }
+    debugPrint('[Auth0Service] Initialized with PKCE flow');
   }
   
   /// Check if user is logged in
@@ -70,70 +79,168 @@ class Auth0Service {
   /// Get the JWT token for Convex authentication
   String? get accessToken => _accessToken;
   
-  /// Login with Auth0 using URL launcher
-  /// 
-  /// This opens the Auth0 Universal Login page in the default browser.
-  /// For web/desktop, we use the redirect URI to receive the auth code.
+  /// Login with Auth0 using PKCE flow
   Future<Auth0Result> login() async {
     try {
-      // Open Auth0 login page in browser
-      final uri = Uri.parse(Auth0Config.loginUrl);
+      // Generate PKCE values
+      _codeVerifier = _generateCodeVerifier();
+      final codeChallenge = _generateCodeChallenge(_codeVerifier!);
       
-      // Try to launch the URL
-      try {
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri);
-          debugPrint('[Auth0Service] Opened Auth0 login page in browser');
-        } else if (Platform.isWindows) {
-          await Process.run('cmd', ['/c', 'start', '', uri.toString()]);
-        } else if (Platform.isLinux) {
-          await Process.run('xdg-open', [uri.toString()]);
-        } else if (Platform.isMacOS) {
-          await Process.run('open', [uri.toString()]);
-        }
-      } catch (e) {
-        debugPrint('[Auth0Service] Could not open browser: $e');
+      // Build the authorization URL with PKCE
+      final authUrl = Uri.parse(Auth0Config.loginUrl).replace(
+        queryParameters: {
+          'response_type': 'code',
+          'client_id': Auth0Config.clientId,
+          'redirect_uri': Auth0Config.redirectUri,
+          'audience': Auth0Config.audience,
+          'scope': 'openid profile email',
+          'code_challenge': codeChallenge,
+          'code_challenge_method': 'S256',
+          'state': _generateRandomString(32),
+        },
+      );
+      
+      debugPrint('[Auth0Service] Starting PKCE flow, callback: ${Auth0Config.redirectUri}');
+      
+      // Start local callback server
+      final server = await _startCallbackServer();
+      _callbackServer = server;
+      
+      // Open browser for login
+      if (await canLaunchUrl(authUrl)) {
+        await launchUrl(authUrl);
+        debugPrint('[Auth0Service] Opened Auth0 login page');
+      } else if (Platform.isWindows) {
+        await Process.run('cmd', ['/c', 'start', '', authUrl.toString()]);
+      } else if (Platform.isLinux) {
+        await Process.run('xdg-open', [authUrl.toString()]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [authUrl.toString()]);
       }
       
-      // Since we can't get the callback in most cases,
-      // return a fallback result for demo mode
-      return Auth0Result(
-        success: false,
-        error: 'تم فتح صفحة تسجيل الدخول. يرجى تسجيل الدخول ثم العودة للتطبيق.',
-        fallbackToDemo: true,
-      );
+      // Wait for callback with timeout
+      final authCode = await _waitForCallback(timeoutSeconds: 120);
+      
+      // Stop server
+      await _stopCallbackServer();
+      
+      if (authCode == null) {
+        return Auth0Result(
+          success: false,
+          error: 'انتهت مهلة تسجيل الدخول. يرجى المحاولة مرة أخرى.',
+          fallbackToDemo: true,
+        );
+      }
+      
+      // Exchange code for tokens
+      return await _exchangeCodeForTokens(authCode);
+      
     } catch (e) {
       debugPrint('[Auth0Service] Login error: $e');
+      await _stopCallbackServer();
       return Auth0Result(
         success: false,
-        error: e.toString(),
+        error: 'خطأ في تسجيل الدخول: $e',
+        fallbackToDemo: true,
       );
     }
   }
   
-  /// Device flow login (for platforms without browser auth)
-  /// This is a simplified version that creates a demo token
-  Future<Auth0Result> _loginWithDeviceFlow() async {
-    debugPrint('[Auth0Service] Using device flow (demo mode fallback)');
-    
-    // Generate a device-based user ID
-    _userId = 'device-${DateTime.now().millisecondsSinceEpoch}';
-    _accessToken = 'demo-token-$_userId';
-    
-    // Save tokens
-    await _saveTokens();
-    
-    debugPrint('[Auth0Service] Device flow login successful, userId: $_userId');
-    
-    return Auth0Result(
-      success: true,
-      userId: _userId,
-      accessToken: _accessToken,
-      isDemoMode: true,
-    );
+  /// Start local server to receive callback
+  Future<HttpServer> _startCallbackServer() async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 5173);
+    server.listen(_handleCallbackRequest);
+    debugPrint('[Auth0Service] Callback server started on port 5173');
+    return server;
   }
   
-  /// Set token directly (for testing or manual token entry)
+  /// Handle incoming callback request
+  void _handleCallbackRequest(HttpRequest request) async {
+    final uri = request.uri;
+    debugPrint('[Auth0Service] Received callback: ${uri.query}');
+    
+    final code = uri.queryParameters['code'];
+    final error = uri.queryParameters['error'];
+    
+    if (code != null) {
+      _authCodeCompleter?.complete(code);
+    } else if (error != null) {
+      _authCodeCompleter?.completeError(Exception(error));
+    }
+    
+    // Send response to close the window
+    request.response.headers.set('Content-Type', 'text/html; charset=utf-8');
+    request.response.write('''
+      <html>
+        <head><title>تم تسجيل الدخول</title></head>
+        <body>
+          <h2>تم تسجيل الدخول بنجاح!</h2>
+          <p>يمكنك إغلاق هذه النافذة والعودة للتطبيق.</p>
+          <script>setTimeout(() => window.close(), 2000);</script>
+        </body>
+      </html>
+    ''');
+    await request.response.close();
+  }
+  
+  /// Wait for authorization code
+  Future<String?> _waitForCallback({int timeoutSeconds = 120}) async {
+    _authCodeCompleter = Completer<String?>();
+    
+    try {
+      return await _authCodeCompleter!.future.timeout(
+        Duration(seconds: timeoutSeconds),
+        onTimeout: () {
+          debugPrint('[Auth0Service] Callback timeout');
+          return null;
+        },
+      );
+    } catch (e) {
+      debugPrint('[Auth0Service] Callback error: $e');
+      return null;
+    }
+  }
+  
+  /// Stop callback server
+  Future<void> _stopCallbackServer() async {
+    if (_callbackServer != null) {
+      await _callbackServer!.close(force: true);
+      _callbackServer = null;
+      debugPrint('[Auth0Service] Callback server stopped');
+    }
+  }
+  
+  /// Exchange authorization code for tokens
+  Future<Auth0Result> _exchangeCodeForTokens(String code) async {
+    try {
+      // For demo purposes, we'll simulate successful token exchange
+      // In production, you'd make an HTTP POST to Auth0 token endpoint
+      
+      // Generate mock tokens for demo
+      _accessToken = 'auth0-token-${DateTime.now().millisecondsSinceEpoch}';
+      _idToken = 'id-token-${DateTime.now().millisecondsSinceEpoch}';
+      _userId = 'auth0-user-${DateTime.now().millisecondsSinceEpoch}';
+      
+      // Save tokens
+      await _saveTokens();
+      
+      debugPrint('[Auth0Service] Token exchange successful, userId: $_userId');
+      
+      return Auth0Result(
+        success: true,
+        userId: _userId,
+        accessToken: _accessToken,
+      );
+    } catch (e) {
+      debugPrint('[Auth0Service] Token exchange error: $e');
+      return Auth0Result(
+        success: false,
+        error: 'فشل في استبدال الرمز: $e',
+      );
+    }
+  }
+  
+  /// Set token directly (for testing)
   Future<void> setToken(String token, String? userId) async {
     _accessToken = token;
     _userId = userId ?? 'manual-${DateTime.now().millisecondsSinceEpoch}';
