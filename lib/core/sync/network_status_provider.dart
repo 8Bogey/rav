@@ -1,9 +1,8 @@
-/**
- * Connectivity and Sync Status Provider
- * 
- * Monitors network connectivity and provides sync status.
- * Triggers outbox processing when connectivity is restored.
- */
+/// Connectivity and Sync Status Provider
+/// 
+/// Monitors network connectivity and provides sync status.
+/// Triggers outbox processing when connectivity is restored.
+library;
 
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';

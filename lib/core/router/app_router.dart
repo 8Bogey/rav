@@ -14,7 +14,6 @@ import '../../features/reports/reports_screen.dart';
 import '../../features/whatsapp/whatsapp_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/audit/audit_screen.dart';
-import '../../features/auth/providers/auth_provider.dart';
 import '../../shared/widgets/layout/app_shell.dart';
 
 /// Route permission requirements
@@ -72,12 +71,12 @@ class RoutePermissions {
 
 /// Provider for GoRouter configuration
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
-
   return GoRouter(
     debugLogDiagnostics: true,
     initialLocation: AppRoutes.login,
     redirect: (context, state) {
+      // Read auth state directly without watching in provider
+      final authState = ref.read(authProvider);
       final isAuthenticated = authState.isAuthenticated;
       final isLoginRoute = state.matchedLocation == AppRoutes.login;
       final currentRoute = RoutePermissions.getRouteNameFromPath(state.matchedLocation);

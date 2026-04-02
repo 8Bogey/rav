@@ -1,11 +1,10 @@
-/**
- * Local Database Migration Manager
- * 
- * Handles the migration from Drift V1 (Int IDs) to Drift V2 (UUIDs).
- * The simplest strategy is to wipe the old local database and rebuild from Convex.
- * 
- * Following MINIMAX_IMPLEMENTATION_GUIDE.md patterns.
- */
+/// Local Database Migration Manager
+/// 
+/// Handles the migration from Drift V1 (Int IDs) to Drift V2 (UUIDs).
+/// The simplest strategy is to wipe the old local database and rebuild from Convex.
+/// 
+/// Following MINIMAX_IMPLEMENTATION_GUIDE.md patterns.
+library;
 
 import 'dart:io';
 import 'package:drift/drift.dart';

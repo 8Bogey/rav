@@ -7,7 +7,6 @@ import 'package:mawlid_al_dhaki/core/services/settings_service.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
-import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 import 'package:mawlid_al_dhaki/features/collection/payment_registration_dialog.dart';
 import 'package:mawlid_al_dhaki/features/payments/providers/payments_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';

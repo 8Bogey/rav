@@ -160,7 +160,7 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
   Future<Cabinet?> getCabinetByLetter(String letter) async {
     final cabinets = await _service.getAllCabinets(ownerId: _ownerId);
     try {
-      return cabinets.firstWhere((c) => (c.letter?.toUpperCase() ?? c.name.toUpperCase()) == letter.toUpperCase());
+      return cabinets.firstWhere((c) => (c.letter.toUpperCase() ?? c.name.toUpperCase()) == letter.toUpperCase());
     } catch (e) {
       return null;
     }

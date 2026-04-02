@@ -28,7 +28,7 @@ void main() {
 
     test('Can add and retrieve a cabinet', () async {
       // Create a new cabinet
-      final cabinet = Cabinet(
+      const cabinet = Cabinet(
         id: 0, // Will be auto-generated
         name: 'Test Cabinet',
         letter: 'A',
@@ -59,7 +59,7 @@ void main() {
 
     test('Can update a cabinet', () async {
       // Create and add a cabinet
-      final cabinet = Cabinet(
+      const cabinet = Cabinet(
         id: 0,
         name: 'Original Name',
         letter: 'B',
@@ -101,7 +101,7 @@ void main() {
 
     test('Can delete a cabinet', () async {
       // Create and add a cabinet
-      final cabinet = Cabinet(
+      const cabinet = Cabinet(
         id: 0,
         name: 'Cabinet to Delete',
         letter: 'C',
@@ -129,7 +129,7 @@ void main() {
 
     test('Can get all cabinets', () async {
       // Add a few cabinets
-      final cabinet1 = Cabinet(
+      const cabinet1 = Cabinet(
         id: 0,
         name: 'Cabinet 1',
         letter: 'D',
@@ -140,7 +140,7 @@ void main() {
         completionDate: null,
       );
 
-      final cabinet2 = Cabinet(
+      const cabinet2 = Cabinet(
         id: 0,
         name: 'Cabinet 2',
         letter: 'E',

@@ -1,29 +1,173 @@
-{"created_at":"2026-03-03T15:54:19Z","created_by":"Bogey","depends_on_id":"rav-478","issue_id":"rav-070","type":"blocks"}
-{"created_at":"2026-03-03T15:53:22Z","created_by":"Bogey","depends_on_id":"rav-3n3","issue_id":"rav-2l5","type":"blocks"}
-{"created_at":"2026-03-03T15:44:59Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-3n3","type":"blocks"}
-{"created_at":"2026-03-03T15:45:03Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-478","type":"blocks"}
-{"created_at":"2026-03-03T15:44:45Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-4eq","type":"blocks"}
-{"created_at":"2026-03-03T15:50:36Z","created_by":"Bogey","depends_on_id":"rav-4eq","issue_id":"rav-4kw","type":"blocks"}
-{"created_at":"2026-03-03T15:45:24Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-5ps","type":"blocks"}
-{"created_at":"2026-03-03T15:46:18Z","created_by":"Bogey","depends_on_id":"rav-ck5","issue_id":"rav-73i","type":"blocks"}
-{"created_at":"2026-03-03T15:45:45Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-794","type":"blocks"}
-{"created_at":"2026-03-03T15:48:19Z","created_by":"Bogey","depends_on_id":"rav-lny","issue_id":"rav-7kx","type":"blocks"}
-{"created_at":"2026-03-03T15:46:04Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-9da","type":"blocks"}
-{"created_at":"2026-03-03T15:47:16Z","created_by":"Bogey","depends_on_id":"rav-ck5","issue_id":"rav-a6k","type":"blocks"}
-{"created_at":"2026-03-03T15:49:57Z","created_by":"Bogey","depends_on_id":"rav-apk","issue_id":"rav-a9y","type":"blocks"}
-{"created_at":"2026-03-03T15:44:11Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-apk","type":"blocks"}
-{"created_at":"2026-03-03T15:43:54Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-ck5","type":"blocks"}
-{"created_at":"2026-03-03T15:51:23Z","created_by":"Bogey","depends_on_id":"rav-4eq","issue_id":"rav-czy","type":"blocks"}
-{"created_at":"2026-03-03T15:54:13Z","created_by":"Bogey","depends_on_id":"rav-478","issue_id":"rav-dv9","type":"blocks"}
-{"created_at":"2026-03-03T15:47:03Z","created_by":"Bogey","depends_on_id":"rav-ck5","issue_id":"rav-hda","type":"blocks"}
-{"created_at":"2026-03-03T15:52:23Z","created_by":"Bogey","depends_on_id":"rav-3n3","issue_id":"rav-jec","type":"blocks"}
-{"created_at":"2026-03-03T15:52:15Z","created_by":"Bogey","depends_on_id":"rav-o72","issue_id":"rav-krq","type":"blocks"}
-{"created_at":"2026-03-03T15:44:01Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-lny","type":"blocks"}
-{"created_at":"2026-03-03T15:44:55Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-o72","type":"blocks"}
-{"created_at":"2026-03-03T15:46:47Z","created_by":"Bogey","depends_on_id":"rav-ck5","issue_id":"rav-pf5","type":"blocks"}
-{"created_at":"2026-03-03T15:45:06Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-s3z","type":"blocks"}
-{"created_at":"2026-03-03T15:45:09Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-ujn","type":"blocks"}
-{"created_at":"2026-03-03T15:48:35Z","created_by":"Bogey","depends_on_id":"rav-lny","issue_id":"rav-vtj","type":"blocks"}
-{"created_at":"2026-03-03T15:51:35Z","created_by":"Bogey","depends_on_id":"rav-o72","issue_id":"rav-vvw","type":"blocks"}
-{"created_at":"2026-03-03T15:50:06Z","created_by":"Bogey","depends_on_id":"rav-apk","issue_id":"rav-zvj","type":"blocks"}
-{"created_at":"2026-03-03T15:42:47Z","created_by":"Bogey","depends_on_id":"rav-1pk","issue_id":"rav-zy6","type":"blocks"}
+{"created_at":"2026-03-31T21:11:46Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-0bg","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:33Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-0ds","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:12Z","created_by":"Bogey","depends_on_id":"rav-ehd","issue_id":"rav-0lfm","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:24Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-15a","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:35Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-1f5","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:23:32Z","created_by":"Bogey","depends_on_id":"rav-ti5","issue_id":"rav-1jj","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:12:05Z","created_by":"Bogey","depends_on_id":"rav-8dg","issue_id":"rav-21j6","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:05Z","created_by":"Bogey","depends_on_id":"rav-8dg","issue_id":"rav-22lb","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:04Z","created_by":"Bogey","depends_on_id":"rav-8dg","issue_id":"rav-2bh4","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T09:00:23Z","created_by":"Bogey","depends_on_id":"rav-pxb","issue_id":"rav-2gp","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-15T09:00:16Z","created_by":"Bogey","depends_on_id":"rav-w0u","issue_id":"rav-2gp","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-15T09:01:51Z","created_by":"Bogey","depends_on_id":"rav-xdy","issue_id":"rav-2gp","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:36Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-2p5","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:08Z","created_by":"Bogey","depends_on_id":"rav-qsl","issue_id":"rav-2uso","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:11:03Z","created_by":"Bogey","depends_on_id":"rav-clz","issue_id":"rav-360","metadata":"{}","type":"part-of"}
+{"created_at":"2026-03-31T23:48:19Z","created_by":"Bogey","depends_on_id":"EPIC: Drift Local Database Layer","issue_id":"rav-399v","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:12:07Z","created_by":"Bogey","depends_on_id":"rav-qsl","issue_id":"rav-3o32","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:51Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-3uh","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:00Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-3ym","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:38Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-47l","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:28Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-4ax","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:23Z","created_by":"Bogey","depends_on_id":"EPIC: Service Layer \u0026 Provider Refactoring","issue_id":"rav-4eh8","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:30Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-4i3","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:51Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-4lg","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:23Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-4ph","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:46Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-545","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:00Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-56d","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:11:37Z","created_by":"Bogey","depends_on_id":"rav-clz","issue_id":"rav-591","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:42Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-5ci","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:03Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-5f8f","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:18Z","created_by":"Bogey","depends_on_id":"EPIC: Drift Local Database Layer","issue_id":"rav-5yp5","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T23:48:25Z","created_by":"Bogey","depends_on_id":"EPIC: Auth","issue_id":"rav-615z","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T23:48:25Z","created_by":"Bogey","depends_on_id":"Multi-tenancy \u0026 RBAC","issue_id":"rav-615z","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:47Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-624","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T07:39:16Z","created_by":"Bogey","depends_on_id":"rav-1jj","issue_id":"rav-66a","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-15T07:39:44Z","created_by":"Bogey","depends_on_id":"rav-9it","issue_id":"rav-66a","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-15T07:39:27Z","created_by":"Bogey","depends_on_id":"rav-kec","issue_id":"rav-66a","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:40Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-68n","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:47Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-6d4","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:10Z","created_by":"Bogey","depends_on_id":"rav-qsl","issue_id":"rav-6mai","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:34Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-758","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:24:08Z","created_by":"Bogey","depends_on_id":"rav-7g8","issue_id":"rav-793","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-15T08:24:03Z","created_by":"Bogey","depends_on_id":"rav-clz","issue_id":"rav-793","metadata":"{}","type":"part-of"}
+{"created_at":"2026-04-01T01:39:24Z","created_by":"Bogey","depends_on_id":"EPIC: Post-Migration Refactoring \u0026 Compile Error Resolution","issue_id":"rav-7f9a","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-15T08:24:08Z","created_by":"Bogey","depends_on_id":"rav-clz","issue_id":"rav-7g8","metadata":"{}","type":"part-of"}
+{"created_at":"2026-03-15T08:24:43Z","created_by":"Bogey","depends_on_id":"rav-n0x","issue_id":"rav-7g8","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:33Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-7hk","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:02Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-7jh","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:58Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-7k2","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:35Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-7ka","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:53Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-7lk","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:36Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-7rp","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:59Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-8cj","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:09Z","created_by":"Bogey","depends_on_id":"rav-qsl","issue_id":"rav-8k2v","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:25Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-8z1","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:22Z","created_by":"Bogey","depends_on_id":"EPIC: Data Migration (Drift V1 -\u003e Drift V2)","issue_id":"rav-9as7","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T23:48:15Z","created_by":"Bogey","depends_on_id":"EPIC: Convex Backend Schema \u0026 Server Functions","issue_id":"rav-9d38","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:27Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-9ey","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:49Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-9fk","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:11:03Z","created_by":"Bogey","depends_on_id":"rav-360","issue_id":"rav-9it","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:54Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-9w9","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:06Z","created_by":"Bogey","depends_on_id":"rav-8dg","issue_id":"rav-a097","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-29T00:34:05Z","created_by":"Bogey","depends_on_id":"rav-wu9","issue_id":"rav-a25","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:16Z","created_by":"Bogey","depends_on_id":"EPIC: Convex Backend Schema \u0026 Server Functions","issue_id":"rav-a34o","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:25Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-a73","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:34Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-abg","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:10:48Z","created_by":"Bogey","depends_on_id":"rav-clz","issue_id":"rav-azy","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:56Z","created_by":"Bogey","depends_on_id":"rav-476","issue_id":"rav-b1f","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T18:59:42Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-b1si","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:59Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-b8x","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T19:56:27Z","created_by":"Bogey","depends_on_id":"rav-z8x9","issue_id":"rav-biel","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:41Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-brx","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:20Z","created_by":"Bogey","depends_on_id":"EPIC: Sync Bridge (Drift \u003c-\u003e Convex)","issue_id":"rav-bvlt","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:12:01Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-c64","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:45Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-c6j","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:48Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-cbe","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:45Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-csd","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:12Z","created_by":"Bogey","depends_on_id":"rav-ehd","issue_id":"rav-cu1z","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T01:39:22Z","created_by":"Bogey","depends_on_id":"EPIC: Post-Migration Refactoring \u0026 Compile Error Resolution","issue_id":"rav-czho","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:12:02Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-d1r","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:03Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-deg","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:52Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-dgf","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T09:04:04Z","created_by":"Bogey","depends_on_id":"rav-cho","issue_id":"rav-dh9","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:50Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-dhw","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:40Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-dji","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:22Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-djz","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:55Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-dl4","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:27Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-doh","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T01:39:21Z","created_by":"Bogey","depends_on_id":"EPIC: Post-Migration Refactoring \u0026 Compile Error Resolution","issue_id":"rav-dq9s","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:31Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-du8","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:30Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-dv0","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:50Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-efm","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:01Z","created_by":"Bogey","depends_on_id":"rav-dnk","issue_id":"rav-enl","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:37Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-eve","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:45Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-f8r","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:24Z","created_by":"Bogey","depends_on_id":"EPIC: Service Layer \u0026 Provider Refactoring","issue_id":"rav-fb5y","metadata":"{}","type":"descendant"}
+{"created_at":"2026-04-01T18:59:38Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-ffbv","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:41Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-fm9","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:49Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-fvi","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T01:39:22Z","created_by":"Bogey","depends_on_id":"EPIC: Post-Migration Refactoring \u0026 Compile Error Resolution","issue_id":"rav-ga3g","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:55Z","created_by":"Bogey","depends_on_id":"rav-476","issue_id":"rav-gp9","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:44Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-h5p","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:24Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-h85","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T19:56:33Z","created_by":"Bogey","depends_on_id":"rav-z8x9","issue_id":"rav-hxbf","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:14Z","created_by":"Bogey","depends_on_id":"EPIC: Project Infrastructure \u0026 Dependency Migration","issue_id":"rav-i6ib","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:42Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-ihz","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:18Z","created_by":"Bogey","depends_on_id":"EPIC: Drift Local Database Layer","issue_id":"rav-imyk","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:31Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-iuj","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:10:21Z","created_by":"Bogey","depends_on_id":"rav-clz","issue_id":"rav-izy","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:11Z","created_by":"Bogey","depends_on_id":"rav-ehd","issue_id":"rav-j29c","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:38Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-j7l","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:39Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-j8o","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:21Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-jeg","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:26Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-jjk","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:24:03Z","created_by":"Bogey","depends_on_id":"rav-793","issue_id":"rav-kec","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:29Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-kje","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:09Z","created_by":"Bogey","depends_on_id":"rav-qsl","issue_id":"rav-kknr","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:44Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-klu","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:13Z","created_by":"Bogey","depends_on_id":"rav-ehd","issue_id":"rav-kvib","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-29T00:33:47Z","created_by":"Bogey","depends_on_id":"rav-wu9","issue_id":"rav-kyw","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:25Z","created_by":"Bogey","depends_on_id":"EPIC: Auth","issue_id":"rav-lc40","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T23:48:25Z","created_by":"Bogey","depends_on_id":"Multi-tenancy \u0026 RBAC","issue_id":"rav-lc40","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T23:48:16Z","created_by":"Bogey","depends_on_id":"EPIC: Convex Backend Schema \u0026 Server Functions","issue_id":"rav-ld1j","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:12:10Z","created_by":"Bogey","depends_on_id":"rav-ehd","issue_id":"rav-mmz3","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:13Z","created_by":"Bogey","depends_on_id":"EPIC: Project Infrastructure \u0026 Dependency Migration","issue_id":"rav-mtxg","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:12:11Z","created_by":"Bogey","depends_on_id":"rav-ehd","issue_id":"rav-o4sm","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T22:50:22Z","created_by":"Bogey","depends_on_id":"rav-pq8s","issue_id":"rav-oot0","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:10:43Z","created_by":"Bogey","depends_on_id":"rav-clz","issue_id":"rav-ota","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:13Z","created_by":"Bogey","depends_on_id":"rav-ehd","issue_id":"rav-pbf6","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:29Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-plt","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:26Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-ppl","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:58Z","created_by":"Bogey","depends_on_id":"rav-476","issue_id":"rav-prm","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T09:01:55Z","created_by":"Bogey","depends_on_id":"rav-dh9","issue_id":"rav-pxb","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:28Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-pxh","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-29T00:33:54Z","created_by":"Bogey","depends_on_id":"rav-wu9","issue_id":"rav-q0j","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:08Z","created_by":"Bogey","depends_on_id":"rav-qsl","issue_id":"rav-q0v1","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T01:39:23Z","created_by":"Bogey","depends_on_id":"EPIC: Post-Migration Refactoring \u0026 Compile Error Resolution","issue_id":"rav-qdr3","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T23:48:21Z","created_by":"Bogey","depends_on_id":"EPIC: Sync Bridge (Drift \u003c-\u003e Convex)","issue_id":"rav-r7yo","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T23:48:22Z","created_by":"Bogey","depends_on_id":"EPIC: Data Migration (Drift V1 -\u003e Drift V2)","issue_id":"rav-s62v","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:37Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-s7p","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T18:59:40Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-s7r6","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:39Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-scm","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T01:39:23Z","created_by":"Bogey","depends_on_id":"EPIC: Post-Migration Refactoring \u0026 Compile Error Resolution","issue_id":"rav-snfu","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:32Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-srm","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:22Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-t09","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:23Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-t9f","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:24:08Z","created_by":"Bogey","depends_on_id":"rav-7g8","issue_id":"rav-ti5","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-15T08:23:32Z","created_by":"Bogey","depends_on_id":"rav-clz","issue_id":"rav-ti5","metadata":"{}","type":"part-of"}
+{"created_at":"2026-03-31T21:11:56Z","created_by":"Bogey","depends_on_id":"rav-476","issue_id":"rav-tnt","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:04Z","created_by":"Bogey","depends_on_id":"rav-8dg","issue_id":"rav-u1uv","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-04-01T18:59:02Z","created_by":"Bogey","depends_on_id":"rav-987","issue_id":"rav-u6zp","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:06Z","created_by":"Bogey","depends_on_id":"rav-8dg","issue_id":"rav-umlm","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:57Z","created_by":"Bogey","depends_on_id":"rav-476","issue_id":"rav-uqu","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:14Z","created_by":"Bogey","depends_on_id":"EPIC: Project Infrastructure \u0026 Dependency Migration","issue_id":"rav-ursh","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:57Z","created_by":"Bogey","depends_on_id":"rav-476","issue_id":"rav-uwf","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:26Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-w02","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:59:18Z","created_by":"Bogey","depends_on_id":"rav-b2x","issue_id":"rav-w0u","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:11:52Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-wln","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:36Z","created_by":"Bogey","depends_on_id":"rav-i6z","issue_id":"rav-wou","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:43Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-wzf","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-15T08:59:57Z","created_by":"Bogey","depends_on_id":"rav-9g6","issue_id":"rav-xdy","metadata":"{}","type":"blocks"}
+{"created_at":"2026-03-31T21:12:03Z","created_by":"Bogey","depends_on_id":"rav-8dg","issue_id":"rav-xfiz","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:07Z","created_by":"Bogey","depends_on_id":"rav-qsl","issue_id":"rav-xqmi","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:12:12Z","created_by":"Bogey","depends_on_id":"rav-ehd","issue_id":"rav-y083","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:32Z","created_by":"Bogey","depends_on_id":"rav-3am","issue_id":"rav-yf8","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:54Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-yfs","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:43Z","created_by":"Bogey","depends_on_id":"rav-neh","issue_id":"rav-yic","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:53Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-yki","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-29T00:34:00Z","created_by":"Bogey","depends_on_id":"rav-wu9","issue_id":"rav-ype","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T21:11:55Z","created_by":"Bogey","depends_on_id":"rav-sem","issue_id":"rav-yt1","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:20Z","created_by":"Bogey","depends_on_id":"EPIC: Sync Bridge (Drift \u003c-\u003e Convex)","issue_id":"rav-za56","metadata":"{}","type":"descendant"}
+{"created_at":"2026-03-31T21:11:48Z","created_by":"Bogey","depends_on_id":"rav-ju9","issue_id":"rav-zfx","metadata":"{}","type":"discovered-from"}
+{"created_at":"2026-03-31T23:48:17Z","created_by":"Bogey","depends_on_id":"EPIC: Drift Local Database Layer","issue_id":"rav-zy9c","metadata":"{}","type":"descendant"}

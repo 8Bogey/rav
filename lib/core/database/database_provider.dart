@@ -60,3 +60,10 @@ final workersDaoProvider = Provider((ref) {
 final auditLogDaoProvider = Provider((ref) {
   return ref.watch(databaseProvider).auditLogDao;
 });
+
+/// Provider for WhatsappTemplatesDao
+///
+/// Convenience provider to access the WhatsappTemplatesDao directly
+final whatsappTemplatesDaoProvider = Provider((ref) {
+  return ref.watch(databaseProvider).whatsappTemplatesDao;
+});

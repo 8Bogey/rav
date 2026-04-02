@@ -51,13 +51,13 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
         onExit: (_) => setState(() => _hoveredIndex = null),
         child: Container(
           width: 220, // sidebarWidth from PRD
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppColors.bgSidebar,
-            borderRadius: const BorderRadius.only(
+            borderRadius: BorderRadius.only(
               topLeft: Radius.circular(22),
               bottomLeft: Radius.circular(22),
             ),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
                 color: Color(0x1A000000),
                 blurRadius: 20,

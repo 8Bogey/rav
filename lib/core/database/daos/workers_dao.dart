@@ -58,20 +58,18 @@ class WorkersDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
-  // Add a new worker
+  // Add a new worker - the worker must have id already set in the companion
   Future<String> addWorker(Insertable<Worker> worker) async {
-    return await into(workersTable).insert(worker).then((_) {
-      final comp = worker as WorkersTableCompanion;
-      return comp.id.value;
-    });
+    await into(workersTable).insert(worker);
+    final comp = worker as WorkersTableCompanion;
+    return comp.id.value;
   }
 
   // Insert worker and return ID
   Future<String> insertWorker(Insertable<Worker> worker) async {
-    return await into(workersTable).insert(worker).then((_) {
-      final comp = worker as WorkersTableCompanion;
-      return comp.id.value;
-    });
+    await into(workersTable).insert(worker);
+    final comp = worker as WorkersTableCompanion;
+    return comp.id.value;
   }
 
   // Update a worker

@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart' hide isNull, isNotNull;
-import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'support/sync_validation_spike.dart';

@@ -45,11 +45,15 @@ export default defineSchema({
     isDeleted: v.boolean(), // Soft delete flag
     updatedAt: v.number(), // Unix timestamp
     createdAt: v.number(), // Unix timestamp
+    
+    // Sync bridge: UUID from local Drift to enable upsert
+    syncId: v.string(),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_code", ["code"])
     .index("by_cabinet", ["cabinet"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_syncId", ["syncId"]),
 
   // ============================================================
   // CABINETS - Generator cabinets/zones
@@ -81,10 +85,14 @@ export default defineSchema({
     isDeleted: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
+    
+    // Sync bridge: UUID from local Drift to enable upsert
+    syncId: v.string(),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_name", ["name"])
-    .index("by_letter", ["letter"]),
+    .index("by_letter", ["letter"])
+    .index("by_syncId", ["syncId"]),
 
   // ============================================================
   // PAYMENTS - Payment records for subscribers
@@ -114,12 +122,16 @@ export default defineSchema({
     isDeleted: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
+    
+    // Sync bridge: UUID from local Drift to enable upsert
+    syncId: v.string(),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_subscriberId", ["subscriberId"])
     .index("by_date", ["date"])
     .index("by_worker", ["worker"])
-    .index("by_cabinet", ["cabinet"]),
+    .index("by_cabinet", ["cabinet"])
+    .index("by_syncId", ["syncId"]),
 
   // ============================================================
   // WORKERS - Staff/collectors with roles and permissions
@@ -149,10 +161,14 @@ export default defineSchema({
     isDeleted: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
+    
+    // Sync bridge: UUID from local Drift to enable upsert
+    syncId: v.string(),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_name", ["name"])
-    .index("by_phone", ["phone"]),
+    .index("by_phone", ["phone"])
+    .index("by_syncId", ["syncId"]),
 
   // ============================================================
   // AUDIT_LOG - Financial compliance audit trail
@@ -183,12 +199,16 @@ export default defineSchema({
     isDeleted: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
+    
+    // Sync bridge: UUID from local Drift to enable upsert
+    syncId: v.string(),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_user", ["user"])
     .index("by_target", ["target"])
     .index("by_action", ["action"])
-    .index("by_timestamp", ["timestamp"]),
+    .index("by_timestamp", ["timestamp"])
+    .index("by_syncId", ["syncId"]),
 
   // ============================================================
   // GENERATOR_SETTINGS - Per-tenant singleton settings
@@ -208,8 +228,12 @@ export default defineSchema({
     isDeleted: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
+    
+    // Sync bridge: UUID from local Drift to enable upsert
+    syncId: v.string(),
   })
-    .index("by_ownerId", ["ownerId"]),
+    .index("by_ownerId", ["ownerId"])
+    .index("by_syncId", ["syncId"]),
 
   // ============================================================
   // WHATSAPP_TEMPLATES - Message templates for WhatsApp bridge
@@ -237,7 +261,11 @@ export default defineSchema({
     isDeleted: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
+    
+    // Sync bridge: UUID from local Drift to enable upsert
+    syncId: v.string(),
   })
     .index("by_ownerId", ["ownerId"])
-    .index("by_isActive", ["isActive"]),
+    .index("by_isActive", ["isActive"])
+    .index("by_syncId", ["syncId"]),
 });

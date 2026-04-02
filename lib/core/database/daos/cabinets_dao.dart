@@ -48,20 +48,18 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
-  // Add a new cabinet
+  // Add a new cabinet - the cabinet must have id already set in the companion
   Future<String> addCabinet(Insertable<Cabinet> cabinet) async {
-    return await into(cabinetsTable).insert(cabinet).then((_) {
-      final comp = cabinet as CabinetsTableCompanion;
-      return comp.id.value;
-    });
+    await into(cabinetsTable).insert(cabinet);
+    final comp = cabinet as CabinetsTableCompanion;
+    return comp.id.value;
   }
 
   // Insert cabinet and return ID
   Future<String> insertCabinet(Insertable<Cabinet> cabinet) async {
-    return await into(cabinetsTable).insert(cabinet).then((_) {
-      final comp = cabinet as CabinetsTableCompanion;
-      return comp.id.value;
-    });
+    await into(cabinetsTable).insert(cabinet);
+    final comp = cabinet as CabinetsTableCompanion;
+    return comp.id.value;
   }
 
   // Update a cabinet

@@ -60,7 +60,7 @@ class WhatsappScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.error,
                           size: 64,
                           color: AppColors.statusDanger,

@@ -4,6 +4,7 @@
 /// tracking and resolving synchronization conflicts in the offline-first system.
 /// This is a local implementation for the Convex-based sync, replacing the
 /// previous Supabase-based implementation.
+library;
 
 /// Conflict type enumeration
 enum ConflictType {

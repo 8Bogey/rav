@@ -48,20 +48,18 @@ class WhatsappTemplatesDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
-  // Add a new template
+  // Add a new template - the template must have id already set in the companion
   Future<String> addTemplate(Insertable<WhatsappTemplateData> template) async {
-    return await into(whatsappTemplatesTable).insert(template).then((_) {
-      final comp = template as WhatsappTemplatesTableCompanion;
-      return comp.id.value;
-    });
+    await into(whatsappTemplatesTable).insert(template);
+    final comp = template as WhatsappTemplatesTableCompanion;
+    return comp.id.value;
   }
 
   // Insert template and return ID
   Future<String> insertTemplate(Insertable<WhatsappTemplateData> template) async {
-    return await into(whatsappTemplatesTable).insert(template).then((_) {
-      final comp = template as WhatsappTemplatesTableCompanion;
-      return comp.id.value;
-    });
+    await into(whatsappTemplatesTable).insert(template);
+    final comp = template as WhatsappTemplatesTableCompanion;
+    return comp.id.value;
   }
 
   // Update a template

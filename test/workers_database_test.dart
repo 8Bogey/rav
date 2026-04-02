@@ -28,7 +28,7 @@ void main() {
 
     test('Can add and retrieve a worker', () async {
       // Create a new worker
-      final worker = Worker(
+      const worker = Worker(
         id: 0, // Will be auto-generated
         name: 'Test Worker',
         phone: '07701234567',
@@ -55,7 +55,7 @@ void main() {
 
     test('Can update a worker', () async {
       // Create and add a worker
-      final worker = Worker(
+      const worker = Worker(
         id: 0,
         name: 'Original Worker',
         phone: '07709876543',
@@ -95,7 +95,7 @@ void main() {
 
     test('Can delete a worker', () async {
       // Create and add a worker
-      final worker = Worker(
+      const worker = Worker(
         id: 0,
         name: 'Worker to Delete',
         phone: '07705566778',
@@ -121,7 +121,7 @@ void main() {
 
     test('Can get all workers', () async {
       // Add a few workers
-      final worker1 = Worker(
+      const worker1 = Worker(
         id: 0,
         name: 'Worker 1',
         phone: '07701234567',
@@ -130,7 +130,7 @@ void main() {
         monthTotal: 620000.0,
       );
 
-      final worker2 = Worker(
+      const worker2 = Worker(
         id: 0,
         name: 'Worker 2',
         phone: '07709876543',
@@ -152,7 +152,7 @@ void main() {
 
     test('Can get worker by name', () async {
       // Add a few workers
-      final worker1 = Worker(
+      const worker1 = Worker(
         id: 0,
         name: 'Ahmed Mohammed',
         phone: '07701234567',
@@ -161,7 +161,7 @@ void main() {
         monthTotal: 620000.0,
       );
 
-      final worker2 = Worker(
+      const worker2 = Worker(
         id: 0,
         name: 'Ali Hassan',
         phone: '07709876543',

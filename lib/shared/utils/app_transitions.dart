@@ -20,7 +20,7 @@ class AppTransitions {
       transitionDuration: AppDimens.durationNormal,
       pageBuilder: (context, animation, secondaryAnimation) => child,
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curve = Curves.easeOutQuart;
+        const curve = Curves.easeOutQuart;
         final scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
           CurvedAnimation(parent: animation, curve: curve),
         );

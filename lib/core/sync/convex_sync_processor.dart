@@ -65,6 +65,14 @@ class ConvexSyncProcessor {
       );
 
       final Map<String, dynamic> payload = jsonDecode(entry.payload);
+      
+      // CRITICAL FIX: Map the Drift UUID (documentId) to syncId for Convex upsert
+      // The documentId field in outbox contains the local Drift UUID
+      payload['syncId'] = entry.documentId;
+      
+      // Remove the 'id' field if present - Convex now uses syncId for upsert
+      payload.remove('id');
+      
       final String mutationName = _getMutationName(entry.targetTable, entry.operationType);
       
       // Execute Convex mutation
@@ -106,13 +114,21 @@ class ConvexSyncProcessor {
   }
 
   String _getMutationName(String table, String operation) {
-    // Maps table + op to Convex mutation name (e.g., 'subscribers' + 'create' -> 'saveSubscriber')
-    // All our Convex mutations follow the 'save[Object]' pattern.
+    // Maps table + op to Convex mutation name
+    // All our Convex mutations follow the 'save[Object]' pattern for creates/updates
+    // And 'delete[Object]' pattern for deletes
+    String baseName;
     if (table.endsWith('s')) {
       final singular = table.substring(0, table.length - 1);
-      final capitalized = singular[0].toUpperCase() + singular.substring(1);
-      return 'save$capitalized';
+      baseName = singular[0].toUpperCase() + singular.substring(1);
+    } else {
+      baseName = table[0].toUpperCase() + table.substring(1);
     }
-    return 'save${table[0].toUpperCase() + table.substring(1)}';
+    
+    // Handle delete operations separately
+    if (operation == 'delete') {
+      return 'delete$baseName';
+    }
+    return 'save$baseName';
   }
 }

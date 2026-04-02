@@ -1,9 +1,8 @@
-/**
- * Sync Status Indicator Widget
- * 
- * Displays current sync status with visual indicators.
- * Shows connectivity, pending sync count, and sync progress.
- */
+/// Sync Status Indicator Widget
+/// 
+/// Displays current sync status with visual indicators.
+/// Shows connectivity, pending sync count, and sync progress.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

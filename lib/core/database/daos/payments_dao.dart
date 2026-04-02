@@ -58,20 +58,18 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
-  // Add a new payment
+  // Add a new payment - the payment must have id already set in the companion
   Future<String> addPayment(Insertable<Payment> payment) async {
-    return await into(paymentsTable).insert(payment).then((_) {
-      final comp = payment as PaymentsTableCompanion;
-      return comp.id.value;
-    });
+    await into(paymentsTable).insert(payment);
+    final comp = payment as PaymentsTableCompanion;
+    return comp.id.value;
   }
 
   // Insert payment and return ID
   Future<String> insertPayment(Insertable<Payment> payment) async {
-    return await into(paymentsTable).insert(payment).then((_) {
-      final comp = payment as PaymentsTableCompanion;
-      return comp.id.value;
-    });
+    await into(paymentsTable).insert(payment);
+    final comp = payment as PaymentsTableCompanion;
+    return comp.id.value;
   }
 
   // Update a payment

@@ -657,12 +657,12 @@ class WorkersScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('حذف العامل'),
+        title: const Text('حذف العامل'),
         content: Text('هل أنت متأكد من حذف ${worker.name}؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('إلغاء'),
+            child: const Text('إلغاء'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -674,7 +674,7 @@ class WorkersScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.statusDanger,
             ),
-            child: Text('حذف'),
+            child: const Text('حذف'),
           ),
         ],
       ),

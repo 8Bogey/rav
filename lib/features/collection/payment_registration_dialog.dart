@@ -212,7 +212,7 @@ class _PaymentRegistrationDialogState
                   )
                 else
                   DropdownButtonFormField<Worker>(
-                    value: _selectedWorker,
+                    initialValue: _selectedWorker,
                     hint: Text(
                       'اختر العامل',
                       style: AppTypography.bodyMd.copyWith(
@@ -320,7 +320,7 @@ class _PaymentRegistrationDialogState
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Checkbox(value: true, onChanged: null),
+                    const Checkbox(value: true, onChanged: null),
                     Text(
                       'طباعة إيصال بعد التسجيل',
                       style: AppTypography.bodyMd.copyWith(
@@ -417,7 +417,7 @@ class _PaymentRegistrationDialogState
     final amountText = _amountController.text.trim();
     if (amountText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'يرجى إدخال المبلغ المدفوع',
             textDirection: TextDirection.rtl,
@@ -431,7 +431,7 @@ class _PaymentRegistrationDialogState
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'يرجى إدخال مبلغ صحيح',
             textDirection: TextDirection.rtl,
@@ -444,7 +444,7 @@ class _PaymentRegistrationDialogState
 
     if (_selectedWorker == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'يرجى اختيار العامل',
             textDirection: TextDirection.rtl,
@@ -458,7 +458,7 @@ class _PaymentRegistrationDialogState
     final cabinet = _cabinetController.text.trim();
     if (cabinet.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'يرجى إدخال اسم الكابينة',
             textDirection: TextDirection.rtl,
@@ -489,7 +489,7 @@ class _PaymentRegistrationDialogState
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
               'تم تسجيل الدفعة بنجاح',
               textDirection: TextDirection.rtl,

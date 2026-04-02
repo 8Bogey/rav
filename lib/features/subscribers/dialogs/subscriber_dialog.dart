@@ -92,7 +92,7 @@ class _SubscriberDialogState extends ConsumerState<SubscriberDialog> {
     
     // If code is empty or doesn't start with the cabinet letter, update it
     if (code.isEmpty) {
-      _codeController.text = '$cabinet';
+      _codeController.text = cabinet;
     } else {
       // Check if first character is a letter
       final letterMatch = RegExp(r'^([A-Za-z]+)').firstMatch(code.toUpperCase());

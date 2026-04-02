@@ -465,7 +465,7 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.apps,
                   size: 16,
                   color: AppColors.primary,
@@ -483,7 +483,7 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
                     ref.read(subscribersProvider.notifier).clearFilters();
                     ref.read(selectedCabinetFilterProvider.notifier).state = null;
                   },
-                  child: Icon(
+                  child: const Icon(
                     Icons.close,
                     size: 16,
                     color: AppColors.primary,
@@ -730,7 +730,7 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
           const SizedBox(width: 8),
           GestureDetector(
             onTap: () => _showDeleteConfirmation(context, ref, subscriber),
-            child: Icon(
+            child: const Icon(
               Icons.delete_outline,
               size: 20,
               color: AppColors.statusDanger,
@@ -776,7 +776,7 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
               await ref.read(subscribersProvider.notifier).deleteSubscriber(subscriber.id);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
+                  const SnackBar(
                     content: Text('تم حذف المشترك بنجاح'),
                     backgroundColor: AppColors.statusActive,
                   ),

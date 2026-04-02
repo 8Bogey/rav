@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 import 'package:mawlid_al_dhaki/core/services/cabinets_service.dart';
 export 'package:mawlid_al_dhaki/core/services/cabinets_service.dart';

@@ -43,7 +43,7 @@ Future<void> main() async {
   }
 
   // Initialize Convex client (if URL is configured in .env)
-  final convexUrl = const String.fromEnvironment('CONVEX_URL', defaultValue: '');
+  const convexUrl = String.fromEnvironment('CONVEX_URL', defaultValue: '');
   if (convexUrl.isNotEmpty) {
     try {
       await AppConvexConfig.initialize(convexUrl);

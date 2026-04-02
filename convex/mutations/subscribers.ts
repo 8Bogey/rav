@@ -14,7 +14,7 @@ import { v } from "convex/values";
 
 export const saveSubscriber = mutation({
   args: {
-    id: v.optional(v.id("subscribers")),
+    syncId: v.string(),
     version: v.number(),
     ownerId: v.string(),
     name: v.string(),
@@ -51,19 +51,14 @@ export const saveSubscriber = mutation({
 
     const now = Date.now();
 
-    if (args.id) {
-      // UPDATE: Check if document exists and version is newer
-      const existing = await ctx.db.get(args.id);
-      if (!existing) {
-        throw new Error("Not found: Document does not exist");
-      }
-      
-      // Verify ownership
-      if (existing.ownerId !== identity.subject) {
-        throw new Error("Unauthorized: Cannot modify another tenant's document");
-      }
+    // 3. UPSERT PATTERN: Find existing by syncId instead of using Convex ID
+    const existing = await ctx.db
+      .query("subscribers")
+      .withIndex("by_syncId", (q) => q.eq("syncId", args.syncId))
+      .first();
 
-      // LWW Conflict Resolution: Reject if incoming version is not newer
+    if (existing) {
+      // UPDATE: Check version is newer (LWW conflict resolution)
       if (args.version <= existing.version) {
         return { 
           success: false, 
@@ -73,19 +68,17 @@ export const saveSubscriber = mutation({
       }
 
       // Update existing document
-      const { id, ...updateData } = args;
-      await ctx.db.patch(id, {
-        ...updateData,
+      await ctx.db.patch(existing._id, {
+        ...args,
         updatedAt: now,
         version: args.version,
       });
       
-      return { success: true, id: args.id, version: args.version };
+      return { success: true, id: existing._id, version: args.version };
     } else {
       // CREATE: Insert new document
-      const { id, ...insertData } = args;
       const newId = await ctx.db.insert("subscribers", {
-        ...insertData,
+        ...args,
         createdAt: now,
         updatedAt: now,
         version: 0, // Initial version for new documents
@@ -98,7 +91,7 @@ export const saveSubscriber = mutation({
 
 export const deleteSubscriber = mutation({
   args: {
-    id: v.id("subscribers"),
+    syncId: v.string(),
     version: v.number(),
     ownerId: v.string(),
   },
@@ -114,15 +107,14 @@ export const deleteSubscriber = mutation({
       throw new Error("Unauthorized: Cannot delete another tenant's data");
     }
 
-    // 3. Get existing document
-    const existing = await ctx.db.get(args.id);
+    // 3. Find existing by syncId
+    const existing = await ctx.db
+      .query("subscribers")
+      .withIndex("by_syncId", (q) => q.eq("syncId", args.syncId))
+      .first();
+      
     if (!existing) {
-      throw new Error("Not found: Document does not exist");
-    }
-
-    // Verify ownership
-    if (existing.ownerId !== identity.subject) {
-      throw new Error("Unauthorized: Cannot delete another tenant's document");
+      return { success: false, reason: "not_found" };
     }
 
     // LWW Conflict Resolution
@@ -135,13 +127,13 @@ export const deleteSubscriber = mutation({
     }
 
     // Soft Delete: Set isDeleted = true instead of actual DELETE
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch(existing._id, {
       isDeleted: true,
       version: args.version,
       updatedAt: Date.now(),
     });
 
-    return { success: true, id: args.id };
+    return { success: true, id: existing._id };
   },
 });
 
@@ -149,7 +141,7 @@ export const deleteSubscriber = mutation({
 export const bulkSaveSubscribers = mutation({
   args: {
     subscribers: v.array(v.object({
-      id: v.optional(v.id("subscribers")),
+      syncId: v.string(),
       version: v.number(),
       ownerId: v.string(),
       name: v.string(),
@@ -188,18 +180,21 @@ export const bulkSaveSubscribers = mutation({
         continue;
       }
 
-      if (subscriber.id) {
-        const existing = await ctx.db.get(subscriber.id);
-        if (existing && existing.ownerId === identity.subject && subscriber.version > existing.version) {
-          const { id, ...data } = subscriber;
-          await ctx.db.patch(id, { ...data, updatedAt: now });
-          results.push({ success: true, id });
+      // UPSERT PATTERN: Find by syncId
+      const existing = await ctx.db
+        .query("subscribers")
+        .withIndex("by_syncId", (q) => q.eq("syncId", subscriber.syncId))
+        .first();
+
+      if (existing) {
+        if (subscriber.version > existing.version) {
+          await ctx.db.patch(existing._id, { ...subscriber, updatedAt: now });
+          results.push({ success: true, id: existing._id });
         } else {
           results.push({ success: false, error: "stale_version" });
         }
       } else {
-        const { id, ...data } = subscriber;
-        const newId = await ctx.db.insert("subscribers", { ...data, createdAt: now, updatedAt: now, version: 0 });
+        const newId = await ctx.db.insert("subscribers", { ...subscriber, createdAt: now, updatedAt: now, version: 0 });
         results.push({ success: true, id: newId });
       }
     }

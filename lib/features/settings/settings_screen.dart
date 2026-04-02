@@ -540,7 +540,7 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: (v) => ref
                 .read(themeModeProvider.notifier)
                 .setThemeMode(v ? ThemeMode.dark : ThemeMode.light),
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
           isDarkMode: isDarkMode,
         ),
@@ -608,8 +608,9 @@ class SettingsScreen extends ConsumerWidget {
               DropdownMenuItem(value: 'thermal', child: Text('طابعة حرارية')),
             ],
             onChanged: (value) {
-              if (value != null)
+              if (value != null) {
                 ref.read(printerNameProvider.notifier).state = value;
+              }
             },
           ),
           isDarkMode: isDarkMode,
@@ -628,8 +629,9 @@ class SettingsScreen extends ConsumerWidget {
               DropdownMenuItem(value: 'thermal', child: Text('حراري 80mm')),
             ],
             onChanged: (value) {
-              if (value != null)
+              if (value != null) {
                 ref.read(paperSizeProvider.notifier).state = value;
+              }
             },
           ),
           isDarkMode: isDarkMode,
@@ -846,7 +848,7 @@ class SettingsScreen extends ConsumerWidget {
             value: ref.watch(autoLockProvider),
             onChanged: (value) =>
                 ref.read(autoLockProvider.notifier).state = value,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
           isDarkMode: isDarkMode,
         ),
@@ -924,7 +926,7 @@ class SettingsScreen extends ConsumerWidget {
                     onChanged: (value) => ref
                         .read(paymentRemindersProvider.notifier)
                         .state = value,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                   ),
                 ],
               ),
@@ -992,7 +994,7 @@ class SettingsScreen extends ConsumerWidget {
                 value: ref.watch(syncNotificationsProvider),
                 onChanged: (value) =>
                     ref.read(syncNotificationsProvider.notifier).state = value,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ],
           ),
@@ -1044,7 +1046,7 @@ class SettingsScreen extends ConsumerWidget {
                 value: ref.watch(systemAlertsProvider),
                 onChanged: (value) =>
                     ref.read(systemAlertsProvider.notifier).state = value,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ],
           ),
@@ -1097,7 +1099,7 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: (value) => ref
                     .read(whatsappNotificationsProvider.notifier)
                     .state = value,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ],
           ),
@@ -1309,7 +1311,7 @@ class SettingsScreen extends ConsumerWidget {
                     onChanged: (value) => ref
                         .read(cloudBackupEnabledProvider.notifier)
                         .state = value,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                   ),
                 ],
               ),
@@ -1325,9 +1327,10 @@ class SettingsScreen extends ConsumerWidget {
                     DropdownMenuItem(value: 'weekly', child: Text('أسبوعياً')),
                   ],
                   onChanged: (value) {
-                    if (value != null)
+                    if (value != null) {
                       ref.read(autoBackupFrequencyProvider.notifier).state =
                           value;
+                    }
                   },
                 ),
                 isDarkMode: isDarkMode,

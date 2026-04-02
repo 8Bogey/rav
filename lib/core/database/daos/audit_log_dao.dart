@@ -68,20 +68,18 @@ class AuditLogDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
-  // Add a new audit log entry
+  // Add a new audit log entry - the entry must have id already set in the companion
   Future<String> addAuditLogEntry(Insertable<AuditLogEntry> entry) async {
-    return await into(auditLogTable).insert(entry).then((_) {
-      final comp = entry as AuditLogTableCompanion;
-      return comp.id.value;
-    });
+    await into(auditLogTable).insert(entry);
+    final comp = entry as AuditLogTableCompanion;
+    return comp.id.value;
   }
 
   // Insert audit log entry and return ID
   Future<String> insertAuditLogEntry(Insertable<AuditLogEntry> entry) async {
-    return await into(auditLogTable).insert(entry).then((_) {
-      final comp = entry as AuditLogTableCompanion;
-      return comp.id.value;
-    });
+    await into(auditLogTable).insert(entry);
+    final comp = entry as AuditLogTableCompanion;
+    return comp.id.value;
   }
 
   // Update an audit log entry

@@ -9,7 +9,6 @@ import 'package:mawlid_al_dhaki/features/cabinets/providers/cabinets_provider.da
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/router/route_names.dart';
-import 'package:mawlid_al_dhaki/shared/utils/app_transitions.dart';
 
 class CabinetsScreen extends ConsumerStatefulWidget {
   const CabinetsScreen({super.key});

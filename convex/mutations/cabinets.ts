@@ -9,7 +9,7 @@ import { v } from "convex/values";
 
 export const saveCabinet = mutation({
   args: {
-    id: v.optional(v.id("cabinets")),
+    syncId: v.string(),
     version: v.number(),
     ownerId: v.string(),
     name: v.string(),
@@ -42,16 +42,13 @@ export const saveCabinet = mutation({
 
     const now = Date.now();
 
-    if (args.id) {
-      const existing = await ctx.db.get(args.id);
-      if (!existing) {
-        throw new Error("Not found: Document does not exist");
-      }
+    // UPSERT PATTERN: Find by syncId
+    const existing = await ctx.db
+      .query("cabinets")
+      .withIndex("by_syncId", (q) => q.eq("syncId", args.syncId))
+      .first();
 
-      if (existing.ownerId !== identity.subject) {
-        throw new Error("Unauthorized: Cannot modify another tenant's document");
-      }
-
+    if (existing) {
       // LWW Conflict Resolution
       if (args.version <= existing.version) {
         return { 
@@ -61,18 +58,16 @@ export const saveCabinet = mutation({
         };
       }
 
-      const { id, ...updateData } = args;
-      await ctx.db.patch(id, {
-        ...updateData,
+      await ctx.db.patch(existing._id, {
+        ...args,
         updatedAt: now,
         version: args.version,
       });
 
-      return { success: true, id: args.id, version: args.version };
+      return { success: true, id: existing._id, version: args.version };
     } else {
-      const { id, ...insertData } = args;
       const newId = await ctx.db.insert("cabinets", {
-        ...insertData,
+        ...args,
         createdAt: now,
         updatedAt: now,
         version: 0,
@@ -85,7 +80,7 @@ export const saveCabinet = mutation({
 
 export const deleteCabinet = mutation({
   args: {
-    id: v.id("cabinets"),
+    syncId: v.string(),
     version: v.number(),
     ownerId: v.string(),
   },
@@ -99,13 +94,14 @@ export const deleteCabinet = mutation({
       throw new Error("Unauthorized: Cannot delete another tenant's data");
     }
 
-    const existing = await ctx.db.get(args.id);
-    if (!existing) {
-      throw new Error("Not found: Document does not exist");
-    }
+    // Find by syncId
+    const existing = await ctx.db
+      .query("cabinets")
+      .withIndex("by_syncId", (q) => q.eq("syncId", args.syncId))
+      .first();
 
-    if (existing.ownerId !== identity.subject) {
-      throw new Error("Unauthorized: Cannot delete another tenant's document");
+    if (!existing) {
+      return { success: false, reason: "not_found" };
     }
 
     // LWW Conflict Resolution
@@ -118,12 +114,12 @@ export const deleteCabinet = mutation({
     }
 
     // Soft Delete
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch(existing._id, {
       isDeleted: true,
       version: args.version,
       updatedAt: Date.now(),
     });
 
-    return { success: true, id: args.id };
+    return { success: true, id: existing._id };
   },
 });

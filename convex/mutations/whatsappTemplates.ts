@@ -9,7 +9,7 @@ import { v } from "convex/values";
 
 export const saveWhatsappTemplate = mutation({
   args: {
-    id: v.optional(v.id("whatsappTemplates")),
+    syncId: v.string(),
     version: v.number(),
     ownerId: v.string(),
     title: v.string(),
@@ -38,16 +38,13 @@ export const saveWhatsappTemplate = mutation({
 
     const now = Date.now();
 
-    if (args.id) {
-      const existing = await ctx.db.get(args.id);
-      if (!existing) {
-        throw new Error("Not found: Document does not exist");
-      }
+    // UPSERT PATTERN: Find by syncId
+    const existing = await ctx.db
+      .query("whatsappTemplates")
+      .withIndex("by_syncId", (q) => q.eq("syncId", args.syncId))
+      .first();
 
-      if (existing.ownerId !== identity.subject) {
-        throw new Error("Unauthorized: Cannot modify another tenant's document");
-      }
-
+    if (existing) {
       // LWW Conflict Resolution
       if (args.version <= existing.version) {
         return { 
@@ -57,18 +54,16 @@ export const saveWhatsappTemplate = mutation({
         };
       }
 
-      const { id, ...updateData } = args;
-      await ctx.db.patch(id, {
-        ...updateData,
+      await ctx.db.patch(existing._id, {
+        ...args,
         updatedAt: now,
         version: args.version,
       });
 
-      return { success: true, id: args.id, version: args.version };
+      return { success: true, id: existing._id, version: args.version };
     } else {
-      const { id, ...insertData } = args;
       const newId = await ctx.db.insert("whatsappTemplates", {
-        ...insertData,
+        ...args,
         createdAt: now,
         updatedAt: now,
         version: 0,
@@ -81,7 +76,7 @@ export const saveWhatsappTemplate = mutation({
 
 export const deleteWhatsappTemplate = mutation({
   args: {
-    id: v.id("whatsappTemplates"),
+    syncId: v.string(),
     version: v.number(),
     ownerId: v.string(),
   },
@@ -95,13 +90,14 @@ export const deleteWhatsappTemplate = mutation({
       throw new Error("Unauthorized: Cannot delete another tenant's data");
     }
 
-    const existing = await ctx.db.get(args.id);
-    if (!existing) {
-      throw new Error("Not found: Document does not exist");
-    }
+    // Find by syncId
+    const existing = await ctx.db
+      .query("whatsappTemplates")
+      .withIndex("by_syncId", (q) => q.eq("syncId", args.syncId))
+      .first();
 
-    if (existing.ownerId !== identity.subject) {
-      throw new Error("Unauthorized: Cannot delete another tenant's document");
+    if (!existing) {
+      return { success: false, reason: "not_found" };
     }
 
     // LWW Conflict Resolution
@@ -114,12 +110,12 @@ export const deleteWhatsappTemplate = mutation({
     }
 
     // Soft Delete
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch(existing._id, {
       isDeleted: true,
       version: args.version,
       updatedAt: Date.now(),
     });
 
-    return { success: true, id: args.id };
+    return { success: true, id: existing._id };
   },
 });

@@ -1,9 +1,8 @@
-/**
- * Auth Provider for Riverpod with Auth0 integration
- * 
- * Manages authentication state and user session via Auth0.
- * Bridges Auth0 identity to Convex for tenant isolation.
- */
+/// Auth Provider for Riverpod with Auth0 integration
+/// 
+/// Manages authentication state and user session via Auth0.
+/// Bridges Auth0 identity to Convex for tenant isolation.
+library;
 
 import 'package:auth0_flutter/auth0_flutter.dart';
 import 'package:flutter/foundation.dart';
@@ -80,12 +79,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true);
     try {
       final credentials = await _auth0.credentialsManager.credentials();
-      if (credentials != null) {
-        await _updateConvexAndState(credentials);
-      } else {
-        state = state.copyWith(isLoading: false, isAuthenticated: false);
-      }
-    } catch (e) {
+      await _updateConvexAndState(credentials);
+        } catch (e) {
       debugPrint('AuthNotifier: No existing session: $e');
       state = state.copyWith(isLoading: false, isAuthenticated: false);
     }

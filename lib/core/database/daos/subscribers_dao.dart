@@ -52,20 +52,18 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
   }
 
   // Add a new subscriber (with auto-generated UUID)
-  Future<String> addSubscriber(Insertable<Subscriber> subscriber) {
-    return into(subscribersTable).insert(subscriber).then((_) {
-      // Return the ID that was inserted
-      final comp = subscriber as SubscribersTableCompanion;
-      return comp.id.value;
-    });
+  // The subscriber must have id already set in the companion
+  Future<String> addSubscriber(Insertable<Subscriber> subscriber) async {
+    await into(subscribersTable).insert(subscriber);
+    final comp = subscriber as SubscribersTableCompanion;
+    return comp.id.value;
   }
 
   // Add subscriber and return the ID
   Future<String> insertSubscriber(Insertable<Subscriber> subscriber) async {
-    return await into(subscribersTable).insert(subscriber).then((_) {
-      final comp = subscriber as SubscribersTableCompanion;
-      return comp.id.value;
-    });
+    await into(subscribersTable).insert(subscriber);
+    final comp = subscriber as SubscribersTableCompanion;
+    return comp.id.value;
   }
 
   // Update a subscriber

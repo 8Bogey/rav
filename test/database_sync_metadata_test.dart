@@ -328,7 +328,7 @@ void main() {
       });
 
       test('Sync metadata fields have correct default values', () async {
-        final worker = Worker(
+        const worker = Worker(
           id: 0,
           name: 'Test Worker 2',
           phone: '07701234567',

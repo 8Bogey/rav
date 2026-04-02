@@ -107,7 +107,7 @@ class DashboardScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error, size: 64, color: AppColors.statusDanger),
+          const Icon(Icons.error, size: 64, color: AppColors.statusDanger),
           const Gap(16),
           Text(
             'حدث خطأ أثناء تحميل البيانات',
@@ -295,7 +295,7 @@ boxShadow: [
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.statusActive,
                       shape: BoxShape.circle,
                     ),
@@ -983,7 +983,7 @@ boxShadow: [
                   color: AppColors.statusDanger.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppDimens.rMd),
                 ),
-                child: Icon(Icons.warning, color: AppColors.statusDanger, size: AppDimens.iconMd),
+                child: const Icon(Icons.warning, color: AppColors.statusDanger, size: AppDimens.iconMd),
               ),
               const Gap(AppDimens.s12),
               Text(
@@ -1014,7 +1014,7 @@ boxShadow: [
                 padding: const EdgeInsets.all(AppDimens.cardPadding),
                 child: Column(
                   children: [
-                    Icon(Icons.check_circle, size: 48, color: AppColors.statusActive),
+                    const Icon(Icons.check_circle, size: 48, color: AppColors.statusActive),
                     const Gap(AppDimens.s12),
                     Text(
                       'لا توجد تنبيهات',
@@ -1098,7 +1098,7 @@ boxShadow: [
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppDimens.rMd),
                 ),
-                child: Icon(Icons.apps, color: AppColors.primary, size: AppDimens.iconMd),
+                child: const Icon(Icons.apps, color: AppColors.primary, size: AppDimens.iconMd),
               ),
               const Gap(AppDimens.s12),
               Text(
