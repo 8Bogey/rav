@@ -16,7 +16,10 @@ import 'dart:math';
 class Auth0Config {
   static const String domain = 'dev-cqkioj1eiksobor3.us.auth0.com';
   static const String clientId = 'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB';
-  static const String audience = 'https://hearty-meadowlark-390.convex.cloud';
+  
+  // Remove audience - not required for basic auth
+  // Can add back once API is created in Auth0
+  static const String? audience = null; // 'https://hearty-meadowlark-390.convex.cloud' - requires API setup in Auth0
   
   // Callback URL for Native app
   static const String redirectUri = 'http://127.0.0.1:5173/callback';
@@ -92,17 +95,23 @@ class Auth0Service {
       final codeChallenge = _generateCodeChallenge(_codeVerifier!);
       
       // Build the authorization URL with PKCE
+      final Map<String, String> queryParams = {
+        'response_type': 'code',
+        'client_id': Auth0Config.clientId,
+        'redirect_uri': Auth0Config.redirectUri,
+        'scope': 'openid profile email',
+        'code_challenge': codeChallenge,
+        'code_challenge_method': 'S256',
+        'state': _generateRandomString(32),
+      };
+      
+      // Add audience only if configured (requires API in Auth0)
+      if (Auth0Config.audience != null) {
+        queryParams['audience'] = Auth0Config.audience!;
+      }
+      
       final authUrl = Uri.parse(Auth0Config.loginUrl).replace(
-        queryParameters: {
-          'response_type': 'code',
-          'client_id': Auth0Config.clientId,
-          'redirect_uri': Auth0Config.redirectUri,
-          'audience': Auth0Config.audience,
-          'scope': 'openid profile email',
-          'code_challenge': codeChallenge,
-          'code_challenge_method': 'S256',
-          'state': _generateRandomString(32),
-        },
+        queryParameters: queryParams,
       );
       
       debugPrint('[Auth0Service] Starting PKCE flow, callback: ${Auth0Config.redirectUri}');
