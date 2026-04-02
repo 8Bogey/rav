@@ -70,8 +70,9 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
   // Soft delete a cabinet
   Future<int> deleteCabinet(String id) {
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const CabinetsTableCompanion(
-          isDeleted: Value(true),
+        .write(CabinetsTableCompanion(
+          isDeleted: const Value(true),
+          updatedAt: Value(DateTime.now()),
         ));
   }
 
