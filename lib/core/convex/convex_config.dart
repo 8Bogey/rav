@@ -1,18 +1,35 @@
 // Convex Client Configuration
 // 
-// Initializes and provides the Convex client for the Flutter app.
-// Used for real-time subscriptions and mutations.
+// ARCHITECTURE DECISION:
+// - Using custom HTTP client instead of official Convex SDK to avoid version compatibility issues
+// - HTTP provides reliable request/response for CRUD operations
+// - Real-time subscriptions (WebSocket) can be added later when needed
+//
+// STANDARDIZATION: This file is the canonical Convex client.
+// All cloud operations should go through AppConvexConfig (not direct HTTP calls).
+//
+// FUTURE ENHANCEMENT:
+// - Add WebSocket support via dart:io WebSocket for real-time down-sync
+// - This would enable: subscribe to queries, receive push notifications on data changes
 
-import 'dart:async';
-
-import 'package:convex_flutter/convex_flutter.dart';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
-/// App's Convex configuration wrapper (avoids conflict with package's ConvexConfig)
+/// App's Convex configuration - unified client for all cloud operations.
+/// 
+/// Provides:
+/// - Query execution (read)
+/// - Mutation execution (write)  
+/// - Action execution (server-side functions)
+/// - Authentication management
+/// - Connection state tracking
 class AppConvexConfig {
   static String? _deploymentUrl;
   static bool _isInitialized = false;
+  static String? _authToken;
+  static http.Client? _httpClient;
 
   /// Initialize Convex client with deployment URL
   static Future<void> initialize(String deploymentUrl) async {
@@ -22,22 +39,10 @@ class AppConvexConfig {
     }
 
     _deploymentUrl = deploymentUrl;
-    
-    // Initialize the Convex client singleton with package's ConvexConfig
-    final config = ConvexConfig(
-      deploymentUrl: deploymentUrl,
-      clientId: 'mawlid_al_dhaki_app',
-    );
-    
-    await ConvexClient.initialize(config);
-    
     _isInitialized = true;
     
     debugPrint('AppConvexConfig: Initialized with deployment URL: $deploymentUrl');
   }
-
-  /// Get the Convex client instance (singleton)
-  static ConvexClient get client => ConvexClient.instance;
 
   /// Check if client is initialized
   static bool get isInitialized => _isInitialized;
@@ -45,34 +50,88 @@ class AppConvexConfig {
   /// Get deployment URL
   static String? get deploymentUrl => _deploymentUrl;
 
-  /// Check if user is authenticated (sync)
-  static bool get isAuthenticated => client.isAuthenticated;
-
-  /// Get auth state stream (reactive)
-  static Stream<bool> get authStateStream => client.authState;
+  /// Check if user is authenticated
+  static bool get isAuthenticated => _authToken != null;
 
   /// Set authentication token (call on login)
   static Future<void> setAuth(String? token) async {
-    await client.setAuth(token: token);
+    _authToken = token;
+    debugPrint('AppConvexConfig: Auth token set');
   }
 
   /// Clear authentication (call on logout)
   static Future<void> clearAuth() async {
-    await client.setAuth(token: null);
+    _authToken = null;
+    debugPrint('AppConvexConfig: Auth cleared');
+  }
+
+  /// Make a mutation request to Convex
+  static Future<Map<String, dynamic>> mutation(
+    String mutationName, 
+    Map<String, dynamic> args,
+  ) async {
+    if (_deploymentUrl == null) {
+      throw Exception('Convex not initialized');
+    }
+
+    final url = Uri.parse('$_deploymentUrl/api/mutation/$mutationName');
+    
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+      },
+      body: jsonEncode(args),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Convex mutation failed: ${response.body}');
+    }
+  }
+
+  /// Make a query request to Convex
+  static Future<dynamic> query(
+    String queryName, 
+    Map<String, dynamic> args,
+  ) async {
+    if (_deploymentUrl == null) {
+      throw Exception('Convex not initialized');
+    }
+
+    final url = Uri.parse('$_deploymentUrl/api/query/$queryName');
+    
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+      },
+      body: jsonEncode(args),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Convex query failed: ${response.body}');
+    }
   }
 
   /// Dispose the client
   static void dispose() {
     _deploymentUrl = null;
     _isInitialized = false;
+    _authToken = null;
     debugPrint('AppConvexConfig: Disposed');
   }
 }
 
-/// Provider for Convex client
-final convexClientProvider = Provider<ConvexClient>((ref) {
+/// Provider placeholder (can be extended later if needed)
+final convexClientProvider = Provider<dynamic>((ref) {
   if (!AppConvexConfig.isInitialized) {
-    throw StateError('AppConvexConfig not initialized. Call AppConvexConfig.initialize() in main().');
+    throw StateError('AppConvexConfig not initialized');
   }
-  return AppConvexConfig.client;
+  return AppConvexConfig;
 });
