@@ -50,12 +50,14 @@ class SubscribersService extends BaseService {
     );
     
     // Add to outbox for Convex sync
+    // NOTE: Don't include 'id' for new documents - let Convex generate
+    // Convex will return the new document ID in the response
     _outbox.addEntry(
       targetTable: 'subscribers',
       operationType: 'create',
       documentId: id,
       payload: {
-        'id': id,
+        // id field intentionally omitted for new docs - Convex auto-generates
         'ownerId': ownerId,
         'name': subscriber.name,
         'code': subscriber.code,
@@ -87,12 +89,16 @@ class SubscribersService extends BaseService {
     );
     
     // Add to outbox for Convex sync
+    // NOTE: Update operations - include id if we have Convex ID tracked
+    // For now, use local UUID but this needs Convex ID tracking for full support
     _outbox.addEntry(
       targetTable: 'subscribers',
       operationType: 'update',
       documentId: subscriber.id,
       payload: {
-        'id': subscriber.id,
+        // For updates, we need the Convex document ID - currently using local ID
+        // This will need convexId field tracking for proper sync
+        'id': subscriber.id, // TODO: Use Convex document ID when available
         'ownerId': ownerId,
         'name': subscriber.name,
         'code': subscriber.code,

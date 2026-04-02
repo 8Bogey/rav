@@ -49,12 +49,13 @@ class CabinetsService extends BaseService {
     );
     
     // Add to outbox for Convex sync
+    // NOTE: Don't include 'id' for new documents - let Convex generate
     _outbox.addEntry(
       targetTable: 'cabinets',
       operationType: 'create',
       documentId: id,
       payload: {
-        'id': id,
+        // id field intentionally omitted for new docs - Convex auto-generates
         'ownerId': ownerId,
         'name': cabinet.name,
         'letter': cabinet.letter,
