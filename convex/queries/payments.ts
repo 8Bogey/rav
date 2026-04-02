@@ -213,3 +213,34 @@ export const getPaymentsByDateRange = query({
       .collect();
   },
 });
+
+// Get payments modified since timestamp (for down-sync)
+export const getPaymentsModifiedSince = query({
+  args: {
+    ownerId: v.string(),
+    since: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    if (args.ownerId !== identity.subject) {
+      return [];
+    }
+
+    const payments = await ctx.db
+      .query("payments")
+      .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+      .filter((q) => 
+        q.and(
+          q.gt(q.field("updatedAt"), args.since),
+          q.eq(q.field("isDeleted"), false)
+        )
+      )
+      .collect();
+
+    return payments;
+  },
+});

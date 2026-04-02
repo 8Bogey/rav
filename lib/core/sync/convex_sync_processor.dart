@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
+import 'package:mawlid_al_dhaki/core/sync/convex_down_sync_service.dart';
 
 /// Conflict resolution strategies
 enum ConflictResolutionStrategy {
@@ -48,8 +49,13 @@ class ConvexSyncProcessor {
   
   bool _isProcessing = false;
   Timer? _syncTimer;
+  
+  // Down-sync service for pulling from cloud
+  late final ConvexDownSyncService _downSyncService;
 
-  ConvexSyncProcessor(this.database);
+  ConvexSyncProcessor(this.database) {
+    _downSyncService = ConvexDownSyncService(database);
+  }
 
   /// Check if sync should proceed.
   /// Allow sync if Convex is initialized and user is authenticated.
@@ -84,18 +90,24 @@ class ConvexSyncProcessor {
     
     _isProcessing = true;
     try {
+      // First: Push local changes to cloud (up-sync)
       final pendingEntries = await (database.select(database.outboxTable)
             ..where((t) => t.status.equals('pending'))
             ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
           .get();
 
-      if (pendingEntries.isEmpty) return;
-      
-      debugPrint('ConvexSyncProcessor: Processing ${pendingEntries.length} pending entries');
+      if (pendingEntries.isNotEmpty) {
+        debugPrint('ConvexSyncProcessor: Processing ${pendingEntries.length} pending entries');
 
-      for (final entry in pendingEntries) {
-        await _syncEntry(entry);
+        for (final entry in pendingEntries) {
+          await _syncEntry(entry);
+        }
       }
+      
+      // Second: Pull changes from cloud (down-sync)
+      // This keeps local in sync with cloud changes from other devices
+      await _downSyncService.syncFromCloud();
+      
     } catch (e) {
       debugPrint('ConvexSyncProcessor Error: $e');
     } finally {

@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,8 +31,7 @@ class ConvexDownSyncService {
   /// Check if sync can proceed
   bool get _canSync {
     if (!AppConvexConfig.isInitialized) return false;
-    // In demo mode, allow sync
-    if (kDemoAuthLogin) return true;
+    // Allow sync if authenticated
     return AppConvexConfig.isAuthenticated;
   }
 
@@ -48,7 +48,7 @@ class ConvexDownSyncService {
 
       debugPrint('ConvexDownSyncService: Starting down-sync from $lastSync');
 
-      // Sync each table type
+      // Sync each table type using new query names
       await _syncTable('subscribers', lastSync, _applySubscriberChanges);
       await _syncTable('cabinets', lastSync, _applyCabinetChanges);
       await _syncTable('payments', lastSync, _applyPaymentChanges);
@@ -69,9 +69,10 @@ class ConvexDownSyncService {
     Future<void> Function(List<Map<String, dynamic>>) applyChanges,
   ) async {
     try {
-      // Query Convex for changes since last sync
+      // Query Convex for changes since last sync using new ModifiedSince queries
       final queryName = 'get${_toSingular(tableName)}sModifiedSince';
       final result = await AppConvexConfig.query(queryName, {
+        'ownerId': _getCurrentOwnerId(),
         'since': sinceTimestamp,
       });
 
@@ -83,6 +84,17 @@ class ConvexDownSyncService {
     } catch (e) {
       debugPrint('ConvexDownSyncService: Error syncing $tableName: $e');
     }
+  }
+  
+  /// Get current owner ID from Auth0 user
+  String _getCurrentOwnerId() {
+    // Get from Auth0 service instance - use subject from token
+    final userId = Auth0Service.instance.userId;
+    if (userId != null && userId.isNotEmpty) {
+      return userId;
+    }
+    // Fallback for demo mode
+    return 'demo-user';
   }
 
   /// Apply subscriber changes to local database

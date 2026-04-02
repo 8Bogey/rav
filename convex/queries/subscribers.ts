@@ -220,3 +220,36 @@ export const searchSubscribers = query({
     );
   },
 });
+
+// Get subscribers modified since timestamp (for down-sync)
+export const getSubscribersModifiedSince = query({
+  args: {
+    ownerId: v.string(),
+    since: v.number(), // Unix timestamp
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    if (args.ownerId !== identity.subject) {
+      return [];
+    }
+
+    // Get all subscribers updated since the timestamp
+    // Use by_ownerId index and filter by updatedAt
+    const subscribers = await ctx.db
+      .query("subscribers")
+      .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+      .filter((q) => 
+        q.and(
+          q.gt(q.field("updatedAt"), args.since),
+          q.eq(q.field("isDeleted"), false)
+        )
+      )
+      .collect();
+
+    return subscribers;
+  },
+});

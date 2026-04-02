@@ -157,3 +157,34 @@ export const getCabinetByName = query({
     return results.length > 0 ? results[0] : null;
   },
 });
+
+// Get cabinets modified since timestamp (for down-sync)
+export const getCabinetsModifiedSince = query({
+  args: {
+    ownerId: v.string(),
+    since: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    if (args.ownerId !== identity.subject) {
+      return [];
+    }
+
+    const cabinets = await ctx.db
+      .query("cabinets")
+      .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+      .filter((q) => 
+        q.and(
+          q.gt(q.field("updatedAt"), args.since),
+          q.eq(q.field("isDeleted"), false)
+        )
+      )
+      .collect();
+
+    return cabinets;
+  },
+});
