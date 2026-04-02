@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 import 'package:mawlid_al_dhaki/core/services/settings_service.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 // import 'package:mawlid_al_dhaki/core/services/print_service.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
@@ -13,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Settings section provider
 final settingsSectionProvider =
-    StateProvider<String>((ref) => 'معلومات المولد');
+    StateProvider<String>((ref) => 'حساب المزامنة');
 
 // Logo path provider
 final logoPathProvider = StateProvider<String>((ref) => '');
@@ -181,6 +182,12 @@ class SettingsScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(8),
               children: [
                 _buildMenuItem(
+                    'حساب المزامنة', selectedSection == 'حساب المزامنة',
+                    isDarkMode: isDarkMode,
+                    onTap: () => ref
+                        .read(settingsSectionProvider.notifier)
+                        .state = 'حساب المزامنة'),
+                _buildMenuItem(
                     'معلومات المولد', selectedSection == 'معلومات المولد',
                     isDarkMode: isDarkMode,
                     onTap: () => ref
@@ -321,6 +328,9 @@ class SettingsScreen extends ConsumerWidget {
       required WidgetRef ref,
       required BuildContext context}) {
     switch (section) {
+      case 'حساب المزامنة':
+        return _buildSyncAccountSection(
+            isDarkMode: isDarkMode, syncState: syncState, ref: ref, context: context);
       case 'معلومات المولد':
         return _buildGeneratorInfoSection(
             isDarkMode: isDarkMode, context: context, ref: ref);
@@ -351,6 +361,303 @@ class SettingsScreen extends ConsumerWidget {
         return _buildGeneratorInfoSection(
             isDarkMode: isDarkMode, context: context, ref: ref);
     }
+  }
+
+  Widget _buildSyncAccountSection(
+      {required bool isDarkMode,
+      required NetworkStatus syncState,
+      required WidgetRef ref,
+      required BuildContext context}) {
+    final authState = ref.watch(authStateProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'حساب المزامنة',
+          style: AppTypography.h2.copyWith(
+            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Identity verification card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      authState.isAuthenticated
+                          ? Icons.verified_user
+                          : Icons.account_circle_outlined,
+                      color: AppColors.primary,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'التحقق من الهوية',
+                          style: AppTypography.bodyMd.copyWith(
+                            color: isDarkMode
+                                ? AppColors.darkTextHead
+                                : AppColors.textHeading,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (authState.isAuthenticated)
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.statusActive,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  authState.email ?? authState.userId ?? 'تم التحقق',
+                                  style: AppTypography.bodySm.copyWith(
+                                    color: AppColors.statusActive,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Text(
+                            'غير مُتحقق',
+                            style: AppTypography.bodySm.copyWith(
+                              color: AppColors.statusDanger,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (authState.isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          ref.read(authStateProvider.notifier).signIn();
+                        },
+                        icon: const Icon(Icons.login, size: 20),
+                        label: Text(
+                          authState.isAuthenticated ? 'إعادة الاتصال' : 'تحقق للاتصال',
+                          style: AppTypography.labelLg.copyWith(
+                            color: AppColors.textOnPrimary,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textOnPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (authState.isAuthenticated) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            ref.read(authStateProvider.notifier).signOut();
+                          },
+                          icon: const Icon(Icons.logout, size: 20),
+                          label: Text(
+                            'تسجيل الخروج',
+                            style: AppTypography.labelLg.copyWith(
+                              color: isDarkMode
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textBody,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.statusDanger,
+                            side: const BorderSide(color: AppColors.statusDanger),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              if (authState.error != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.statusDanger.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    authState.error!,
+                    style: AppTypography.bodySm.copyWith(
+                      color: AppColors.statusDanger,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Sync controls
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDarkMode
+                ? AppColors.darkBgSurfaceAlt
+                : AppColors.bgSurfaceAlt,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.sync, color: AppColors.primary),
+                  const SizedBox(width: 12),
+                  Text(
+                    'المزامنة',
+                    style: AppTypography.bodyMd.copyWith(
+                      color: isDarkMode
+                          ? AppColors.darkTextHead
+                          : AppColors.textHeading,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: authState.isAuthenticated && !syncState.isSyncing
+                          ? () {
+                              ref.read(networkStatusProvider.notifier).syncToCloud();
+                            }
+                          : null,
+                      icon: const Icon(Icons.cloud_upload, size: 20),
+                      label: const Text('حفظ في السحابة'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textOnPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: authState.isAuthenticated && !syncState.isSyncing
+                          ? () {
+                              ref.read(networkStatusProvider.notifier).syncFromCloud();
+                            }
+                          : null,
+                      icon: const Icon(Icons.cloud_download, size: 20),
+                      label: const Text('استعادة من السحابة'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textBody,
+                        side: BorderSide(
+                          color: isDarkMode
+                              ? AppColors.darkBorder
+                              : AppColors.borderLight,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (!authState.isAuthenticated) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.gold.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: AppColors.gold, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'تحقق من هويتك أولاً للسماح بالمزامنة',
+                          style: AppTypography.bodySm.copyWith(
+                            color: isDarkMode
+                                ? AppColors.darkTextBody
+                                : AppColors.textBody,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildGeneratorInfoSection(
