@@ -56,19 +56,19 @@ export const saveSubscriber = mutation({
     const now = Date.now();
     
     // Determine the Convex document ID to use
-    // Priority: explicit id > cloudId (stored Convex ID) > create new
+    // Priority: explicit id > cloudId lookup via index > create new
     let documentId = args.id;
     
-    // If no explicit Convex ID but we have cloudId, try to use it for update
+    // If no explicit Convex ID but we have cloudId, use index lookup
     if (!documentId && args.cloudId) {
-      try {
-        // Try to get the document by cloudId lookup (requires index)
-        // For now, if cloudId looks like a Convex ID, use it directly
-        if (/^[a-z0-9]{12,}$/.test(args.cloudId)) {
-          documentId = args.cloudId as any; // Type assertion for Convex ID
-        }
-      } catch (e) {
-        // Ignore lookup errors
+      // Use the by_cloudId index for efficient lookup
+      const existingByCloudId = await ctx.db
+        .query("subscribers")
+        .withIndex("by_cloudId", (q) => q.eq("cloudId", args.cloudId!))
+        .first();
+      
+      if (existingByCloudId) {
+        documentId = existingByCloudId._id;
       }
     }
 

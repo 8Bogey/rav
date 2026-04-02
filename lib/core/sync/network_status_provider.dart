@@ -7,7 +7,10 @@
 
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mawlid_al_dhaki/core/database/app_database.dart';
+import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 
 /// Connectivity state
 enum ConnectivityState {
@@ -70,9 +73,13 @@ class NetworkStatus {
 class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  
+  // Database reference for querying outbox
+  final AppDatabase? _database;
 
-  NetworkStatusNotifier()
-      : super(const NetworkStatus()) {
+  NetworkStatusNotifier({AppDatabase? database})
+      : _database = database,
+        super(const NetworkStatus()) {
     _init();
   }
 
@@ -117,11 +124,22 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
     );
   }
 
-  /// Update pending outbox count
+  /// Update pending outbox count - queries local outbox for pending entries
   Future<void> updatePendingCount() async {
-    // TODO: Implement when outbox is ready - for now return 0
-    // In production, query the local outbox table for pending entries
-    state = state.copyWith(pendingOutboxCount: 0);
+    if (_database == null) {
+      state = state.copyWith(pendingOutboxCount: 0);
+      return;
+    }
+    
+    try {
+      final pendingEntries = await (_database!.select(_database!.outboxTable)
+            ..where((t) => t.status.equals('pending')))
+          .get();
+      state = state.copyWith(pendingOutboxCount: pendingEntries.length);
+    } catch (e) {
+      debugPrint('[NetworkStatusNotifier] Error querying outbox: $e');
+      state = state.copyWith(pendingOutboxCount: 0);
+    }
   }
 
   /// Force sync now - triggers immediate sync
@@ -248,8 +266,9 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
 
 /// Provider for network status
 final networkStatusProvider = StateNotifierProvider<NetworkStatusNotifier, NetworkStatus>((ref) {
-  // This will be connected after outbox processor is initialized
-  return NetworkStatusNotifier();
+  // Get database from provider
+  final database = ref.watch(databaseProvider);
+  return NetworkStatusNotifier(database: database);
 });
 
 /// Provider for connectivity only

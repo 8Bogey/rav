@@ -36,7 +36,7 @@ export default defineSchema({
     lastSyncedAt: v.optional(v.number()),
     syncStatus: v.optional(v.string()),
     dirtyFlag: v.optional(v.boolean()),
-    cloudId: v.optional(v.string()),
+    cloudId: v.optional(v.string()), // Convex document ID for client ID mapping
     deletedLocally: v.optional(v.boolean()),
     permissionsMask: v.optional(v.string()),
     
@@ -49,7 +49,8 @@ export default defineSchema({
     .index("by_ownerId", ["ownerId"])
     .index("by_code", ["code"])
     .index("by_cabinet", ["cabinet"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_cloudId", ["cloudId"]), // For efficient Convex ID lookup
 
   // ============================================================
   // CABINETS - Generator cabinets/zones
@@ -119,7 +120,8 @@ export default defineSchema({
     .index("by_subscriberId", ["subscriberId"])
     .index("by_date", ["date"])
     .index("by_worker", ["worker"])
-    .index("by_cabinet", ["cabinet"]),
+    .index("by_cabinet", ["cabinet"])
+    .index("by_cloudId", ["cloudId"]),
 
   // ============================================================
   // WORKERS - Staff/collectors with roles and permissions

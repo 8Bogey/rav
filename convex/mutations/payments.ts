@@ -42,9 +42,18 @@ export const savePayment = mutation({
     const now = Date.now();
     
     // Determine Convex document ID
+    // Priority: explicit id > cloudId lookup via index > create new
     let documentId = args.id;
-    if (!documentId && args.cloudId && /^[a-z0-9]{12,}$/.test(args.cloudId)) {
-      documentId = args.cloudId as any;
+    if (!documentId && args.cloudId) {
+      // Use the by_cloudId index for efficient lookup
+      const existingByCloudId = await ctx.db
+        .query("payments")
+        .withIndex("by_cloudId", (q) => q.eq("cloudId", args.cloudId!))
+        .first();
+      
+      if (existingByCloudId) {
+        documentId = existingByCloudId._id;
+      }
     }
 
     if (documentId) {
