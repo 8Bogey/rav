@@ -52,15 +52,11 @@ class ConvexSyncProcessor {
   ConvexSyncProcessor(this.database);
 
   /// Check if sync should proceed.
-  /// In demo mode (kDemoAuthLogin=true), allow sync if Convex is initialized.
-  /// In production, require real authentication.
+  /// Allow sync if Convex is initialized and user is authenticated.
   bool get _canSync {
     if (!AppConvexConfig.isInitialized) return false;
     
-    // In demo mode, allow sync even without real auth token
-    if (kDemoAuthLogin) return true;
-    
-    // Production: require real authentication
+    // Allow sync when authenticated (simple password login)
     return AppConvexConfig.isAuthenticated;
   }
 

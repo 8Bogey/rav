@@ -1,11 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
-import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
 
-/// When `false` (build with `--dart-define=DEMO_AUTH=false`), demo login is rejected until real auth is wired.
-const bool kDemoAuthLogin =
-    bool.fromEnvironment('DEMO_AUTH', defaultValue: true);
+/// Simple password for daily access (settable in settings)
+const String kDefaultDailyPassword = '123456';
 
 /// User role enum for RBAC
 enum UserRole {
@@ -64,52 +62,49 @@ class AuthNotifier extends StateNotifier<AuthState> {
   
   AuthNotifier(this._ref) : super(AuthState(isAuthenticated: false, userId: null));
 
-  Future<void> login(String password) async {
-    // Use Auth0 authentication (with demo fallback for desktop)
-    final result = await Auth0Service.instance.login();
-    
-    if (!result.success) {
-      // Check if we should fall back to demo mode
-      if (result.fallbackToDemo || !kDemoAuthLogin) {
-        state = state.copyWith(
-          isAuthenticated: false,
-          errorMessage: result.error ?? 'فشل تسجيل الدخول',
-        );
-        return;
-      }
-      
-      // Fall back to demo mode for development
-      return _demoLogin();
-    }
-    
-    // If demo mode was triggered, use demo login
-    if (result.isDemoMode) {
-      return _demoLogin();
-    }
-    
-    // Auth0 login successful - wire token to Convex
-    if (result.accessToken != null) {
-      await AppConvexConfig.setAuth(result.accessToken!);
-      debugPrint('[AuthNotifier] Convex auth set with Auth0 token');
-    }
-    
-    state = AuthState(
-      isAuthenticated: true,
-      userId: result.userId,
-      errorMessage: null,
-    );
-    
-    debugPrint('[AuthNotifier] Auth0 login successful, userId: ${result.userId}');
+  /// Set the daily password (called from Settings when user changes it)
+  static String _dailyPassword = kDefaultDailyPassword;
+  
+  static void setDailyPassword(String password) {
+    _dailyPassword = password;
   }
   
-  /// Demo login fallback for development
-  Future<void> _demoLogin() async {
-    final demoUserId = 'demo-user-${DateTime.now().millisecondsSinceEpoch}';
+  /// Verify subscription status (called from Settings after Auth0 login)
+  static bool _isSubscriptionActive = false;
+  
+  static void setSubscriptionStatus(bool active) {
+    _isSubscriptionActive = active;
+  }
+  
+  /// Check if user has an active subscription
+  bool get hasActiveSubscription => _isSubscriptionActive;
+  
+  Future<void> login(String password) async {
+    // Simple daily password check
+    if (password.isEmpty) {
+      state = state.copyWith(
+        isAuthenticated: false,
+        errorMessage: 'يرجى إدخال كلمة المرور',
+      );
+      return;
+    }
+    
+    // Verify password
+    if (password != _dailyPassword) {
+      state = state.copyWith(
+        isAuthenticated: false,
+        errorMessage: 'كلمة المرور غير صحيحة',
+      );
+      return;
+    }
+    
+    // Successful authentication
+    final userId = 'user-${DateTime.now().millisecondsSinceEpoch}';
     
     try {
       if (AppConvexConfig.isInitialized) {
-        await AppConvexConfig.setAuth('demo-token-$demoUserId');
-        debugPrint('[AuthNotifier] Convex auth set for demo: $demoUserId');
+        await AppConvexConfig.setAuth('session-$userId');
+        debugPrint('[AuthNotifier] Convex auth set for: $userId');
       }
     } catch (e) {
       debugPrint('[AuthNotifier] setAuth error (non-fatal): $e');
@@ -117,19 +112,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     
     state = AuthState(
       isAuthenticated: true,
-      userId: demoUserId,
+      userId: userId,
       errorMessage: null,
     );
     
-    debugPrint('[AuthNotifier] Demo login successful');
+    debugPrint('[AuthNotifier] Login successful');
   }
   
   void logout() async {
-    // Clear Convex auth
     await AppConvexConfig.clearAuth();
-    
-    // Logout from Auth0
-    await Auth0Service.instance.logout();
     
     debugPrint('[AuthNotifier] Logout, clearing userId');
     state = AuthState(
