@@ -7,6 +7,9 @@ import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
+import 'package:mawlid_al_dhaki/core/database/app_database.dart';
+import 'package:mawlid_al_dhaki/core/sync/convex_sync_processor.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 
 Future<void> main() async {
@@ -42,19 +45,49 @@ Future<void> main() async {
     );
   }
 
-  // Initialize Convex client (if URL is configured in .env)
-  final convexUrl = const String.fromEnvironment('CONVEX_URL', defaultValue: '');
-  if (convexUrl.isNotEmpty) {
-    try {
-      await AppConvexConfig.initialize(convexUrl);
-    } catch (e) {
-      debugPrint('Failed to initialize Convex: $e');
-    }
-  } else {
-    debugPrint('CONVEX_URL not set, skipping Convex initialization');
+  // Initialize Convex client with dev deployment URL
+  // The Convex dashboard showed: https://hearty-meadowlark-390.convex.cloud
+  const convexUrl = 'https://hearty-meadowlark-390.convex.cloud';
+  
+  try {
+    await AppConvexConfig.initialize(convexUrl);
+    debugPrint('Convex initialized with: $convexUrl');
+  } catch (e) {
+    debugPrint('Failed to initialize Convex: $e');
   }
 
-  runApp(const ProviderScope(child: AppRoot()));
+  // Initialize Auth0 service
+  try {
+    await Auth0Service.instance.initialize();
+    debugPrint('Auth0Service initialized');
+  } catch (e) {
+    debugPrint('Failed to initialize Auth0: $e');
+  }
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        // Override database provider to ensure it's initialized before we start sync
+        databaseProvider.overrideWith((ref) {
+          final database = AppDatabase();
+          
+          // Start Convex sync processor - it will wait until authenticated
+          // The processor checks isAuthenticated before syncing, so it's safe to start always
+          final syncProcessor = ConvexSyncProcessor(database);
+          syncProcessor.start();
+          debugPrint('ConvexSyncProcessor: Started with database');
+          
+          ref.onDispose(() {
+            syncProcessor.stop();
+            database.close();
+          });
+          
+          return database;
+        }),
+      ],
+      child: const AppRoot(),
+    ),
+  );
 }
 
 class AppRoot extends ConsumerWidget {

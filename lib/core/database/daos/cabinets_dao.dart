@@ -66,15 +66,21 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
 
   // Update a cabinet
   Future<bool> updateCabinet(Insertable<Cabinet> cabinet) {
-    return update(cabinetsTable).replace(cabinet);
+    // Use write() for partial updates instead of replace() which requires all fields
+    final comp = cabinet as CabinetsTableCompanion;
+    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(comp.id.value)))
+        .write(cabinet)
+        .then((rows) => rows > 0);
   }
 
   // Soft delete a cabinet
-  Future<int> deleteCabinet(String id) {
+  Future<bool> softDeleteCabinet(String id) {
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const CabinetsTableCompanion(
-          isDeleted: Value(true),
-        ));
+        .write(CabinetsTableCompanion(
+          isDeleted: const Value(true),
+          updatedAt: Value(DateTime.now()),
+        ))
+        .then((rows) => rows > 0);
   }
 
   // Hard delete

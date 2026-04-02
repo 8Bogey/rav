@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
   file_selector_linux
   flutter_acrylic
-  gtk
   open_file_linux
   printing
   rive_native
@@ -17,7 +16,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
-  convex_flutter
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

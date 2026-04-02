@@ -1,7 +1,10 @@
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
+import 'package:drift/native.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import 'daos/subscribers_dao.dart';
 import 'daos/cabinets_dao.dart';
@@ -36,7 +39,21 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _driftInit());
 
   static QueryExecutor _driftInit() {
-    return driftDatabase(name: 'mawlid_al_dhaki_v2.db');
+    // Use LazyDatabase with a stable path in the application documents directory
+    // This ensures data persists across app restarts on Windows
+    return LazyDatabase(() async {
+      final dbFolder = await getApplicationDocumentsDirectory();
+      final dbPath = p.join(dbFolder.path, 'mawlid_al_dhaki');
+      
+      // Ensure directory exists
+      final dir = Directory(dbPath);
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+      }
+      
+      final file = File(p.join(dbPath, 'mawlid_al_dhaki_v2.db'));
+      return NativeDatabase.createInBackground(file);
+    });
   }
 
   /// Runs a manual ALTER for v1→v2-style migrations; rethrows unless SQLite reports duplicate column.

@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
 
 /// When `false` (build with `--dart-define=DEMO_AUTH=false`), demo login is rejected until real auth is wired.
 const bool kDemoAuthLogin =
@@ -63,37 +65,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._ref) : super(AuthState(isAuthenticated: false, userId: null));
 
   Future<void> login(String password) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    if (!kDemoAuthLogin) {
+    // Use real Auth0 authentication
+    final result = await Auth0Service.instance.login();
+    
+    if (!result.success) {
       state = state.copyWith(
         isAuthenticated: false,
-        errorMessage:
-            'وضع العرض التوضيحي معطّل (DEMO_AUTH=false). اربط المصادقة الفعلية أو أعد البناء مع DEMO_AUTH.',
-      );
-      return;
-    }
-
-    // Demo PRD: accept any non-empty password when kDemoAuthLogin is true
-    if (password.isEmpty) {
-      state = state.copyWith(
-        isAuthenticated: false,
-        errorMessage: 'يرجى إدخال كلمة المرور',
+        errorMessage: 'فشل تسجيل الدخول: ${result.error ?? "خطأ غير معروف"}',
       );
       return;
     }
     
-    // Successful authentication - set a demo userId for tenant isolation
-    debugPrint('[AuthNotifier] Login successful, setting userId: demo-user-001');
+    // Auth0 login successful - wire token to Convex
+    if (result.accessToken != null) {
+      await AppConvexConfig.setAuth(result.accessToken!);
+      debugPrint('[AuthNotifier] Convex auth set with Auth0 token');
+    }
+    
     state = AuthState(
       isAuthenticated: true,
-      userId: 'demo-user-001', // Fixed userId for demo mode - used as ownerId
+      userId: result.userId,
       errorMessage: null,
     );
+    
+    debugPrint('[AuthNotifier] Auth0 login successful, userId: ${result.userId}');
   }
   
-  void logout() {
+  void logout() async {
+    // Clear Convex auth
+    await AppConvexConfig.clearAuth();
+    
+    // Logout from Auth0
+    await Auth0Service.instance.logout();
+    
     debugPrint('[AuthNotifier] Logout, clearing userId');
     state = AuthState(
       isAuthenticated: false,

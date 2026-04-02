@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
@@ -37,17 +38,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // Check if authentication was successful
       final authState = ref.read(authProvider);
       if (authState.isAuthenticated) {
-        // Navigate to dashboard
+        // Navigate to dashboard - GoRouter will handle this automatically via redirect
+        // But we can also explicitly navigate
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/dashboard');
+          context.go('/dashboard');
         }
       }
     } catch (e) {
+      debugPrint('Login error: $e');
       // Handle any unexpected errors
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'),
+          SnackBar(
+            content: Text('حدث خطأ: ${e.toString()}'),
             backgroundColor: AppColors.statusDanger,
           ),
         );

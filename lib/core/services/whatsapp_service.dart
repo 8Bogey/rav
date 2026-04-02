@@ -1,15 +1,17 @@
+import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/whatsapp_templates_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
+import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:uuid/uuid.dart';
 
 class WhatsappService extends BaseService {
   WhatsappService(super.database);
 
   WhatsappTemplatesDao get _dao => database.whatsappTemplatesDao;
+  late final OutboxService _outbox = OutboxService(database);
   static const _uuid = Uuid();
 
   // Get all WhatsApp templates
@@ -30,13 +32,37 @@ class WhatsappService extends BaseService {
     required String ownerId,
   }) {
     final id = _uuid.v4();
+    final now = DateTime.now();
     final companion = WhatsappTemplatesTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
       title: Value(title),
       content: Value(content),
       isActive: Value(isActive ? 1 : 0),
+      version: const Value(1),
+      isDeleted: const Value(false),
+      createdAt: Value(now),
+      updatedAt: Value(now),
     );
+    
+    // Add to outbox for Convex sync
+    _outbox.addEntry(
+      targetTable: 'whatsappTemplates',
+      operationType: 'create',
+      documentId: id,
+      payload: {
+        'id': id,
+        'ownerId': ownerId,
+        'title': title,
+        'content': content,
+        'isActive': isActive ? 1 : 0,
+        'version': 1,
+        'isDeleted': false,
+        'updatedAt': now.millisecondsSinceEpoch,
+        'createdAt': now.millisecondsSinceEpoch,
+      },
+    );
+    
     return _dao.addTemplate(companion);
   }
 
