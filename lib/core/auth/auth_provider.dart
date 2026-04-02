@@ -9,6 +9,7 @@ import 'package:auth0_flutter/auth0_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
+import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart' as demo_auth;
 
 /// User role enum
 enum UserRole {
@@ -144,6 +145,24 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 });
 
 /// Provider for current user ID (ownerId)
+/// 
+/// Reads from the demo auth provider since that's what the login screen uses.
+/// Falls back to Auth0 provider if demo auth userId is null.
 final currentUserIdProvider = Provider<String?>((ref) {
-  return ref.watch(authStateProvider).userId;
+  // First try the demo auth provider (used by login screen)
+  final demoAuthState = ref.watch(demo_auth.authProvider);
+  if (demoAuthState.isAuthenticated && demoAuthState.userId != null) {
+    debugPrint('[currentUserIdProvider] Using demo auth userId: ${demoAuthState.userId}');
+    return demoAuthState.userId;
+  }
+  
+  // Fall back to Auth0 provider
+  final auth0State = ref.watch(authStateProvider);
+  if (auth0State.isAuthenticated && auth0State.userId != null) {
+    debugPrint('[currentUserIdProvider] Using Auth0 userId: ${auth0State.userId}');
+    return auth0State.userId;
+  }
+  
+  debugPrint('[currentUserIdProvider] No authenticated user, returning null');
+  return null;
 });

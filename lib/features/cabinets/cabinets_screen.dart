@@ -174,9 +174,14 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
           ),
         ),
         GestureDetector(
-          onTap: () {
-            AppTransitions.showPremiumDialog(
-                context: context, child: const AddCabinetDialog());
+          onTap: () async {
+            final result = await showDialog<bool>(
+              context: context,
+              builder: (context) => const AddCabinetDialog(),
+            );
+            if (result == true) {
+              ref.read(cabinetsProvider.notifier).loadCabinets();
+            }
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -314,9 +319,9 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                           color: isDarkMode
                               ? AppColors.darkTextBody
                               : AppColors.textSecondary,
-                          onTap: () => AppTransitions.showPremiumDialog(
+                          onTap: () => showDialog(
                             context: context,
-                            child: EditCabinetDialog(cabinet: cabinet),
+                            builder: (context) => EditCabinetDialog(cabinet: cabinet),
                           ),
                           tooltip: 'تعديل',
                         ),
@@ -766,7 +771,7 @@ class _AddCabinetDialogState extends ConsumerState<AddCabinetDialog> {
                     name: nameController.text,
                     letter: letterController.text.trim().toUpperCase(),
                   );
-              if (context.mounted) Navigator.pop(context);
+              if (context.mounted) Navigator.pop(context, true);
             }
           },
           style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold),

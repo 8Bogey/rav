@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// When `false` (build with `--dart-define=DEMO_AUTH=false`), demo login is rejected until real auth is wired.
@@ -12,12 +13,14 @@ enum UserRole {
 
 class AuthState {
   final bool isAuthenticated;
+  final String? userId; // Added for tenant isolation (ownerId)
   final String? errorMessage;
   final UserRole role;
   final List<String> permissions;
 
   AuthState({
     required this.isAuthenticated,
+    this.userId,
     this.errorMessage,
     this.role = UserRole.admin,
     this.permissions = const [],
@@ -25,12 +28,14 @@ class AuthState {
 
   AuthState copyWith({
     bool? isAuthenticated,
+    String? userId,
     String? errorMessage,
     UserRole? role,
     List<String>? permissions,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      userId: userId ?? this.userId,
       errorMessage: errorMessage ?? this.errorMessage,
       role: role ?? this.role,
       permissions: permissions ?? this.permissions,
@@ -55,7 +60,7 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final Ref _ref;
   
-  AuthNotifier(this._ref) : super(AuthState(isAuthenticated: false));
+  AuthNotifier(this._ref) : super(AuthState(isAuthenticated: false, userId: null));
 
   Future<void> login(String password) async {
     // Simulate network delay
@@ -79,16 +84,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return;
     }
     
-    // Successful authentication
-    state = state.copyWith(
+    // Successful authentication - set a demo userId for tenant isolation
+    debugPrint('[AuthNotifier] Login successful, setting userId: demo-user-001');
+    state = AuthState(
       isAuthenticated: true,
+      userId: 'demo-user-001', // Fixed userId for demo mode - used as ownerId
       errorMessage: null,
     );
   }
   
   void logout() {
-    state = state.copyWith(
+    debugPrint('[AuthNotifier] Logout, clearing userId');
+    state = AuthState(
       isAuthenticated: false,
+      userId: null,
       errorMessage: null,
     );
   }

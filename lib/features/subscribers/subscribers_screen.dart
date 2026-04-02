@@ -346,11 +346,15 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
           ],
         ),
         GestureDetector(
-          onTap: () {
-            AppTransitions.showPremiumDialog(
+          onTap: () async {
+            final result = await showDialog<bool>(
               context: context,
-              child: const SubscriberDialog(),
+              builder: (context) => const SubscriberDialog(),
             );
+            if (result == true) {
+              // Refresh the list after adding a subscriber
+              ref.read(subscribersProvider.notifier).loadSubscribers();
+            }
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

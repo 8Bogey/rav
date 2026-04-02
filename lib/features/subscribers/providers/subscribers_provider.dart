@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show WidgetsBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart' as demo_auth;
 
 /// State for subscribers list
 class SubscribersState {
@@ -55,8 +58,29 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
 
   SubscribersNotifier(this._ref) : super(const SubscribersState()) {
     _service = _ref.read(subscribersServiceProvider);
-    // Load subscribers on initialization
-    loadSubscribers();
+    debugPrint('[SubscribersNotifier] Initialized, waiting for auth state');
+    
+    // Check if user is already authenticated on init - load immediately if so
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = _ref.read(demo_auth.authProvider);
+      debugPrint('[SubscribersNotifier] Initial auth check: isAuthenticated=${authState.isAuthenticated}, userId=${authState.userId}');
+      if (authState.isAuthenticated && authState.userId != null) {
+        debugPrint('[SubscribersNotifier] User already authenticated, loading subscribers immediately');
+        loadSubscribers();
+      }
+    });
+    
+    // Listen for auth state changes and reload when user becomes authenticated
+    _ref.listen<demo_auth.AuthState>(demo_auth.authProvider, (previous, next) {
+      debugPrint('[SubscribersNotifier] Auth state changed: isAuthenticated=${next.isAuthenticated}, userId=${next.userId}');
+      if (next.isAuthenticated && next.userId != null) {
+        debugPrint('[SubscribersNotifier] User authenticated, loading subscribers');
+        loadSubscribers();
+      } else if (!next.isAuthenticated) {
+        debugPrint('[SubscribersNotifier] User logged out, clearing subscribers');
+        state = const SubscribersState(subscribers: []);
+      }
+    });
   }
 
   /// Load all subscribers from database
