@@ -1,0 +1,13 @@
+{
+  "name": "mawlid_al_dhaki",
+  "version": "1.0.0",
+  "description": "Smart-gen (Mawlid Al-Dhaki) Convex Backend",
+  "main": "index.js",
+  "dependencies": {
+    "convex": "^1.11.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "type": "module"
+}
