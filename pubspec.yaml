@@ -75,8 +75,8 @@ dependencies:
   figma_squircle: ^0.5.3         # 🔄 بديل smooth_corner — squircle دقيق مطابق Figma
 
   # ── Desktop DataGrid ──────────────────────────────────────────
-  pluto_grid_plus: ^8.4.0        # 🆕 جدول Desktop احترافي — keyboard navigation + sort + sticky headers
-  # data_table_2: ^2.5.14        # بديل أخف إذا لم تحتج pluto_grid
+  trina_grid: ^1.0.0                # ✅ Replacement for discontinued pluto_grid_plus
+  # data_table_2: ^2.5.14        # بديل أخف إذا لم تحتج trina_grid
 
   # ── Desktop UX ────────────────────────────────────────────────
   context_menus: ^2.0.0          # ✅ right-click context menu

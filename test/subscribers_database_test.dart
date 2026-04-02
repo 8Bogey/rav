@@ -4,6 +4,39 @@ import 'package:drift/native.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/services/subscribers_service.dart';
 
+// Helper to create valid Subscriber with all required Convex sync fields
+Subscriber createTestSubscriber({
+  String? id,
+  String name = 'Test Subscriber',
+  String code = 'TS001',
+  String cabinet = 'A',
+  String phone = '07701234567',
+  int status = 1,
+  DateTime? startDate,
+  double accumulatedDebt = 0.0,
+  String? ownerId = 'test-owner',
+}) {
+  final now = DateTime.now();
+  return Subscriber(
+    id: id ?? 'test-${now.millisecondsSinceEpoch}-${now.microsecond}',
+    name: name,
+    code: code,
+    cabinet: cabinet,
+    phone: phone,
+    status: status,
+    startDate: startDate ?? now,
+    accumulatedDebt: accumulatedDebt,
+    tags: null,
+    notes: null,
+    // Convex sync metadata - all required
+    ownerId: ownerId,
+    version: 1,
+    updatedAt: now,
+    createdAt: now,
+    isDeleted: false,
+  );
+}
+
 void main() {
   group('Subscribers Database Tests', () {
     late AppDatabase database;
@@ -27,25 +60,13 @@ void main() {
     });
 
     test('Can add and retrieve a subscriber', () async {
-      // Create a new subscriber
-      final subscriber = Subscriber(
-        id: 0, // Will be auto-generated
-        name: 'Test Subscriber',
-        code: 'TS001',
-        cabinet: 'A',
-        phone: '07701234567',
-        status: 1, // active
-        startDate: DateTime.now(),
-        accumulatedDebt: 0.0,
-        tags: null,
-        notes: null,
-      );
+      final subscriber = createTestSubscriber();
 
       // Add the subscriber to the database
       final id = await subscribersService.addSubscriber(subscriber);
       
       // Verify that the subscriber was added
-      expect(id, greaterThan(0));
+      expect(id, isNotEmpty);
 
       // Retrieve the subscriber from the database
       final retrievedSubscriber = await subscribersService.getSubscriberById(id);
@@ -61,24 +82,19 @@ void main() {
 
     test('Can update a subscriber', () async {
       // Create and add a subscriber
-      final subscriber = Subscriber(
-        id: 0,
+      final subscriber = createTestSubscriber(
         name: 'Original Name',
         code: 'ON001',
-        cabinet: 'B',
-        phone: '07709876543',
-        status: 1, // active
-        startDate: DateTime.now(),
-        accumulatedDebt: 0.0,
-        tags: null,
-        notes: null,
       );
 
       final id = await subscribersService.addSubscriber(subscriber);
 
-      // Update the subscriber
-      final updatedSubscriber = subscriber.copyWith(
-        id: id,
+      // Get the subscriber to update
+      final existing = await subscribersService.getSubscriberById(id);
+      expect(existing, isNotNull);
+
+      // Update the subscriber using copyWith
+      final updatedSubscriber = existing!.copyWith(
         name: 'Updated Name',
         code: 'UN001',
         cabinet: 'C',
@@ -107,17 +123,9 @@ void main() {
 
     test('Can delete a subscriber', () async {
       // Create and add a subscriber
-      final subscriber = Subscriber(
-        id: 0,
+      final subscriber = createTestSubscriber(
         name: 'Subscriber to Delete',
         code: 'SD001',
-        cabinet: 'D',
-        phone: '07705566778',
-        status: 1, // active
-        startDate: DateTime.now(),
-        accumulatedDebt: 0.0,
-        tags: null,
-        notes: null,
       );
 
       final id = await subscribersService.addSubscriber(subscriber);
@@ -137,34 +145,19 @@ void main() {
 
     test('Can get all subscribers', () async {
       // Add a few subscribers
-      final subscriber1 = Subscriber(
-        id: 0,
+      await subscribersService.addSubscriber(createTestSubscriber(
         name: 'Subscriber 1',
         code: 'S1001',
         cabinet: 'A',
-        phone: '07701234567',
-        status: 1, // active
-        startDate: DateTime.now(),
-        accumulatedDebt: 0.0,
-        tags: null,
-        notes: null,
-      );
+      ));
 
-      final subscriber2 = Subscriber(
-        id: 0,
+      await subscribersService.addSubscriber(createTestSubscriber(
         name: 'Subscriber 2',
         code: 'S2001',
         cabinet: 'B',
-        phone: '07709876543',
-        status: 2, // suspended
-        startDate: DateTime.now(),
+        status: 2,
         accumulatedDebt: 10000.0,
-        tags: null,
-        notes: null,
-      );
-
-      await subscribersService.addSubscriber(subscriber1);
-      await subscribersService.addSubscriber(subscriber2);
+      ));
 
       // Get all subscribers
       final subscribers = await subscribersService.getAllSubscribers();
@@ -176,34 +169,19 @@ void main() {
 
     test('Can search subscribers', () async {
       // Add a few subscribers
-      final subscriber1 = Subscriber(
-        id: 0,
+      await subscribersService.addSubscriber(createTestSubscriber(
         name: 'Ahmed Ali',
         code: 'AA001',
         cabinet: 'A',
-        phone: '07701234567',
-        status: 1, // active
-        startDate: DateTime.now(),
-        accumulatedDebt: 0.0,
-        tags: null,
-        notes: null,
-      );
+      ));
 
-      final subscriber2 = Subscriber(
-        id: 0,
+      await subscribersService.addSubscriber(createTestSubscriber(
         name: 'Mohammed Hassan',
         code: 'MH001',
         cabinet: 'B',
-        phone: '07709876543',
-        status: 2, // suspended
-        startDate: DateTime.now(),
+        status: 2,
         accumulatedDebt: 10000.0,
-        tags: null,
-        notes: null,
-      );
-
-      await subscribersService.addSubscriber(subscriber1);
-      await subscribersService.addSubscriber(subscriber2);
+      ));
 
       // Search for subscribers
       final searchResults = await subscribersService.searchSubscribers('Ahmed');
