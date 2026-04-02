@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 import 'package:mawlid_al_dhaki/core/services/settings_service.dart';
-import 'package:mawlid_al_dhaki/core/services/print_service.dart';
+// import 'package:mawlid_al_dhaki/core/services/print_service.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
@@ -657,20 +657,16 @@ class SettingsScreen extends ConsumerWidget {
 
         const SizedBox(height: 24),
 
-        // Test print button
+        // Test print button - disabled (pdf package not installed)
         OutlinedButton.icon(
           onPressed: () async {
             try {
-              await PrintService.printTestPage(
-                printerName: ref.read(printerNameProvider),
-                documentTitle: ref.read(documentTitleProvider),
-                documentPhone: ref.read(documentPhoneProvider),
-              );
+              // Print feature disabled - pdf package not installed
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('تم إرسال صفحة الاختبار إلى الطابعة'),
-                    backgroundColor: AppColors.statusActive,
+                    content: Text('ميزة الطباعة غير متاحة حالياً'),
+                    backgroundColor: AppColors.statusWarning,
                   ),
                 );
               }
@@ -678,7 +674,7 @@ class SettingsScreen extends ConsumerWidget {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('فشل الطباعة: $e'),
+                    content: Text('خطأ: $e'),
                     backgroundColor: AppColors.statusDanger,
                   ),
                 );
