@@ -2,8 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 
-/// Simple password for daily access (settable in settings)
-const String kDefaultDailyPassword = '123456';
+  /// Simple password for daily access (settable in settings)
+  const String kDefaultDailyPassword = '123456';
+
+/// Demo user ID - constant for persistence across restarts
+/// In production, this would come from Auth0
+const String kDemoUserId = 'demo-user-001';
 
 /// User role enum for RBAC
 enum UserRole {
@@ -98,8 +102,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return;
     }
     
-    // Successful authentication
-    final userId = 'user-${DateTime.now().millisecondsSinceEpoch}';
+    // Successful authentication - use constant demo user ID for persistence
+    final userId = kDemoUserId;
     
     try {
       if (AppConvexConfig.isInitialized) {
