@@ -6970,6 +6970,479 @@ class EventsTableCompanion extends UpdateCompanion<EventEntry> {
   }
 }
 
+class $TrashTableTable extends TrashTable
+    with TableInfo<$TrashTableTable, TrashItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrashTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _entityTypeMeta =
+      const VerificationMeta('entityType');
+  @override
+  late final GeneratedColumn<String> entityType = GeneratedColumn<String>(
+      'entity_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _entityIdMeta =
+      const VerificationMeta('entityId');
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+      'entity_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _entityDataMeta =
+      const VerificationMeta('entityData');
+  @override
+  late final GeneratedColumn<String> entityData = GeneratedColumn<String>(
+      'entity_data', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _ownerIdMeta =
+      const VerificationMeta('ownerId');
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+      'owner_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _deletedAtMeta =
+      const VerificationMeta('deletedAt');
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+      'deleted_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _expiresAtMeta =
+      const VerificationMeta('expiresAt');
+  @override
+  late final GeneratedColumn<DateTime> expiresAt = GeneratedColumn<DateTime>(
+      'expires_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        entityType,
+        entityId,
+        entityData,
+        ownerId,
+        deletedAt,
+        expiresAt,
+        createdAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trash_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<TrashItem> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('entity_type')) {
+      context.handle(
+          _entityTypeMeta,
+          entityType.isAcceptableOrUnknown(
+              data['entity_type']!, _entityTypeMeta));
+    } else if (isInserting) {
+      context.missing(_entityTypeMeta);
+    }
+    if (data.containsKey('entity_id')) {
+      context.handle(_entityIdMeta,
+          entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta));
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('entity_data')) {
+      context.handle(
+          _entityDataMeta,
+          entityData.isAcceptableOrUnknown(
+              data['entity_data']!, _entityDataMeta));
+    } else if (isInserting) {
+      context.missing(_entityDataMeta);
+    }
+    if (data.containsKey('owner_id')) {
+      context.handle(_ownerIdMeta,
+          ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(_deletedAtMeta,
+          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
+    } else if (isInserting) {
+      context.missing(_deletedAtMeta);
+    }
+    if (data.containsKey('expires_at')) {
+      context.handle(_expiresAtMeta,
+          expiresAt.isAcceptableOrUnknown(data['expires_at']!, _expiresAtMeta));
+    } else if (isInserting) {
+      context.missing(_expiresAtMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TrashItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrashItem(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      entityType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entity_type'])!,
+      entityId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entity_id'])!,
+      entityData: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entity_data'])!,
+      ownerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_id'])!,
+      deletedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at'])!,
+      expiresAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}expires_at'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $TrashTableTable createAlias(String alias) {
+    return $TrashTableTable(attachedDatabase, alias);
+  }
+}
+
+class TrashItem extends DataClass implements Insertable<TrashItem> {
+  final String id;
+  final String entityType;
+  final String entityId;
+  final String entityData;
+  final String ownerId;
+  final DateTime deletedAt;
+  final DateTime expiresAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const TrashItem(
+      {required this.id,
+      required this.entityType,
+      required this.entityId,
+      required this.entityData,
+      required this.ownerId,
+      required this.deletedAt,
+      required this.expiresAt,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['entity_type'] = Variable<String>(entityType);
+    map['entity_id'] = Variable<String>(entityId);
+    map['entity_data'] = Variable<String>(entityData);
+    map['owner_id'] = Variable<String>(ownerId);
+    map['deleted_at'] = Variable<DateTime>(deletedAt);
+    map['expires_at'] = Variable<DateTime>(expiresAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  TrashTableCompanion toCompanion(bool nullToAbsent) {
+    return TrashTableCompanion(
+      id: Value(id),
+      entityType: Value(entityType),
+      entityId: Value(entityId),
+      entityData: Value(entityData),
+      ownerId: Value(ownerId),
+      deletedAt: Value(deletedAt),
+      expiresAt: Value(expiresAt),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TrashItem.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrashItem(
+      id: serializer.fromJson<String>(json['id']),
+      entityType: serializer.fromJson<String>(json['entityType']),
+      entityId: serializer.fromJson<String>(json['entityId']),
+      entityData: serializer.fromJson<String>(json['entityData']),
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      deletedAt: serializer.fromJson<DateTime>(json['deletedAt']),
+      expiresAt: serializer.fromJson<DateTime>(json['expiresAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'entityType': serializer.toJson<String>(entityType),
+      'entityId': serializer.toJson<String>(entityId),
+      'entityData': serializer.toJson<String>(entityData),
+      'ownerId': serializer.toJson<String>(ownerId),
+      'deletedAt': serializer.toJson<DateTime>(deletedAt),
+      'expiresAt': serializer.toJson<DateTime>(expiresAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  TrashItem copyWith(
+          {String? id,
+          String? entityType,
+          String? entityId,
+          String? entityData,
+          String? ownerId,
+          DateTime? deletedAt,
+          DateTime? expiresAt,
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      TrashItem(
+        id: id ?? this.id,
+        entityType: entityType ?? this.entityType,
+        entityId: entityId ?? this.entityId,
+        entityData: entityData ?? this.entityData,
+        ownerId: ownerId ?? this.ownerId,
+        deletedAt: deletedAt ?? this.deletedAt,
+        expiresAt: expiresAt ?? this.expiresAt,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  TrashItem copyWithCompanion(TrashTableCompanion data) {
+    return TrashItem(
+      id: data.id.present ? data.id.value : this.id,
+      entityType:
+          data.entityType.present ? data.entityType.value : this.entityType,
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      entityData:
+          data.entityData.present ? data.entityData.value : this.entityData,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      expiresAt: data.expiresAt.present ? data.expiresAt.value : this.expiresAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrashItem(')
+          ..write('id: $id, ')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('entityData: $entityData, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, entityType, entityId, entityData, ownerId,
+      deletedAt, expiresAt, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrashItem &&
+          other.id == this.id &&
+          other.entityType == this.entityType &&
+          other.entityId == this.entityId &&
+          other.entityData == this.entityData &&
+          other.ownerId == this.ownerId &&
+          other.deletedAt == this.deletedAt &&
+          other.expiresAt == this.expiresAt &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TrashTableCompanion extends UpdateCompanion<TrashItem> {
+  final Value<String> id;
+  final Value<String> entityType;
+  final Value<String> entityId;
+  final Value<String> entityData;
+  final Value<String> ownerId;
+  final Value<DateTime> deletedAt;
+  final Value<DateTime> expiresAt;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const TrashTableCompanion({
+    this.id = const Value.absent(),
+    this.entityType = const Value.absent(),
+    this.entityId = const Value.absent(),
+    this.entityData = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TrashTableCompanion.insert({
+    required String id,
+    required String entityType,
+    required String entityId,
+    required String entityData,
+    required String ownerId,
+    required DateTime deletedAt,
+    required DateTime expiresAt,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        entityType = Value(entityType),
+        entityId = Value(entityId),
+        entityData = Value(entityData),
+        ownerId = Value(ownerId),
+        deletedAt = Value(deletedAt),
+        expiresAt = Value(expiresAt),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<TrashItem> custom({
+    Expression<String>? id,
+    Expression<String>? entityType,
+    Expression<String>? entityId,
+    Expression<String>? entityData,
+    Expression<String>? ownerId,
+    Expression<DateTime>? deletedAt,
+    Expression<DateTime>? expiresAt,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entityType != null) 'entity_type': entityType,
+      if (entityId != null) 'entity_id': entityId,
+      if (entityData != null) 'entity_data': entityData,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TrashTableCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? entityType,
+      Value<String>? entityId,
+      Value<String>? entityData,
+      Value<String>? ownerId,
+      Value<DateTime>? deletedAt,
+      Value<DateTime>? expiresAt,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return TrashTableCompanion(
+      id: id ?? this.id,
+      entityType: entityType ?? this.entityType,
+      entityId: entityId ?? this.entityId,
+      entityData: entityData ?? this.entityData,
+      ownerId: ownerId ?? this.ownerId,
+      deletedAt: deletedAt ?? this.deletedAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (entityType.present) {
+      map['entity_type'] = Variable<String>(entityType.value);
+    }
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (entityData.present) {
+      map['entity_data'] = Variable<String>(entityData.value);
+    }
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (expiresAt.present) {
+      map['expires_at'] = Variable<DateTime>(expiresAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrashTableCompanion(')
+          ..write('id: $id, ')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('entityData: $entityData, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6985,6 +7458,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $GeneratorSettingsTableTable(this);
   late final $OutboxTableTable outboxTable = $OutboxTableTable(this);
   late final $EventsTableTable eventsTable = $EventsTableTable(this);
+  late final $TrashTableTable trashTable = $TrashTableTable(this);
   late final SubscribersDao subscribersDao =
       SubscribersDao(this as AppDatabase);
   late final CabinetsDao cabinetsDao = CabinetsDao(this as AppDatabase);
@@ -6996,6 +7470,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final GeneratorSettingsDao generatorSettingsDao =
       GeneratorSettingsDao(this as AppDatabase);
   late final EventsDao eventsDao = EventsDao(this as AppDatabase);
+  late final TrashDao trashDao = TrashDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7009,7 +7484,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         whatsappTemplatesTable,
         generatorSettingsTable,
         outboxTable,
-        eventsTable
+        eventsTable,
+        trashTable
       ];
 }
 
@@ -10083,6 +10559,231 @@ typedef $$EventsTableTableProcessedTableManager = ProcessedTableManager<
     (EventEntry, BaseReferences<_$AppDatabase, $EventsTableTable, EventEntry>),
     EventEntry,
     PrefetchHooks Function()>;
+typedef $$TrashTableTableCreateCompanionBuilder = TrashTableCompanion Function({
+  required String id,
+  required String entityType,
+  required String entityId,
+  required String entityData,
+  required String ownerId,
+  required DateTime deletedAt,
+  required DateTime expiresAt,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$TrashTableTableUpdateCompanionBuilder = TrashTableCompanion Function({
+  Value<String> id,
+  Value<String> entityType,
+  Value<String> entityId,
+  Value<String> entityData,
+  Value<String> ownerId,
+  Value<DateTime> deletedAt,
+  Value<DateTime> expiresAt,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$TrashTableTableFilterComposer
+    extends Composer<_$AppDatabase, $TrashTableTable> {
+  $$TrashTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get entityType => $composableBuilder(
+      column: $table.entityType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get entityId => $composableBuilder(
+      column: $table.entityId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get entityData => $composableBuilder(
+      column: $table.entityData, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get expiresAt => $composableBuilder(
+      column: $table.expiresAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$TrashTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $TrashTableTable> {
+  $$TrashTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get entityType => $composableBuilder(
+      column: $table.entityType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get entityId => $composableBuilder(
+      column: $table.entityId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get entityData => $composableBuilder(
+      column: $table.entityData, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+      column: $table.ownerId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get expiresAt => $composableBuilder(
+      column: $table.expiresAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TrashTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TrashTableTable> {
+  $$TrashTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get entityType => $composableBuilder(
+      column: $table.entityType, builder: (column) => column);
+
+  GeneratedColumn<String> get entityId =>
+      $composableBuilder(column: $table.entityId, builder: (column) => column);
+
+  GeneratedColumn<String> get entityData => $composableBuilder(
+      column: $table.entityData, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get expiresAt =>
+      $composableBuilder(column: $table.expiresAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TrashTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TrashTableTable,
+    TrashItem,
+    $$TrashTableTableFilterComposer,
+    $$TrashTableTableOrderingComposer,
+    $$TrashTableTableAnnotationComposer,
+    $$TrashTableTableCreateCompanionBuilder,
+    $$TrashTableTableUpdateCompanionBuilder,
+    (TrashItem, BaseReferences<_$AppDatabase, $TrashTableTable, TrashItem>),
+    TrashItem,
+    PrefetchHooks Function()> {
+  $$TrashTableTableTableManager(_$AppDatabase db, $TrashTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrashTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrashTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrashTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> entityType = const Value.absent(),
+            Value<String> entityId = const Value.absent(),
+            Value<String> entityData = const Value.absent(),
+            Value<String> ownerId = const Value.absent(),
+            Value<DateTime> deletedAt = const Value.absent(),
+            Value<DateTime> expiresAt = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TrashTableCompanion(
+            id: id,
+            entityType: entityType,
+            entityId: entityId,
+            entityData: entityData,
+            ownerId: ownerId,
+            deletedAt: deletedAt,
+            expiresAt: expiresAt,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String entityType,
+            required String entityId,
+            required String entityData,
+            required String ownerId,
+            required DateTime deletedAt,
+            required DateTime expiresAt,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TrashTableCompanion.insert(
+            id: id,
+            entityType: entityType,
+            entityId: entityId,
+            entityData: entityData,
+            ownerId: ownerId,
+            deletedAt: deletedAt,
+            expiresAt: expiresAt,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TrashTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TrashTableTable,
+    TrashItem,
+    $$TrashTableTableFilterComposer,
+    $$TrashTableTableOrderingComposer,
+    $$TrashTableTableAnnotationComposer,
+    $$TrashTableTableCreateCompanionBuilder,
+    $$TrashTableTableUpdateCompanionBuilder,
+    (TrashItem, BaseReferences<_$AppDatabase, $TrashTableTable, TrashItem>),
+    TrashItem,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10107,4 +10808,6 @@ class $AppDatabaseManager {
       $$OutboxTableTableTableManager(_db, _db.outboxTable);
   $$EventsTableTableTableManager get eventsTable =>
       $$EventsTableTableTableManager(_db, _db.eventsTable);
+  $$TrashTableTableTableManager get trashTable =>
+      $$TrashTableTableTableManager(_db, _db.trashTable);
 }

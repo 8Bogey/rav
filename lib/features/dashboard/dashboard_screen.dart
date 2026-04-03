@@ -12,6 +12,8 @@ import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/dialogs/subscriber_dialog.dart';
 import 'package:mawlid_al_dhaki/shared/utils/app_transitions.dart';
+import 'package:mawlid_al_dhaki/features/dashboard/widgets/dashboard_header.dart';
+import 'package:mawlid_al_dhaki/features/dashboard/widgets/quick_actions_panel.dart';
 import 'package:gap/gap.dart';
 
 // Provider for DashboardService
@@ -164,11 +166,19 @@ class DashboardScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Modern Header with Gradient
-          _buildHeader(context, isDarkMode),
+          DashboardHeader(isDarkMode: isDarkMode),
           const Gap(AppDimens.cardGap),
           
           // Quick Actions Panel
-          _buildQuickActions(context, isDarkMode),
+          QuickActionsPanel(
+            isDarkMode: isDarkMode,
+            onAddSubscriber: () => _showSubscriberDialog(context),
+            onRecordPayment: () => _showPaymentDialog(context),
+            onNavigateToCabinets: () => _navigateToCabinets(context),
+            onNavigateToSubscribers: () => _navigateToSubscribers(context),
+            onNavigateToWorkers: () => _navigateToWorkers(context),
+            onNavigateToReports: () => _navigateToReports(context),
+          ),
           const Gap(AppDimens.cardGap),
           
           // Stats Cards Section
@@ -245,254 +255,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDarkMode) {
-    final now = DateTime.now();
-    final dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-    final today = '${dayNames[now.weekday % 7]}، ${now.day} ${_getMonthName(now.month)} ${now.year}';
-    
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.cardPadding * 1.5),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDarkMode 
-              ? [AppColors.darkBgSurface, AppColors.darkBgPage]
-              : [AppColors.primary, AppColors.primary.withGreen(180)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppDimens.rLg),
-boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'مرحباً، الأدمن 👋',
-                style: AppTypography.h2.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Gap(AppDimens.s8),
-              Text(
-                today,
-                style: AppTypography.bodyMd.copyWith(
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
-              const Gap(AppDimens.s4),
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: AppColors.statusActive,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const Gap(AppDimens.s8),
-                  Text(
-                    'النظام يعمل بشكل طبيعي',
-                    style: AppTypography.bodySm.copyWith(
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              _buildHeaderAction(
-                icon: Icons.notifications_outlined,
-                onTap: () {},
-                isDarkMode: isDarkMode,
-              ),
-              const Gap(AppDimens.s12),
-              _buildAddButton(context),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1);
-  }
 
-  Widget _buildHeaderAction({
-    required IconData icon,
-    required VoidCallback onTap,
-    required bool isDarkMode,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppDimens.s12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(AppDimens.rMd),
-        ),
-        child: Icon(icon, color: Colors.white, size: AppDimens.iconMd),
-      ),
-    );
-  }
-
-  Widget _buildAddButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        AppTransitions.showPremiumDialog(
-          context: context,
-          child: const SubscriberDialog(),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimens.s20, vertical: AppDimens.s12),
-        decoration: BoxDecoration(
-          color: AppColors.gold,
-          borderRadius: BorderRadius.circular(AppDimens.rMd),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.gold.withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.add, color: AppColors.textOnGold, size: AppDimens.iconMd),
-            const Gap(AppDimens.s8),
-            Text(
-              'إضافة مشترك',
-              style: AppTypography.labelLg.copyWith(color: AppColors.textOnGold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context, bool isDarkMode) {
-    final actions = [
-      {'icon': Icons.person_add, 'label': 'إضافة مشترك', 'color': AppColors.statusInfo, 'action': () => _showSubscriberDialog(context)},
-      {'icon': Icons.payments, 'label': 'تسجيل دفعة', 'color': AppColors.statusActive, 'action': () => _showPaymentDialog(context)},
-      {'icon': Icons.apps, 'label': 'الكabenات', 'color': AppColors.primary, 'action': () => _navigateToCabinets(context)},
-      {'icon': Icons.people, 'label': 'المشتركون', 'color': AppColors.gold, 'action': () => _navigateToSubscribers(context)},
-      {'icon': Icons.engineering, 'label': 'الموظفين', 'color': AppColors.statusWarning, 'action': () => _navigateToWorkers(context)},
-      {'icon': Icons.bar_chart, 'label': 'التقارير', 'color': AppColors.statusDanger, 'action': () => _navigateToReports(context)},
-    ];
-    
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.cardPadding),
-      decoration: BoxDecoration(
-        color: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppDimens.rLg),
-        boxShadow: AppShadows.card,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'إجراءات سريعة',
-            style: AppTypography.h3.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-            ),
-          ),
-          const Gap(AppDimens.s16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              // Responsive grid for quick actions
-              int crossAxisCount;
-              if (constraints.maxWidth > 1200) {
-                crossAxisCount = 6; // Large screens
-              } else if (constraints.maxWidth > 800) {
-                crossAxisCount = 4; // Medium screens
-              } else if (constraints.maxWidth > 600) {
-                crossAxisCount = 3; // Small screens
-              } else {
-                crossAxisCount = 2; // Very small screens
-              }
-              
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: AppDimens.s12,
-                  mainAxisSpacing: AppDimens.s12,
-                  childAspectRatio: 1.1,
-                ),
-                itemCount: actions.length,
-                itemBuilder: (context, index) {
-                  final action = actions[index];
-                  return _buildQuickActionButton(
-                    icon: action['icon'] as IconData,
-                    label: action['label'] as String,
-                    color: action['color'] as Color,
-                    onTap: action['action'] as VoidCallback,
-                    index: index,
-                    isDarkMode: isDarkMode,
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 100.ms, duration: 400.ms);
-  }
-
-  Widget _buildQuickActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-    required int index,
-    required bool isDarkMode,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppDimens.s12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(AppDimens.rMd),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppDimens.s10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: AppDimens.iconMd),
-            ),
-            const Gap(AppDimens.s8),
-            Text(
-              label,
-              style: AppTypography.labelSm.copyWith(
-                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    ).animate(delay: (150 + index * 50).ms).fadeIn().scale(begin: const Offset(0.8, 0.8));
-  }
 
   Widget _buildSectionTitle(String title, bool isDarkMode) {
     return Text(

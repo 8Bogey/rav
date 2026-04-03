@@ -14,6 +14,7 @@ import 'daos/audit_log_dao.dart';
 import 'daos/whatsapp_templates_dao.dart';
 import 'daos/generator_settings_dao.dart';
 import 'daos/events_dao.dart';
+import 'daos/trash_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -28,6 +29,7 @@ part 'app_database.g.dart';
     GeneratorSettingsTable,
     OutboxTable,
     EventsTable,
+    TrashTable,
   ],
   daos: [
     SubscribersDao,
@@ -38,6 +40,7 @@ part 'app_database.g.dart';
     WhatsappTemplatesDao,
     GeneratorSettingsDao,
     EventsDao,
+    TrashDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -547,6 +550,25 @@ class WhatsappTemplatesTable extends Table {
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// ============================================================
+// TRASH TABLE - For soft-deleted items before permanent deletion
+// ============================================================
+@DataClassName('TrashItem')
+class TrashTable extends Table {
+  TextColumn get id => text()(); // UUID
+  TextColumn get entityType => text()(); // 'subscribers', 'cabinets', etc.
+  TextColumn get entityId => text()(); // The entity's UUID
+  TextColumn get entityData => text()(); // JSON snapshot of entity
+  TextColumn get ownerId => text()();
+  DateTimeColumn get deletedAt => dateTime()();
+  DateTimeColumn get expiresAt => dateTime()(); // Auto-delete after this
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  
   @override
   Set<Column> get primaryKey => {id};
 }

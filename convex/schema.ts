@@ -270,4 +270,24 @@ export default defineSchema({
     .index("by_entityType_entityId", ["entityType", "entityId"])
     .index("by_occurredAt", ["occurredAt"])
     .index("by_ownerId_occurredAt", ["ownerId", "occurredAt"]),
+
+  // ============================================================
+  // TRASH - Bin for soft-deleted items before permanent deletion
+  // ============================================================
+  // Items in trash auto-delete after 30 days via cron job.
+  trash: defineTable({
+    // Multi-tenant isolation
+    ownerId: v.string(),
+    
+    // Trash metadata
+    entityType: v.string(), // 'subscribers', 'cabinets', 'payments', 'workers'
+    entityId: v.string(), // The client's UUID
+    entityData: v.string(), // JSON snapshot of entity when moved to trash
+    deletedAt: v.number(), // Unix timestamp when moved to trash
+    deletedBy: v.string(), // User/device identifier
+    expiresAt: v.number(), // Auto-delete after this timestamp (30 days from deletedAt)
+  })
+    .index("by_ownerId", ["ownerId"])
+    .index("by_ownerId_deletedAt", ["ownerId", "deletedAt"])
+    .index("by_ownerId_expiresAt", ["ownerId", "expiresAt"]),
 });
