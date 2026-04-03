@@ -4,6 +4,7 @@ import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/cabinets_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
 import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
+import 'package:mawlid_al_dhaki/core/services/trash_service.dart';
 import 'package:uuid/uuid.dart';
 
 class CabinetsService extends BaseService {
@@ -111,7 +112,7 @@ class CabinetsService extends BaseService {
     return _dao.updateCabinet(companion);
   }
 
-  // Delete a cabinet (soft delete)
+  // Delete a cabinet (soft delete + move to trash)
   Future<bool> deleteCabinet(String id, {required String ownerId}) async {
     debugPrint(
         '[CabinetsService] deleteCabinet called: id=$id, ownerId=$ownerId');
@@ -120,6 +121,32 @@ class CabinetsService extends BaseService {
     debugPrint('[CabinetsService] existing cabinet: $existing');
     final newVersion = (existing?.version ?? 0) + 1;
     debugPrint('[CabinetsService] newVersion: $newVersion');
+
+    // Move to trash before soft deleting
+    if (existing != null) {
+      try {
+        final trashService = TrashService(database);
+        await trashService.moveToTrash(
+          entityType: 'cabinets',
+          entityId: id,
+          entityData: {
+            'id': existing.id,
+            'name': existing.name,
+            'letter': existing.letter,
+            'totalSubscribers': existing.totalSubscribers,
+            'currentSubscribers': existing.currentSubscribers,
+            'collectedAmount': existing.collectedAmount,
+            'delayedSubscribers': existing.delayedSubscribers,
+            'completionDate': existing.completionDate?.toIso8601String(),
+            'ownerId': ownerId,
+            'version': existing.version,
+          },
+        );
+        debugPrint('[CabinetsService] Moved cabinet to trash');
+      } catch (e) {
+        debugPrint('[CabinetsService] Failed to move cabinet to trash: $e');
+      }
+    }
 
     // Use soft delete which only updates isDeleted and updatedAt
     final result = await _dao.softDeleteCabinet(id);

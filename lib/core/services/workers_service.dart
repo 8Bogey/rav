@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/workers_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
 import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
+import 'package:mawlid_al_dhaki/core/services/trash_service.dart';
 import 'package:uuid/uuid.dart';
 
 class WorkersService extends BaseService {
@@ -102,11 +104,35 @@ class WorkersService extends BaseService {
     return _dao.updateWorker(companion);
   }
 
-  // Soft delete a worker
+  // Soft delete a worker (move to trash first)
   Future<bool> deleteWorker(String id, {required String ownerId}) async {
     final now = DateTime.now();
     final existing = await _dao.getWorkerById(id, ownerId: ownerId);
     final newVersion = (existing?.version ?? 0) + 1;
+
+    // Move to trash before soft deleting
+    if (existing != null) {
+      try {
+        final trashService = TrashService(database);
+        await trashService.moveToTrash(
+          entityType: 'workers',
+          entityId: id,
+          entityData: {
+            'id': existing.id,
+            'name': existing.name,
+            'phone': existing.phone,
+            'permissions': existing.permissions,
+            'todayCollected': existing.todayCollected,
+            'monthTotal': existing.monthTotal,
+            'ownerId': ownerId,
+            'version': existing.version,
+          },
+        );
+        debugPrint('[WorkersService] Moved worker to trash');
+      } catch (e) {
+        debugPrint('[WorkersService] Failed to move worker to trash: $e');
+      }
+    }
 
     final companion = WorkersTableCompanion(
       id: Value(id),

@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/payments_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
 import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
+import 'package:mawlid_al_dhaki/core/services/trash_service.dart';
 import 'package:uuid/uuid.dart';
 
 class PaymentsService extends BaseService {
@@ -103,11 +105,35 @@ class PaymentsService extends BaseService {
     return _dao.updatePayment(companion);
   }
 
-  // Soft delete a payment
+  // Soft delete a payment (move to trash first)
   Future<bool> deletePayment(String id, {required String ownerId}) async {
     final now = DateTime.now();
     final existing = await _dao.getPaymentById(id, ownerId: ownerId);
     final newVersion = (existing?.version ?? 0) + 1;
+
+    // Move to trash before soft deleting
+    if (existing != null) {
+      try {
+        final trashService = TrashService(database);
+        await trashService.moveToTrash(
+          entityType: 'payments',
+          entityId: id,
+          entityData: {
+            'id': existing.id,
+            'subscriberId': existing.subscriberId,
+            'amount': existing.amount,
+            'worker': existing.worker,
+            'date': existing.date.toIso8601String(),
+            'cabinet': existing.cabinet,
+            'ownerId': ownerId,
+            'version': existing.version,
+          },
+        );
+        debugPrint('[PaymentsService] Moved payment to trash');
+      } catch (e) {
+        debugPrint('[PaymentsService] Failed to move payment to trash: $e');
+      }
+    }
 
     final companion = PaymentsTableCompanion(
       id: Value(id),

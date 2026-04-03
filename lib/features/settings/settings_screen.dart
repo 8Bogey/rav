@@ -2171,90 +2171,90 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Expanded(
-          child: StreamBuilder<List<TrashItem>>(
-            stream: trashService.watchTrashItems(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('خطأ: ${snapshot.error}',
-                      style: AppTypography.bodyMd.copyWith(
-                        color: AppColors.statusDanger,
-                      )),
-                );
-              }
-              final items = snapshot.data ?? [];
-              if (items.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.delete_outline, size: 64,
-                          color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted),
-                      const SizedBox(height: 16),
-                      Text(
-                        'سلة المحذوفات فارغة',
-                        style: AppTypography.h3.copyWith(
-                          color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              return ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  final entityData = _parseEntityData(item.entityData);
-                  final name = entityData['name'] ?? item.entityId;
-                  final daysLeft = _daysUntilExpiry(item.expiresAt);
-
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.statusWarning.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(_getEntityTypeIcon(item.entityType),
-                            color: AppColors.statusWarning),
-                      ),
-                      title: Text(name, style: AppTypography.bodyMd),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('نوع: ${_getEntityTypeName(item.entityType)}'),
-                          Text('محذوف منذ: ${_formatDate(item.deletedAt)}'),
-                          Text('يُحذف نهائياً بعد: $daysLeft يوم'),
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.restore, color: AppColors.statusActive),
-                            tooltip: 'استعادة',
-                            onPressed: () => _restoreItem(context, trashService, item.id),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_forever, color: AppColors.statusDanger),
-                            tooltip: 'حذف نهائي',
-                            onPressed: () => _showPermanentDeleteConfirm(context, trashService, item.id),
-                          ),
-                        ],
+        StreamBuilder<List<TrashItem>>(
+          stream: trashService.watchTrashItems(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('خطأ: ${snapshot.error}',
+                    style: AppTypography.bodyMd.copyWith(
+                      color: AppColors.statusDanger,
+                    )),
+              );
+            }
+            final items = snapshot.data ?? [];
+            if (items.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.delete_outline, size: 64,
+                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted),
+                    const SizedBox(height: 16),
+                    Text(
+                      'سلة المحذوفات فارغة',
+                      style: AppTypography.h3.copyWith(
+                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
                       ),
                     ),
-                  );
-                },
+                  ],
+                ),
               );
-            },
-          ),
+            }
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final entityData = _parseEntityData(item.entityData);
+                final name = entityData['name'] ?? item.entityId;
+                final daysLeft = _daysUntilExpiry(item.expiresAt);
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusWarning.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(_getEntityTypeIcon(item.entityType),
+                          color: AppColors.statusWarning),
+                    ),
+                    title: Text(name, style: AppTypography.bodyMd),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('نوع: ${_getEntityTypeName(item.entityType)}'),
+                        Text('محذوف منذ: ${_formatDate(item.deletedAt)}'),
+                        Text('يُحذف نهائياً بعد: $daysLeft يوم'),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.restore, color: AppColors.statusActive),
+                          tooltip: 'استعادة',
+                          onPressed: () => _restoreItem(context, trashService, item.id),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_forever, color: AppColors.statusDanger),
+                          tooltip: 'حذف نهائي',
+                          onPressed: () => _showPermanentDeleteConfirm(context, trashService, item.id),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ],
     );

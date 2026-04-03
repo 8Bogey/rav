@@ -244,14 +244,41 @@ class AppDatabase extends _$AppDatabase {
           print('Database migration to v4 completed successfully');
         }
         
-        // Migrate to version 5: add EventsTable for event-sourced sync
+        // Migrate to version 5: add EventsTable and TrashTable for event-sourced sync and trash functionality
         if (from < 5) {
           await m.createTable(eventsTable);
-          print('Database migration to v5 completed successfully (EventsTable added)');
+          await m.createTable(trashTable);
+          print('Database migration to v5 completed successfully (EventsTable and TrashTable added)');
         }
       },
       beforeOpen: (details) async {
         print('Database opening with version ${details.versionNow}, wasCreated: ${details.wasCreated}');
+        
+        // Ensure trash_table exists (for databases that may have been at v5 before trash was added to migration)
+        try {
+          await customStatement('SELECT 1 FROM trash_table LIMIT 1');
+        } catch (e) {
+          // Table doesn't exist, create it
+          try {
+            await customStatement('''
+              CREATE TABLE IF NOT EXISTS trash_table (
+                id TEXT NOT NULL PRIMARY KEY,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT NOT NULL,
+                entity_data TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                deleted_at INTEGER NOT NULL,
+                expires_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+              )
+            ''');
+            print('Created missing trash_table');
+          } catch (createError) {
+            print('Warning: Failed to create trash_table: $createError');
+          }
+        }
+        
         // Fix any NULL values in cabinets_table that might cause null check crashes
         try {
           await customStatement("UPDATE cabinets_table SET name = 'Unknown' WHERE name IS NULL");
