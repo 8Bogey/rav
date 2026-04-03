@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
-import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Service for pulling changes from Convex Cloud to local Drift database.
@@ -146,17 +144,42 @@ class ConvexDownSyncService {
       List<Map<String, dynamic>> changes) async {
     final now = DateTime.now();
     for (final change in changes) {
+      // Convex documents store the client's local UUID in 'cloudId'
+      // This maps to the local database 'id' field
+      final localId = change['cloudId'] as String?;
+      if (localId == null || localId.isEmpty) {
+        debugPrint('[DownSync] Skipping subscriber change without cloudId: ${change['_id']}');
+        continue;
+      }
+
       // LWW: Only apply if incoming version is newer
       final existing = await (database.select(database.subscribersTable)
-            ..where((t) => t.id.equals(change['id'] as String)))
+            ..where((t) => t.id.equals(localId)))
           .getSingleOrNull();
 
       final incomingVersion = change['version'] as int? ?? 0;
       final existingVersion = existing?.version ?? 0;
 
       if (incomingVersion > existingVersion) {
+        final isDeleted = change['isDeleted'] as bool? ?? false;
+
+        // If incoming is deleted, mark local as deleted instead of full update
+        if (isDeleted) {
+          if (existing != null) {
+            await (database.update(database.subscribersTable)
+                  ..where((t) => t.id.equals(localId)))
+                .write(SubscribersTableCompanion(
+              isDeleted: const Value(true),
+              version: Value(incomingVersion),
+              updatedAt: Value(now),
+            ));
+            debugPrint('[DownSync] Soft deleted subscriber: $localId');
+          }
+          continue;
+        }
+
         final companion = SubscribersTableCompanion(
-          id: Value(change['id'] as String),
+          id: Value(localId),
           ownerId: Value(change['ownerId'] as String? ?? ''),
           name: Value(change['name'] as String? ?? ''),
           code: Value(change['code'] as String? ?? ''),
@@ -170,7 +193,7 @@ class ConvexDownSyncService {
           tags: Value(change['tags'] as String?),
           notes: Value(change['notes'] as String?),
           version: Value(incomingVersion),
-          isDeleted: Value(change['isDeleted'] as bool? ?? false),
+          isDeleted: Value(isDeleted),
           updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
               : now),
@@ -181,7 +204,7 @@ class ConvexDownSyncService {
 
         if (existing != null) {
           await (database.update(database.subscribersTable)
-                ..where((t) => t.id.equals(change['id'] as String)))
+                ..where((t) => t.id.equals(localId)))
               .write(companion);
         } else {
           await database.into(database.subscribersTable).insert(companion);
@@ -194,12 +217,18 @@ class ConvexDownSyncService {
   Future<void> _applyCabinetChanges(List<Map<String, dynamic>> changes) async {
     final now = DateTime.now();
     for (final change in changes) {
+      // Convex documents store the client's local UUID in 'cloudId'
+      final localId = change['cloudId'] as String?;
+      if (localId == null || localId.isEmpty) {
+        debugPrint('[DownSync] Skipping cabinet change without cloudId: ${change['_id']}');
+        continue;
+      }
+
       final isDeleted = change['isDeleted'] as bool? ?? false;
       final incomingVersion = change['version'] as int? ?? 0;
 
-      // Try to find existing by cloudId first, then by id
       var existing = await (database.select(database.cabinetsTable)
-            ..where((t) => t.id.equals(change['id'] as String)))
+            ..where((t) => t.id.equals(localId)))
           .getSingleOrNull();
 
       final existingVersion = existing?.version ?? 0;
@@ -209,20 +238,19 @@ class ConvexDownSyncService {
         if (isDeleted) {
           if (existing != null) {
             await (database.update(database.cabinetsTable)
-                  ..where((t) => t.id.equals(change['id'] as String)))
+                  ..where((t) => t.id.equals(localId)))
                 .write(CabinetsTableCompanion(
               isDeleted: const Value(true),
               version: Value(incomingVersion),
               updatedAt: Value(now),
             ));
-            debugPrint('[DownSync] Soft deleted cabinet: ${change['id']}');
+            debugPrint('[DownSync] Soft deleted cabinet: $localId');
           }
-          // Skip further processing for deleted items
           continue;
         }
 
         final companion = CabinetsTableCompanion(
-          id: Value(change['id'] as String),
+          id: Value(localId),
           ownerId: Value(change['ownerId'] as String? ?? ''),
           name: Value(change['name'] as String? ?? ''),
           letter: Value(change['letter'] as String? ?? ''),
@@ -246,7 +274,7 @@ class ConvexDownSyncService {
 
         if (existing != null) {
           await (database.update(database.cabinetsTable)
-                ..where((t) => t.id.equals(change['id'] as String)))
+                ..where((t) => t.id.equals(localId)))
               .write(companion);
         } else {
           await database.into(database.cabinetsTable).insert(companion);
@@ -259,16 +287,40 @@ class ConvexDownSyncService {
   Future<void> _applyPaymentChanges(List<Map<String, dynamic>> changes) async {
     final now = DateTime.now();
     for (final change in changes) {
+      // Convex documents store the client's local UUID in 'cloudId'
+      final localId = change['cloudId'] as String?;
+      if (localId == null || localId.isEmpty) {
+        debugPrint('[DownSync] Skipping payment change without cloudId: ${change['_id']}');
+        continue;
+      }
+
       final existing = await (database.select(database.paymentsTable)
-            ..where((t) => t.id.equals(change['id'] as String)))
+            ..where((t) => t.id.equals(localId)))
           .getSingleOrNull();
 
       final incomingVersion = change['version'] as int? ?? 0;
       final existingVersion = existing?.version ?? 0;
 
       if (incomingVersion > existingVersion) {
+        final isDeleted = change['isDeleted'] as bool? ?? false;
+
+        // If incoming is deleted, mark local as deleted instead of full update
+        if (isDeleted) {
+          if (existing != null) {
+            await (database.update(database.paymentsTable)
+                  ..where((t) => t.id.equals(localId)))
+                .write(PaymentsTableCompanion(
+              isDeleted: const Value(true),
+              version: Value(incomingVersion),
+              updatedAt: Value(now),
+            ));
+            debugPrint('[DownSync] Soft deleted payment: $localId');
+          }
+          continue;
+        }
+
         final companion = PaymentsTableCompanion(
-          id: Value(change['id'] as String),
+          id: Value(localId),
           ownerId: Value(change['ownerId'] as String? ?? ''),
           subscriberId: Value(change['subscriberId'] as String? ?? ''),
           amount: Value(change['amount'] as double? ?? 0),
@@ -278,7 +330,7 @@ class ConvexDownSyncService {
               : now),
           cabinet: Value(change['cabinet'] as String? ?? ''),
           version: Value(incomingVersion),
-          isDeleted: Value(change['isDeleted'] as bool? ?? false),
+          isDeleted: Value(isDeleted),
           updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
               : now),
@@ -289,7 +341,7 @@ class ConvexDownSyncService {
 
         if (existing != null) {
           await (database.update(database.paymentsTable)
-                ..where((t) => t.id.equals(change['id'] as String)))
+                ..where((t) => t.id.equals(localId)))
               .write(companion);
         } else {
           await database.into(database.paymentsTable).insert(companion);
@@ -302,16 +354,40 @@ class ConvexDownSyncService {
   Future<void> _applyWorkerChanges(List<Map<String, dynamic>> changes) async {
     final now = DateTime.now();
     for (final change in changes) {
+      // Convex documents store the client's local UUID in 'cloudId'
+      final localId = change['cloudId'] as String?;
+      if (localId == null || localId.isEmpty) {
+        debugPrint('[DownSync] Skipping worker change without cloudId: ${change['_id']}');
+        continue;
+      }
+
       final existing = await (database.select(database.workersTable)
-            ..where((t) => t.id.equals(change['id'] as String)))
+            ..where((t) => t.id.equals(localId)))
           .getSingleOrNull();
 
       final incomingVersion = change['version'] as int? ?? 0;
       final existingVersion = existing?.version ?? 0;
 
       if (incomingVersion > existingVersion) {
+        final isDeleted = change['isDeleted'] as bool? ?? false;
+
+        // If incoming is deleted, mark local as deleted instead of full update
+        if (isDeleted) {
+          if (existing != null) {
+            await (database.update(database.workersTable)
+                  ..where((t) => t.id.equals(localId)))
+                .write(WorkersTableCompanion(
+              isDeleted: const Value(true),
+              version: Value(incomingVersion),
+              updatedAt: Value(now),
+            ));
+            debugPrint('[DownSync] Soft deleted worker: $localId');
+          }
+          continue;
+        }
+
         final companion = WorkersTableCompanion(
-          id: Value(change['id'] as String),
+          id: Value(localId),
           ownerId: Value(change['ownerId'] as String? ?? ''),
           name: Value(change['name'] as String? ?? ''),
           phone: Value(change['phone'] as String? ?? ''),
@@ -319,7 +395,7 @@ class ConvexDownSyncService {
           todayCollected: Value(change['todayCollected'] as double? ?? 0),
           monthTotal: Value(change['monthTotal'] as double? ?? 0),
           version: Value(incomingVersion),
-          isDeleted: Value(change['isDeleted'] as bool? ?? false),
+          isDeleted: Value(isDeleted),
           updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
               : now),
@@ -330,7 +406,7 @@ class ConvexDownSyncService {
 
         if (existing != null) {
           await (database.update(database.workersTable)
-                ..where((t) => t.id.equals(change['id'] as String)))
+                ..where((t) => t.id.equals(localId)))
               .write(companion);
         } else {
           await database.into(database.workersTable).insert(companion);
@@ -339,31 +415,22 @@ class ConvexDownSyncService {
     }
   }
 
-  String _toSingular(String table) {
-    // Handle special cases with proper capitalization
-    final singularMappings = {
-      'cabinets': 'Cabinet',
-      'subscribers': 'Subscriber',
-      'payments': 'Payment',
-      'workers': 'Worker',
-      'auditLog': 'AuditLog',
-      'whatsappTemplates': 'WhatsappTemplate',
-      'generatorSettings': 'GeneratorSetting',
-    };
-    return singularMappings[table] ?? table;
-  }
-
   // ==================== Hard Deletion Detection ====================
   // These methods detect items that were hard-deleted in Convex dashboard
   // and mark them as deleted locally so they disappear from the UI
 
-  /// Fetch all active (non-deleted) items from cloud for a table
+  /// Fetch ALL items from cloud for a table (including soft-deleted).
+  /// Uses get*ModifiedSince with since: 0 to get every document.
+  /// This is critical for accurate hard-deletion detection: we need to know
+  /// about ALL cloud documents (including soft-deleted ones) so we can distinguish
+  /// between "soft-deleted by app" and "hard-deleted from Convex dashboard".
   Future<Set<String>> _getCloudItemIds(String tableName) async {
+    // Use the ModifiedSince queries with since: 0 to get ALL documents
     final queryMappings = {
-      'subscribers': 'queries/subscribers:getActiveSubscribers',
-      'cabinets': 'queries/cabinets:getActiveCabinets',
-      'payments': 'queries/payments:getActivePayments',
-      'workers': 'queries/workers:getActiveWorkers',
+      'subscribers': 'queries/subscribers:getSubscribersModifiedSince',
+      'cabinets': 'queries/cabinets:getCabinetsModifiedSince',
+      'payments': 'queries/payments:getPaymentsModifiedSince',
+      'workers': 'queries/workers:getWorkersModifiedSince',
     };
 
     final queryName = queryMappings[tableName];
@@ -373,21 +440,22 @@ class ConvexDownSyncService {
     }
 
     try {
-      debugPrint('[DownSync] Fetching cloud items for $tableName');
+      debugPrint('[DownSync] Fetching ALL cloud items for $tableName (including soft-deleted)');
       final result = await AppConvexConfig.query(queryName, {
         'ownerId': _getCurrentOwnerId(),
+        'since': 0, // Get everything since epoch start
       });
 
       if (result is List) {
         // Convex documents have 'cloudId' which maps to local 'id'
-        // Fall back to _id if cloudId is not set
+        // The schema stores the client's local UUID in cloudId
         final ids = result
             .cast<Map<String, dynamic>>()
             .map((item) {
-              final cloudId = item['cloudId'] as String?;
-              final id = item['id'] as String?;
-              // Prefer cloudId (client's local UUID), fall back to id field
-              return cloudId ?? id ?? '';
+              // Only use cloudId - this is the client's local UUID stored in Convex
+              // Do NOT fall back to 'id' field because the schema doesn't have one
+              // (item['id'] would be null and cause false positives in hard-deletion detection)
+              return (item['cloudId'] as String?) ?? '';
             })
             .where((id) => id.isNotEmpty)
             .toSet();
