@@ -76,7 +76,14 @@ class AppConvexConfig {
 
     final url = Uri.parse('$_deploymentUrl/api/mutation/$mutationName');
     
-    debugPrint('[Convex] mutation=$mutationName, authenticated=$isAuthenticated');
+    debugPrint('[Convex] ═══════════════════════════════');
+    debugPrint('[Convex] FULL URL: $url');
+    debugPrint('[Convex] mutation=$mutationName');
+    debugPrint('[Convex] authenticated=$isAuthenticated');
+    if (_authToken != null) {
+      debugPrint('[Convex] token preview: ${_authToken!.substring(0, 30)}...');
+    }
+    debugPrint('[Convex] ═══════════════════════════════');
     
     final response = await http.post(
       url,
@@ -87,6 +94,9 @@ class AppConvexConfig {
       body: jsonEncode(args),
     );
 
+    debugPrint('[Convex] response status: ${response.statusCode}');
+    debugPrint('[Convex] response body preview: ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}');
+    
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
