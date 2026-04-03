@@ -105,36 +105,55 @@ class ConvexDownSyncService {
       debugPrint('[EventDownSync] Processing ${events.length} events from cloud');
 
       for (final eventData in events) {
-        final eventType = eventData['eventType'] as String;
-        final entityType = eventData['entityType'] as String;
-        final entityId = eventData['entityId'] as String;
-        final payload = jsonDecode(eventData['payload'] as String) as Map<String, dynamic>;
-        final version = eventData['version'] as int;
-        final occurredAt = DateTime.fromMillisecondsSinceEpoch(eventData['occurredAt'] as int);
+        try {
+          final eventType = eventData['eventType'] as String;
+          final entityType = eventData['entityType'] as String;
+          final entityId = eventData['entityId'] as String;
+          final version = eventData['version'] as int;
+          final occurredAt = DateTime.fromMillisecondsSinceEpoch(eventData['occurredAt'] as int);
 
-        // Check if we already have this event locally
-        final existingEvents = await _eventService.getEventsForEntity(entityType, entityId);
-        final alreadyHas = existingEvents.any((e) =>
-          e.eventType == eventType && e.version == version);
-        
-        if (alreadyHas) {
-          continue; // Skip duplicate events
+          // Parse payload - handle both string and already-decoded map
+          Map<String, dynamic> payload;
+          final payloadRaw = eventData['payload'];
+          if (payloadRaw is String) {
+            try {
+              payload = jsonDecode(payloadRaw) as Map<String, dynamic>;
+            } catch (e) {
+              debugPrint('[EventDownSync] Failed to parse payload JSON: $e');
+              payload = {};
+            }
+          } else if (payloadRaw is Map) {
+            payload = Map<String, dynamic>.from(payloadRaw);
+          } else {
+            debugPrint('[EventDownSync] Unexpected payload type: ${payloadRaw.runtimeType}');
+            payload = {};
+          }
+
+          // Check if we already have this event locally
+          final existingEvents = await _eventService.getEventsForEntity(entityType, entityId);
+          final alreadyHas = existingEvents.any((e) =>
+            e.eventType == eventType && e.version == version);
+          
+          if (alreadyHas) {
+            continue; // Skip duplicate events
+          }
+
+          // Apply the event to local state
+          await _applyEventLocally(eventType, entityType, entityId, payload, version);
+
+          // Record the event locally as synced
+          await _eventService.appendEvent(
+            eventType: eventType,
+            entityType: entityType,
+            entityId: entityId,
+            payload: payload,
+            version: version,
+            occurredAt: occurredAt,
+          );
+        } catch (e) {
+          debugPrint('[EventDownSync] Error processing event: $e');
+          // Continue with next event instead of failing entirely
         }
-
-        // Apply the event to local state
-        await _applyEventLocally(eventType, entityType, entityId, payload, version);
-
-        // Record the event locally as synced
-        await _eventService.appendEvent(
-          eventType: eventType,
-          entityType: entityType,
-          entityId: entityId,
-          payload: payload,
-          version: version,
-          occurredAt: occurredAt,
-        );
-        // Mark it as synced immediately since it came from cloud
-        // (We need to get the ID from the append, but for now we'll use a workaround)
       }
 
       debugPrint('[EventDownSync] Events sync completed');
