@@ -28,8 +28,8 @@ export default defineSchema({
     status: v.number(), // 0: inactive, 1: active, 2: suspended, 3: disconnected
     startDate: v.number(), // Unix timestamp
     accumulatedDebt: v.number(),
-    tags: v.optional(v.string()), // Stored as comma-separated or JSON
-    notes: v.optional(v.string()),
+    tags: v.nullable(v.string()), // Stored as comma-separated or JSON
+    notes: v.nullable(v.string()), // Allow null for notes
     
     // Legacy sync metadata (kept for backward compatibility)
     lastModified: v.optional(v.number()),
@@ -66,7 +66,7 @@ export default defineSchema({
     currentSubscribers: v.number(),
     collectedAmount: v.number(),
     delayedSubscribers: v.number(),
-    completionDate: v.optional(v.number()), // Unix timestamp
+    completionDate: v.nullable(v.number()), // Unix timestamp - allow null
     
     // Legacy sync metadata
     lastModified: v.optional(v.number()),

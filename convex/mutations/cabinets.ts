@@ -19,7 +19,7 @@ export const saveCabinet = mutation({
     currentSubscribers: v.number(),
     collectedAmount: v.number(),
     delayedSubscribers: v.number(),
-    completionDate: v.optional(v.number()),
+    completionDate: v.nullable(v.number()), // Accept null explicitly
     lastModified: v.optional(v.number()),
     lastSyncedAt: v.optional(v.number()),
     syncStatus: v.optional(v.string()),

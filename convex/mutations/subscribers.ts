@@ -28,8 +28,8 @@ export const saveSubscriber = mutation({
     status: v.number(),
     startDate: v.number(),
     accumulatedDebt: v.number(),
-    tags: v.optional(v.string()),
-    notes: v.optional(v.string()),
+    tags: v.nullable(v.string()), // Stored as comma-separated or JSON
+    notes: v.nullable(v.string()), // Allow null for notes
     lastModified: v.optional(v.number()),
     lastSyncedAt: v.optional(v.number()),
     syncStatus: v.optional(v.string()),
@@ -165,8 +165,8 @@ export const bulkSaveSubscribers = mutation({
       status: v.number(),
       startDate: v.number(),
       accumulatedDebt: v.number(),
-      tags: v.optional(v.string()),
-      notes: v.optional(v.string()),
+      tags: v.nullable(v.string()),
+      notes: v.nullable(v.string()), // Allow null for notes
       lastModified: v.optional(v.number()),
       lastSyncedAt: v.optional(v.number()),
       syncStatus: v.optional(v.string()),
