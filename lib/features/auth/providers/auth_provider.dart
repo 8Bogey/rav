@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 
-  /// Simple password for daily access (settable in settings)
-  const String kDefaultDailyPassword = '123456';
+/// Simple password for daily access (settable in settings)
+const String kDefaultDailyPassword = ' ';
 
 /// Demo user ID - constant for persistence across restarts
 /// In production, this would come from Auth0
@@ -63,26 +63,27 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final Ref _ref;
-  
-  AuthNotifier(this._ref) : super(AuthState(isAuthenticated: false, userId: null));
+
+  AuthNotifier(this._ref)
+      : super(AuthState(isAuthenticated: false, userId: null));
 
   /// Set the daily password (called from Settings when user changes it)
   static String _dailyPassword = kDefaultDailyPassword;
-  
+
   static void setDailyPassword(String password) {
     _dailyPassword = password;
   }
-  
+
   /// Verify subscription status (called from Settings after Auth0 login)
   static bool _isSubscriptionActive = false;
-  
+
   static void setSubscriptionStatus(bool active) {
     _isSubscriptionActive = active;
   }
-  
+
   /// Check if user has an active subscription
   bool get hasActiveSubscription => _isSubscriptionActive;
-  
+
   Future<void> login(String password) async {
     // Simple daily password check
     if (password.isEmpty) {
@@ -92,7 +93,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       return;
     }
-    
+
     // Verify password
     if (password != _dailyPassword) {
       state = state.copyWith(
@@ -101,10 +102,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       return;
     }
-    
+
     // Successful authentication - use constant demo user ID for persistence
     final userId = kDemoUserId;
-    
+
     try {
       if (AppConvexConfig.isInitialized) {
         await AppConvexConfig.setAuth('session-$userId');
@@ -113,19 +114,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       debugPrint('[AuthNotifier] setAuth error (non-fatal): $e');
     }
-    
+
     state = AuthState(
       isAuthenticated: true,
       userId: userId,
       errorMessage: null,
     );
-    
+
     debugPrint('[AuthNotifier] Login successful');
   }
-  
+
   void logout() async {
     await AppConvexConfig.clearAuth();
-    
+
     debugPrint('[AuthNotifier] Logout, clearing userId');
     state = AuthState(
       isAuthenticated: false,

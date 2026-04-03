@@ -144,10 +144,9 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  // Make cards taller to avoid vertical overflow inside the fixed-height grid cells.
-                  childAspectRatio: 0.82,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.0,
                 ),
                 itemCount: cabinetsState.cabinets.length,
                 itemBuilder: (context, index) {
@@ -249,7 +248,7 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: isPendingDelete
             ? Border.all(color: AppColors.statusDanger, width: 2)
             : Border.all(
@@ -271,7 +270,7 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
         children: [
           // Cabinet header with completion badge and actions
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -282,7 +281,7 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                 end: Alignment.bottomRight,
               ),
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
+                  const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Column(
               children: [
@@ -291,18 +290,20 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                   children: [
                     // Cabinet letter circle
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
                         color: color.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(
                         child: Text(
                           cabinet.letter.isNotEmpty
                               ? cabinet.letter[0].toUpperCase()
-                              : (cabinet.name.isNotEmpty ? cabinet.name[0].toUpperCase() : '?'),
-                          style: AppTypography.h2.copyWith(
+                              : (cabinet.name.isNotEmpty
+                                  ? cabinet.name[0].toUpperCase()
+                                  : '?'),
+                          style: AppTypography.h3.copyWith(
                             color: color,
                             fontWeight: FontWeight.bold,
                           ),
@@ -320,7 +321,8 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                               : AppColors.textSecondary,
                           onTap: () => showDialog(
                             context: context,
-                            builder: (context) => EditCabinetDialog(cabinet: cabinet),
+                            builder: (context) =>
+                                EditCabinetDialog(cabinet: cabinet),
                           ),
                           tooltip: 'تعديل',
                         ),
@@ -341,7 +343,8 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                             color: isPendingDelete
                                 ? Colors.white
                                 : AppColors.statusDanger,
-                            onTap: () => _handleDeleteTap(ref, cabinet.id.toString()),
+                            onTap: () =>
+                                _handleDeleteTap(ref, cabinet.id.toString()),
                             tooltip: isPendingDelete ? 'تأكيد الحذف' : 'حذف',
                           ),
                         ),
@@ -349,14 +352,14 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 // Cabinet name
                 Row(
                   children: [
                     Expanded(
                       child: Text(
                         'كابينة ${cabinet.name}',
-                        style: AppTypography.h3.copyWith(
+                        style: AppTypography.labelLg.copyWith(
                           color: isDarkMode
                               ? AppColors.darkTextHead
                               : AppColors.textHeading,
@@ -368,10 +371,10 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                     if (progress >= 1.0)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppColors.gold,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -379,9 +382,9 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                             const Icon(
                               Icons.emoji_events,
                               color: AppColors.textOnGold,
-                              size: 14,
+                              size: 10,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 2),
                             Text(
                               'مكتمل',
                               style: AppTypography.labelSm.copyWith(
@@ -400,17 +403,17 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
           // Content area
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 children: [
                   // Progress section
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: isDarkMode
                           ? AppColors.darkBgSurfaceAlt.withOpacity(0.5)
                           : AppColors.bgSurfaceAlt.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
                       children: [
@@ -418,51 +421,51 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'نسبة الإنجاز',
-                              style: AppTypography.bodySm.copyWith(
+                              'المشتركون',
+                              style: AppTypography.labelSm.copyWith(
                                 color: isDarkMode
                                     ? AppColors.darkTextBody
                                     : AppColors.textBody,
                               ),
                             ),
                             Text(
-                              '${(progress * 100).toInt()}%',
-                              style: AppTypography.h3.copyWith(
+                              subscribersText,
+                              style: AppTypography.labelMd.copyWith(
                                 color: color,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 4),
                         // Progress bar
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
                             value: progress.clamp(0.0, 1.0),
                             backgroundColor: isDarkMode
                                 ? AppColors.darkBorder
                                 : AppColors.borderLight,
                             valueColor: AlwaysStoppedAnimation<Color>(color),
-                            minHeight: 8,
+                            minHeight: 4,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  // Statistics - compact tiles to reduce visual chaos
+                  const SizedBox(height: 6),
+                  // Statistics - compact
                   Row(
                     children: [
                       Expanded(
                         child: _buildMetricTile(
-                          label: 'المشتركون',
-                          value: subscribersText,
-                          icon: Icons.people_outline,
+                          label: 'المحصّل',
+                          value: collectedText,
+                          icon: Icons.attach_money,
                           isDarkMode: isDarkMode,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: _buildMetricTile(
                           label: 'المتأخرون',
@@ -476,14 +479,7 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  _buildMetricTile(
-                    label: 'المحصّل',
-                    value: collectedText,
-                    icon: Icons.attach_money,
-                    isDarkMode: isDarkMode,
-                  ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                   // Action button
                   SizedBox(
                     width: double.infinity,
@@ -491,17 +487,17 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
                       onPressed: () {
                         _navigateToSubscribers(context, ref, cabinet.name);
                       },
-                      icon: const Icon(Icons.arrow_forward, size: 18),
+                      icon: const Icon(Icons.arrow_forward, size: 14),
                       label: const Text('عرض المشتركين'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: color.withValues(alpha: 0.1),
                         foregroundColor: color,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        minimumSize: const Size.fromHeight(38),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        minimumSize: const Size.fromHeight(28),
                       ),
                     ),
                   ),
@@ -511,7 +507,10 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05, curve: Curves.easeOutQuart);
+    )
+        .animate()
+        .fadeIn(duration: 400.ms)
+        .slideY(begin: 0.05, curve: Curves.easeOutQuart);
   }
 
   Widget _buildMetricTile({
@@ -676,9 +675,10 @@ class _AddCabinetDialogState extends ConsumerState<AddCabinetDialog> {
   void initState() {
     super.initState();
     final cabinetsState = ref.read(cabinetsProvider);
-    final existingLetters = cabinetsState.cabinets.map((c) => c.letter).toList();
+    final existingLetters =
+        cabinetsState.cabinets.map((c) => c.letter).toList();
     final nextLetter = _getNextLetter(existingLetters);
-    
+
     nameController = TextEditingController();
     letterController = TextEditingController(text: nextLetter);
   }
@@ -715,7 +715,8 @@ class _AddCabinetDialogState extends ConsumerState<AddCabinetDialog> {
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
     return AlertDialog(
-      backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+      backgroundColor:
+          isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
       title: Text(
         'إضافة كابينة جديدة',
         style: AppTypography.h3.copyWith(
@@ -735,7 +736,8 @@ class _AddCabinetDialogState extends ConsumerState<AddCabinetDialog> {
               ),
             ),
             style: AppTypography.bodyMd.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           const SizedBox(height: 16),
@@ -748,7 +750,8 @@ class _AddCabinetDialogState extends ConsumerState<AddCabinetDialog> {
               ),
             ),
             style: AppTypography.bodyMd.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
         ],
@@ -765,7 +768,8 @@ class _AddCabinetDialogState extends ConsumerState<AddCabinetDialog> {
         ),
         ElevatedButton(
           onPressed: () async {
-            if (nameController.text.isNotEmpty && letterController.text.trim().isNotEmpty) {
+            if (nameController.text.isNotEmpty &&
+                letterController.text.trim().isNotEmpty) {
               await ref.read(cabinetsProvider.notifier).addCabinet(
                     name: nameController.text,
                     letter: letterController.text.trim().toUpperCase(),
@@ -802,7 +806,8 @@ class _EditCabinetDialogState extends ConsumerState<EditCabinetDialog> {
     super.initState();
     nameController = TextEditingController(text: widget.cabinet.name);
     letterController = TextEditingController(text: widget.cabinet.letter);
-    subscribersController = TextEditingController(text: widget.cabinet.totalSubscribers.toString());
+    subscribersController =
+        TextEditingController(text: widget.cabinet.totalSubscribers.toString());
   }
 
   @override
@@ -817,7 +822,8 @@ class _EditCabinetDialogState extends ConsumerState<EditCabinetDialog> {
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
     return AlertDialog(
-      backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+      backgroundColor:
+          isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
       title: Text(
         'تعديل الكابينة',
         style: AppTypography.h3.copyWith(
@@ -836,7 +842,8 @@ class _EditCabinetDialogState extends ConsumerState<EditCabinetDialog> {
               ),
             ),
             style: AppTypography.bodyMd.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           const SizedBox(height: 16),
@@ -849,7 +856,8 @@ class _EditCabinetDialogState extends ConsumerState<EditCabinetDialog> {
               ),
             ),
             style: AppTypography.bodyMd.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           const SizedBox(height: 16),
@@ -863,7 +871,8 @@ class _EditCabinetDialogState extends ConsumerState<EditCabinetDialog> {
               ),
             ),
             style: AppTypography.bodyMd.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
         ],
@@ -885,7 +894,9 @@ class _EditCabinetDialogState extends ConsumerState<EditCabinetDialog> {
                     widget.cabinet.copyWith(
                       name: nameController.text,
                       letter: letterController.text.trim().toUpperCase(),
-                      totalSubscribers: int.tryParse(subscribersController.text) ?? widget.cabinet.totalSubscribers,
+                      totalSubscribers:
+                          int.tryParse(subscribersController.text) ??
+                              widget.cabinet.totalSubscribers,
                     ),
                   );
               if (context.mounted) Navigator.pop(context);
@@ -894,7 +905,8 @@ class _EditCabinetDialogState extends ConsumerState<EditCabinetDialog> {
           style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
           child: Text(
             'حفظ',
-            style: AppTypography.labelLg.copyWith(color: AppColors.textOnPrimary),
+            style:
+                AppTypography.labelLg.copyWith(color: AppColors.textOnPrimary),
           ),
         ),
       ],
