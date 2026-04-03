@@ -82,29 +82,36 @@ class AppConvexConfig {
     debugPrint('Mutation: $mutationName');
     debugPrint('Authenticated: $isAuthenticated');
     if (_authToken != null) {
-      debugPrint('Token: ${_authToken!.substring(0, 50)}...');
+      final tokenLen = _authToken!.length;
+      final previewLen = tokenLen > 20 ? 20 : tokenLen;
+      debugPrint('Token: ${_authToken!.substring(0, previewLen)}... (len=$tokenLen)');
     }
     debugPrint('Body: ${jsonEncode(args)}');
     debugPrint('════════════════════════════════════════');
     
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
-      },
-      body: jsonEncode(args),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+        },
+        body: jsonEncode(args),
+      );
 
-    debugPrint('RESPONSE STATUS: ${response.statusCode}');
-    debugPrint('RESPONSE BODY: ${response.body}');
-    debugPrint('═══════════════════════════════════════');
-    
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      debugPrint('[Convex] mutation failed: ${response.statusCode} ${response.body}');
-      throw Exception('Convex mutation failed: ${response.body}');
+      debugPrint('RESPONSE STATUS: ${response.statusCode}');
+      debugPrint('RESPONSE BODY: ${response.body}');
+      debugPrint('═══════════════════════════════════════');
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        debugPrint('[Convex] mutation failed: ${response.statusCode} ${response.body}');
+        throw Exception('Convex mutation failed: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('HTTP ERROR: $e');
+      rethrow;
     }
   }
 
