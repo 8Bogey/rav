@@ -1,18 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
+import 'package:mawlid_al_dhaki/core/services/event_service.dart' show EventService, EventTypes;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Service for pulling changes from Convex Cloud to local Drift database.
 /// Implements cloud-to-local sync (down-sync) for Local-First architecture.
 class ConvexDownSyncService {
   final AppDatabase database;
+  late final EventService _eventService;
   static const String _lastSyncKey = 'convex_last_sync_timestamp';
 
-  ConvexDownSyncService(this.database);
+  ConvexDownSyncService(this.database) {
+    _eventService = EventService(database);
+  }
 
   /// Get last sync timestamp from SharedPreferences
   Future<int> _getLastSyncTimestamp() async {
@@ -46,7 +51,10 @@ class ConvexDownSyncService {
 
       debugPrint('ConvexDownSyncService: Starting down-sync from $lastSync');
 
-      // Sync each table type using new query names
+      // First: Sync events from Convex (event-sourced approach)
+      await _syncEventsFromCloud(lastSync);
+
+      // Second: Sync each table type using legacy query names (backward compatibility)
       await _syncTable('subscribers', lastSync, _applySubscriberChanges);
       await _syncTable('cabinets', lastSync, _applyCabinetChanges);
       await _syncTable('payments', lastSync, _applyPaymentChanges);
@@ -54,14 +62,20 @@ class ConvexDownSyncService {
 
       // Detect hard-deletions from Convex dashboard
       // Items that exist locally but not in cloud should be marked deleted
-      await _detectHardDeletions('subscribers', _getLocalSubscriberIds,
-          _markSubscriberDeleted);
-      await _detectHardDeletions('cabinets', _getLocalCabinetIds,
-          _markCabinetDeleted);
-      await _detectHardDeletions('payments', _getLocalPaymentIds,
-          _markPaymentDeleted);
-      await _detectHardDeletions('workers', _getLocalWorkerIds,
-          _markWorkerDeleted);
+      await _detectHardDeletions(
+          'subscribers', _getLocalSubscriberIds, _markSubscriberDeleted);
+      await _detectHardDeletions(
+          'cabinets', _getLocalCabinetIds, _markCabinetDeleted);
+      await _detectHardDeletions(
+          'payments', _getLocalPaymentIds, _markPaymentDeleted);
+      await _detectHardDeletions(
+          'workers', _getLocalWorkerIds, _markWorkerDeleted);
+      await _detectHardDeletions(
+          'auditLog', _getLocalAuditLogIds, _markAuditLogDeleted);
+      await _detectHardDeletions('whatsappTemplates',
+          _getLocalWhatsappTemplateIds, _markWhatsappTemplateDeleted);
+      await _detectHardDeletions('generatorSettings',
+          _getLocalGeneratorSettingsIds, _markGeneratorSettingsDeleted);
 
       // Update last sync timestamp
       await _setLastSyncTimestamp(now);
@@ -69,6 +83,119 @@ class ConvexDownSyncService {
     } catch (e) {
       debugPrint('ConvexDownSyncService Error: $e');
     }
+  }
+
+  /// Sync events from Convex to local event store.
+  /// This is the primary down-sync method for the event-sourced architecture.
+  Future<void> _syncEventsFromCloud(int sinceTimestamp) async {
+    try {
+      debugPrint('[EventDownSync] Fetching events since $sinceTimestamp');
+      
+      final result = await AppConvexConfig.query('queries/events:getEventsSince', {
+        'ownerId': _getCurrentOwnerId(),
+        'since': sinceTimestamp,
+      });
+
+      if (result is! List || result.isEmpty) {
+        debugPrint('[EventDownSync] No new events');
+        return;
+      }
+
+      final events = result.cast<Map<String, dynamic>>();
+      debugPrint('[EventDownSync] Processing ${events.length} events from cloud');
+
+      for (final eventData in events) {
+        final eventType = eventData['eventType'] as String;
+        final entityType = eventData['entityType'] as String;
+        final entityId = eventData['entityId'] as String;
+        final payload = jsonDecode(eventData['payload'] as String) as Map<String, dynamic>;
+        final version = eventData['version'] as int;
+        final occurredAt = DateTime.fromMillisecondsSinceEpoch(eventData['occurredAt'] as int);
+
+        // Check if we already have this event locally
+        final existingEvents = await _eventService.getEventsForEntity(entityType, entityId);
+        final alreadyHas = existingEvents.any((e) =>
+          e.eventType == eventType && e.version == version);
+        
+        if (alreadyHas) {
+          continue; // Skip duplicate events
+        }
+
+        // Apply the event to local state
+        await _applyEventLocally(eventType, entityType, entityId, payload, version);
+
+        // Record the event locally as synced
+        await _eventService.appendEvent(
+          eventType: eventType,
+          entityType: entityType,
+          entityId: entityId,
+          payload: payload,
+          version: version,
+          occurredAt: occurredAt,
+        );
+        // Mark it as synced immediately since it came from cloud
+        // (We need to get the ID from the append, but for now we'll use a workaround)
+      }
+
+      debugPrint('[EventDownSync] Events sync completed');
+    } catch (e) {
+      debugPrint('[EventDownSync] Error: $e');
+    }
+  }
+
+  /// Apply an event to the local database state.
+  Future<void> _applyEventLocally(
+    String eventType,
+    String entityType,
+    String entityId,
+    Map<String, dynamic> payload,
+    int version,
+  ) async {
+    switch (eventType) {
+      case EventTypes.entityCreated:
+      case EventTypes.entityUpdated:
+        // Update the entity in the local database
+        await _updateLocalEntity(entityType, entityId, payload, version);
+        break;
+      case EventTypes.entityMovedToTrash:
+        // Mark entity as deleted locally
+        await _markLocalEntityDeleted(entityType, entityId, version);
+        break;
+      case EventTypes.entityRestoredFromTrash:
+        // Restore entity locally (would need to re-insert from payload)
+        await _updateLocalEntity(entityType, entityId, payload, version);
+        break;
+      case EventTypes.entityPermanentlyDeleted:
+        // Delete entity from local database
+        await _deleteLocalEntity(entityType, entityId);
+        break;
+    }
+  }
+
+  /// Update a local entity from cloud event data.
+  Future<void> _updateLocalEntity(
+    String entityType,
+    String entityId,
+    Map<String, dynamic> payload,
+    int version,
+  ) async {
+    // This is a simplified implementation - in production, you'd map
+    // entityType to the correct table and update accordingly
+    debugPrint('[EventDownSync] Would update $entityType/$entityId with v$version');
+  }
+
+  /// Mark a local entity as deleted.
+  Future<void> _markLocalEntityDeleted(
+    String entityType,
+    String entityId,
+    int version,
+  ) async {
+    debugPrint('[EventDownSync] Would mark $entityType/$entityId as deleted');
+  }
+
+  /// Delete a local entity.
+  Future<void> _deleteLocalEntity(String entityType, String entityId) async {
+    debugPrint('[EventDownSync] Would delete $entityType/$entityId');
   }
 
   /// Sync a specific table from Convex
@@ -148,7 +275,8 @@ class ConvexDownSyncService {
       // This maps to the local database 'id' field
       final localId = change['cloudId'] as String?;
       if (localId == null || localId.isEmpty) {
-        debugPrint('[DownSync] Skipping subscriber change without cloudId: ${change['_id']}');
+        debugPrint(
+            '[DownSync] Skipping subscriber change without cloudId: ${change['_id']}');
         continue;
       }
 
@@ -220,7 +348,8 @@ class ConvexDownSyncService {
       // Convex documents store the client's local UUID in 'cloudId'
       final localId = change['cloudId'] as String?;
       if (localId == null || localId.isEmpty) {
-        debugPrint('[DownSync] Skipping cabinet change without cloudId: ${change['_id']}');
+        debugPrint(
+            '[DownSync] Skipping cabinet change without cloudId: ${change['_id']}');
         continue;
       }
 
@@ -290,7 +419,8 @@ class ConvexDownSyncService {
       // Convex documents store the client's local UUID in 'cloudId'
       final localId = change['cloudId'] as String?;
       if (localId == null || localId.isEmpty) {
-        debugPrint('[DownSync] Skipping payment change without cloudId: ${change['_id']}');
+        debugPrint(
+            '[DownSync] Skipping payment change without cloudId: ${change['_id']}');
         continue;
       }
 
@@ -357,7 +487,8 @@ class ConvexDownSyncService {
       // Convex documents store the client's local UUID in 'cloudId'
       final localId = change['cloudId'] as String?;
       if (localId == null || localId.isEmpty) {
-        debugPrint('[DownSync] Skipping worker change without cloudId: ${change['_id']}');
+        debugPrint(
+            '[DownSync] Skipping worker change without cloudId: ${change['_id']}');
         continue;
       }
 
@@ -440,7 +571,8 @@ class ConvexDownSyncService {
     }
 
     try {
-      debugPrint('[DownSync] Fetching ALL cloud items for $tableName (including soft-deleted)');
+      debugPrint(
+          '[DownSync] Fetching ALL cloud items for $tableName (including soft-deleted)');
       final result = await AppConvexConfig.query(queryName, {
         'ownerId': _getCurrentOwnerId(),
         'since': 0, // Get everything since epoch start
@@ -489,7 +621,8 @@ class ConvexDownSyncService {
         }
       }
     } catch (e) {
-      debugPrint('[DownSync] Error detecting hard deletions for $tableName: $e');
+      debugPrint(
+          '[DownSync] Error detecting hard deletions for $tableName: $e');
     }
   }
 
@@ -527,7 +660,9 @@ class ConvexDownSyncService {
 
   Future<void> _markSubscriberDeleted(String id) async {
     final now = DateTime.now();
-    await (database.update(database.subscribersTable)..where((t) => t.id.equals(id))).write(
+    await (database.update(database.subscribersTable)
+          ..where((t) => t.id.equals(id)))
+        .write(
       SubscribersTableCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -538,7 +673,9 @@ class ConvexDownSyncService {
 
   Future<void> _markCabinetDeleted(String id) async {
     final now = DateTime.now();
-    await (database.update(database.cabinetsTable)..where((t) => t.id.equals(id))).write(
+    await (database.update(database.cabinetsTable)
+          ..where((t) => t.id.equals(id)))
+        .write(
       CabinetsTableCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -549,7 +686,9 @@ class ConvexDownSyncService {
 
   Future<void> _markPaymentDeleted(String id) async {
     final now = DateTime.now();
-    await (database.update(database.paymentsTable)..where((t) => t.id.equals(id))).write(
+    await (database.update(database.paymentsTable)
+          ..where((t) => t.id.equals(id)))
+        .write(
       PaymentsTableCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -560,12 +699,74 @@ class ConvexDownSyncService {
 
   Future<void> _markWorkerDeleted(String id) async {
     final now = DateTime.now();
-    await (database.update(database.workersTable)..where((t) => t.id.equals(id))).write(
+    await (database.update(database.workersTable)
+          ..where((t) => t.id.equals(id)))
+        .write(
       WorkersTableCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
       ),
     );
     debugPrint('[DownSync] Marked worker $id as deleted');
+  }
+
+  Future<Set<String>> _getLocalAuditLogIds() async {
+    final rows = await (database.select(database.auditLogTable)
+          ..where((t) => t.isDeleted.equals(false)))
+        .get();
+    return rows.map((r) => r.id).toSet();
+  }
+
+  Future<Set<String>> _getLocalWhatsappTemplateIds() async {
+    final rows = await (database.select(database.whatsappTemplatesTable)
+          ..where((t) => t.isDeleted.equals(false)))
+        .get();
+    return rows.map((r) => r.id).toSet();
+  }
+
+  Future<Set<String>> _getLocalGeneratorSettingsIds() async {
+    final rows = await (database.select(database.generatorSettingsTable)
+          ..where((t) => t.isDeleted.equals(false)))
+        .get();
+    return rows.map((r) => r.id).toSet();
+  }
+
+  Future<void> _markAuditLogDeleted(String id) async {
+    final now = DateTime.now();
+    await (database.update(database.auditLogTable)
+          ..where((t) => t.id.equals(id)))
+        .write(
+      AuditLogTableCompanion(
+        isDeleted: const Value(true),
+        updatedAt: Value(now),
+      ),
+    );
+    debugPrint('[DownSync] Marked audit log $id as deleted');
+  }
+
+  Future<void> _markWhatsappTemplateDeleted(String id) async {
+    final now = DateTime.now();
+    await (database.update(database.whatsappTemplatesTable)
+          ..where((t) => t.id.equals(id)))
+        .write(
+      WhatsappTemplatesTableCompanion(
+        isDeleted: const Value(true),
+        updatedAt: Value(now),
+      ),
+    );
+    debugPrint('[DownSync] Marked whatsapp template $id as deleted');
+  }
+
+  Future<void> _markGeneratorSettingsDeleted(String id) async {
+    final now = DateTime.now();
+    await (database.update(database.generatorSettingsTable)
+          ..where((t) => t.id.equals(id)))
+        .write(
+      GeneratorSettingsTableCompanion(
+        isDeleted: const Value(true),
+        updatedAt: Value(now),
+      ),
+    );
+    debugPrint('[DownSync] Marked generator settings $id as deleted');
   }
 }

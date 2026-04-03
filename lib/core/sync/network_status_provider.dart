@@ -61,8 +61,8 @@ class NetworkStatus {
 
   bool get isOnline => connectivity == ConnectivityState.online;
   bool get hasPendingSync => pendingOutboxCount > 0;
-  
-  // Legacy compatibility getters for old Supabase sync code
+
+  // Compatibility getters
   bool get isSyncing => syncStatus == SyncStatusState.syncing;
   String? get errorMessage => lastError;
   String? get lastConflictSummaryAr => null;
@@ -73,7 +73,7 @@ class NetworkStatus {
 class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
-  
+
   // Database reference for querying outbox
   final AppDatabase? _database;
 
@@ -91,7 +91,7 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
 
     // Check initial connectivity
     _checkConnectivity();
-    
+
     // Initial pending count check
     updatePendingCount();
   }
@@ -102,15 +102,18 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
   }
 
   void _handleConnectivityChange(List<ConnectivityResult> results) {
-    final isOnline = results.isNotEmpty && 
-        !results.contains(ConnectivityResult.none);
+    final isOnline =
+        results.isNotEmpty && !results.contains(ConnectivityResult.none);
 
     state = state.copyWith(
-      connectivity: isOnline ? ConnectivityState.online : ConnectivityState.offline,
+      connectivity:
+          isOnline ? ConnectivityState.online : ConnectivityState.offline,
     );
-    
+
     // Trigger sync when coming back online
-    if (isOnline && state.syncStatus == SyncStatusState.idle && state.hasPendingSync) {
+    if (isOnline &&
+        state.syncStatus == SyncStatusState.idle &&
+        state.hasPendingSync) {
       syncBothDirections();
     }
   }
@@ -130,7 +133,7 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
       state = state.copyWith(pendingOutboxCount: 0);
       return;
     }
-    
+
     try {
       final pendingEntries = await (_database!.select(_database!.outboxTable)
             ..where((t) => t.status.equals('pending')))
@@ -151,15 +154,16 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
       );
       return;
     }
-    
-    state = state.copyWith(syncStatus: SyncStatusState.syncing, lastError: null);
-    
+
+    state =
+        state.copyWith(syncStatus: SyncStatusState.syncing, lastError: null);
+
     try {
       // Trigger the Convex sync processor
       // This would integrate with ConvexSyncProcessor.processOutbox()
       // For now, simulate a successful sync
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       state = state.copyWith(
         syncStatus: SyncStatusState.completed,
         lastSyncTime: DateTime.now(),
@@ -181,13 +185,14 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
       );
       return;
     }
-    
-    state = state.copyWith(syncStatus: SyncStatusState.syncing, lastError: null);
-    
+
+    state =
+        state.copyWith(syncStatus: SyncStatusState.syncing, lastError: null);
+
     try {
       // Push local changes to Convex
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       state = state.copyWith(
         syncStatus: SyncStatusState.completed,
         lastSyncTime: DateTime.now(),
@@ -209,13 +214,14 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
       );
       return;
     }
-    
-    state = state.copyWith(syncStatus: SyncStatusState.syncing, lastError: null);
-    
+
+    state =
+        state.copyWith(syncStatus: SyncStatusState.syncing, lastError: null);
+
     try {
       // Pull remote changes from Convex
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       state = state.copyWith(
         syncStatus: SyncStatusState.completed,
         lastSyncTime: DateTime.now(),
@@ -237,14 +243,15 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
       );
       return;
     }
-    
-    state = state.copyWith(syncStatus: SyncStatusState.syncing, lastError: null);
-    
+
+    state =
+        state.copyWith(syncStatus: SyncStatusState.syncing, lastError: null);
+
     try {
       // Bidirectional sync: push local changes, then pull remote
       // This would integrate with ConvexSyncProcessor
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       state = state.copyWith(
         syncStatus: SyncStatusState.completed,
         lastSyncTime: DateTime.now(),
@@ -265,7 +272,8 @@ class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
 }
 
 /// Provider for network status
-final networkStatusProvider = StateNotifierProvider<NetworkStatusNotifier, NetworkStatus>((ref) {
+final networkStatusProvider =
+    StateNotifierProvider<NetworkStatusNotifier, NetworkStatus>((ref) {
   // Get database from provider
   final database = ref.watch(databaseProvider);
   return NetworkStatusNotifier(database: database);

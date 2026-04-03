@@ -65,10 +65,10 @@ export const saveWhatsappTemplate = mutation({
         ...insertData,
         createdAt: now,
         updatedAt: now,
-        version: 0,
+        version: 1,
       });
 
-      return { success: true, id: newId, version: 0 };
+      return { success: true, id: newId, version: 1 };
     }
   },
 });

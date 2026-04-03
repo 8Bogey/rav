@@ -6,6 +6,7 @@ import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
 import 'package:mawlid_al_dhaki/core/sync/convex_down_sync_service.dart';
+import 'package:mawlid_al_dhaki/core/services/event_service.dart';
 
 /// Conflict resolution strategies
 enum ConflictResolutionStrategy {
@@ -39,10 +40,12 @@ class ConflictResult {
   });
 }
 
-/// Processor for syncing local Drift Outbox entries to Convex Cloud.
-/// Implements Local-First with Last-Write-Wins conflict resolution.
+/// Processor for syncing local Drift events to Convex Cloud.
+/// Implements event-sourced Local-First architecture with Last-Write-Wins conflict resolution.
+/// Also supports legacy outbox-based sync for backward compatibility during migration.
 class ConvexSyncProcessor {
   final AppDatabase database;
+  late final EventService _eventService;
   
   // Default conflict resolution strategy
   static ConflictResolutionStrategy defaultStrategy = ConflictResolutionStrategy.lastWriteWins;
@@ -55,6 +58,7 @@ class ConvexSyncProcessor {
 
   ConvexSyncProcessor(this.database) {
     _downSyncService = ConvexDownSyncService(database);
+    _eventService = EventService(database);
   }
 
   /// Check if sync should proceed.
@@ -80,7 +84,8 @@ class ConvexSyncProcessor {
     debugPrint('ConvexSyncProcessor: Stopped');
   }
 
-  /// Manually trigger an outbox processing run.
+  /// Manually trigger sync processing.
+  /// Processes both event-based sync (primary) and legacy outbox sync (backward compatibility).
   Future<void> processOutbox() async {
     if (_isProcessing) return;
     if (!_canSync) {
@@ -90,21 +95,11 @@ class ConvexSyncProcessor {
     
     _isProcessing = true;
     try {
-      // First: Push local changes to cloud (up-sync)
-      final pendingEntries = await (database.select(database.outboxTable)
-            ..where((t) => t.status.equals('pending'))
-            ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
-          .get();
-
-      debugPrint('[Sync] Found ${pendingEntries.length} pending entries');
+      // First: Push local events to cloud (up-sync) - PRIMARY METHOD
+      await _processEvents();
       
-      if (pendingEntries.isNotEmpty) {
-        debugPrint('ConvexSyncProcessor: Processing ${pendingEntries.length} pending entries');
-
-        for (final entry in pendingEntries) {
-          await _syncEntry(entry);
-        }
-      }
+      // Also process legacy outbox entries for backward compatibility
+      await _processLegacyOutbox();
       
       // Second: Pull changes from cloud (down-sync)
       // This keeps local in sync with cloud changes from other devices
@@ -114,6 +109,135 @@ class ConvexSyncProcessor {
       debugPrint('ConvexSyncProcessor Error: $e');
     } finally {
       _isProcessing = false;
+    }
+  }
+
+  /// Process pending events and sync to Convex using the event-sourced approach.
+  Future<void> _processEvents() async {
+    final pendingEvents = await _eventService.getPendingEvents();
+    
+    if (pendingEvents.isEmpty) {
+      debugPrint('[EventSync] No pending events');
+      return;
+    }
+    
+    debugPrint('[EventSync] Processing ${pendingEvents.length} pending events');
+    
+    for (final event in pendingEvents) {
+      try {
+        await _syncEvent(event);
+      } catch (e) {
+        debugPrint('[EventSync] Error syncing event ${event.id}: $e');
+        await _eventService.markEventFailed(event.id, e.toString());
+      }
+    }
+  }
+
+  /// Sync a single event to Convex.
+  Future<void> _syncEvent(EventEntry event) async {
+    final payload = jsonDecode(event.payload) as Map<String, dynamic>;
+    
+    debugPrint('[EventSync] Syncing event: ${event.eventType} for ${event.entityType}/${event.entityId}');
+    
+    // Call the Convex recordEvent mutation
+    final result = await AppConvexConfig.mutation('mutations/events:recordEvent', {
+      'ownerId': _getCurrentOwnerId(),
+      'eventType': event.eventType,
+      'entityType': event.entityType,
+      'entityId': event.entityId,
+      'payload': jsonEncode(payload),
+      'version': event.version,
+      'occurredAt': event.occurredAt.millisecondsSinceEpoch,
+      'recordedBy': _getCurrentOwnerId(),
+    });
+    
+    if (result['success'] == true) {
+      await _eventService.markEventSynced(event.id);
+      debugPrint('[EventSync] Event synced: ${event.id}');
+    } else {
+      throw Exception(result['reason'] ?? 'Failed to sync event');
+    }
+  }
+
+  /// Process legacy outbox entries for backward compatibility.
+  Future<void> _processLegacyOutbox() async {
+    final pendingEntries = await (database.select(database.outboxTable)
+          ..where((t) => t.status.equals('pending'))
+          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+        .get();
+
+    if (pendingEntries.isEmpty) {
+      return;
+    }
+    
+    debugPrint('[LegacyOutbox] Processing ${pendingEntries.length} legacy outbox entries');
+    
+    for (final entry in pendingEntries) {
+      try {
+        await _syncLegacyEntry(entry);
+      } catch (e) {
+        debugPrint('[LegacyOutbox] Error syncing entry ${entry.id}: $e');
+        final retryCount = entry.retryCount + 1;
+        final status = retryCount > 5 ? 'failed' : 'pending';
+        await database.update(database.outboxTable).replace(
+          entry.copyWith(
+            status: status,
+            retryCount: retryCount,
+            lastError: Value(e.toString()),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Sync a legacy outbox entry (backward compatibility).
+  Future<void> _syncLegacyEntry(OutboxEntry entry) async {
+    // Mark as syncing
+    await database.update(database.outboxTable).replace(
+      entry.copyWith(status: 'syncing', updatedAt: Value(DateTime.now())),
+    );
+
+    final Map<String, dynamic> payload = jsonDecode(entry.payload);
+    final String documentId = entry.documentId;
+    final int localVersion = (payload['version'] as int?) ?? 1;
+    
+    // Check for conflicts with cloud
+    final conflict = await _checkConflict(
+      entry.targetTable,
+      documentId,
+      localVersion,
+    );
+    
+    // Resolve conflict if needed
+    final resolvedPayload = conflict.hasConflict
+        ? await _resolveConflict(payload, conflict)
+        : payload;
+    
+    // Increment version for the write
+    resolvedPayload['version'] = conflict.hasConflict
+        ? conflict.cloudVersion + 1
+        : localVersion;
+    
+    final String mutationName = _getMutationName(entry.targetTable, entry.operationType);
+    
+    debugPrint('[LegacyOutbox] Calling mutation=$mutationName');
+    
+    // Execute Convex mutation via HTTP
+    final result = await AppConvexConfig.mutation(mutationName, resolvedPayload);
+    
+    if (result['success'] == true) {
+      // Mark as synced
+      await database.update(database.outboxTable).replace(
+        entry.copyWith(
+          status: 'synced',
+          syncedAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      debugPrint('[LegacyOutbox] Synced ${entry.targetTable} id: ${entry.documentId}');
+    } else {
+      throw Exception(result['reason'] ?? 'Convex mutation failed');
     }
   }
 
