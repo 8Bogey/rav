@@ -7,10 +7,11 @@ import { v } from "convex/values";
  * This schema defines all document collections for the Local-First architecture.
  * Each table includes:
  * - ownerId: Multi-tenant isolation key
+ * - cloudId: Client-side UUID for entity mapping
  * - version: Last-Write-Wins (LWW) conflict resolution
- * - isDeleted: Soft delete flag
+ * - inTrash/trashMovedAt: Trash state machine fields
  * 
- * Following the MINIMAX_IMPLEMENTATION_GUIDE.md patterns.
+ * State machine: active (default) → inTrash=true (soft delete) → permanently deleted (removed from DB)
  */
 export default defineSchema({
   // ============================================================
@@ -31,18 +32,16 @@ export default defineSchema({
     tags: v.nullable(v.string()), // Stored as comma-separated or JSON
     notes: v.nullable(v.string()), // Allow null for notes
     
-    // Legacy sync metadata (kept for backward compatibility)
-    lastModified: v.optional(v.number()),
-    lastSyncedAt: v.optional(v.number()),
-    syncStatus: v.optional(v.string()),
-    dirtyFlag: v.optional(v.boolean()),
-    cloudId: v.optional(v.string()), // Convex document ID for client ID mapping
-    deletedLocally: v.optional(v.boolean()),
-    permissionsMask: v.optional(v.string()),
+    // Entity identification
+    cloudId: v.string(), // Client-side UUID for entity mapping
     
-    // Convex sync metadata (REQUIRED)
+    // Trash state machine
+    inTrash: v.optional(v.boolean()),
+    trashMovedAt: v.optional(v.number()),
+    
+    // Convex sync metadata
     version: v.number(), // LWW conflict resolution
-    isDeleted: v.boolean(), // Soft delete flag
+    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(), // Unix timestamp
     createdAt: v.number(), // Unix timestamp
   })
@@ -50,7 +49,8 @@ export default defineSchema({
     .index("by_code", ["code"])
     .index("by_cabinet", ["cabinet"])
     .index("by_status", ["status"])
-    .index("by_cloudId", ["cloudId"]), // For efficient Convex ID lookup
+    .index("by_cloudId", ["cloudId"]) // For efficient Convex ID lookup
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]), // Multi-tenant safe lookup
 
   // ============================================================
   // CABINETS - Generator cabinets/zones
@@ -68,25 +68,24 @@ export default defineSchema({
     delayedSubscribers: v.number(),
     completionDate: v.nullable(v.number()), // Unix timestamp - allow null
     
-    // Legacy sync metadata
-    lastModified: v.optional(v.number()),
-    lastSyncedAt: v.optional(v.number()),
-    syncStatus: v.optional(v.string()),
-    dirtyFlag: v.optional(v.boolean()),
-    cloudId: v.optional(v.string()),
-    deletedLocally: v.optional(v.boolean()),
-    permissionsMask: v.optional(v.string()),
+    // Entity identification
+    cloudId: v.string(),
+    
+    // Trash state machine
+    inTrash: v.optional(v.boolean()),
+    trashMovedAt: v.optional(v.number()),
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.boolean(),
+    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_name", ["name"])
     .index("by_letter", ["letter"])
-    .index("by_cloudId", ["cloudId"]),
+    .index("by_cloudId", ["cloudId"])
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
 
   // ============================================================
   // PAYMENTS - Payment records for subscribers
@@ -102,18 +101,16 @@ export default defineSchema({
     date: v.number(), // Unix timestamp
     cabinet: v.string(),
     
-    // Legacy sync metadata
-    lastModified: v.optional(v.number()),
-    lastSyncedAt: v.optional(v.number()),
-    syncStatus: v.optional(v.string()),
-    dirtyFlag: v.optional(v.boolean()),
-    cloudId: v.optional(v.string()),
-    deletedLocally: v.optional(v.boolean()),
-    permissionsMask: v.optional(v.string()),
+    // Entity identification
+    cloudId: v.string(),
+    
+    // Trash state machine
+    inTrash: v.optional(v.boolean()),
+    trashMovedAt: v.optional(v.number()),
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.boolean(),
+    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
@@ -122,7 +119,8 @@ export default defineSchema({
     .index("by_date", ["date"])
     .index("by_worker", ["worker"])
     .index("by_cabinet", ["cabinet"])
-    .index("by_cloudId", ["cloudId"]),
+    .index("by_cloudId", ["cloudId"])
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
 
   // ============================================================
   // WORKERS - Staff/collectors with roles and permissions
@@ -138,25 +136,24 @@ export default defineSchema({
     todayCollected: v.number(),
     monthTotal: v.number(),
     
-    // Legacy sync metadata
-    lastModified: v.optional(v.number()),
-    lastSyncedAt: v.optional(v.number()),
-    syncStatus: v.optional(v.string()),
-    dirtyFlag: v.optional(v.boolean()),
-    cloudId: v.optional(v.string()),
-    deletedLocally: v.optional(v.boolean()),
-    permissionsMask: v.optional(v.string()),
+    // Entity identification
+    cloudId: v.string(),
+    
+    // Trash state machine
+    inTrash: v.optional(v.boolean()),
+    trashMovedAt: v.optional(v.number()),
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.boolean(),
+    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_name", ["name"])
     .index("by_phone", ["phone"])
-    .index("by_cloudId", ["cloudId"]),
+    .index("by_cloudId", ["cloudId"])
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
 
   // ============================================================
   // AUDIT_LOG - Financial compliance audit trail
@@ -173,18 +170,16 @@ export default defineSchema({
     type: v.string(),
     timestamp: v.number(), // Unix timestamp
     
-    // Legacy sync metadata
-    lastModified: v.optional(v.number()),
-    lastSyncedAt: v.optional(v.number()),
-    syncStatus: v.optional(v.string()),
-    dirtyFlag: v.optional(v.boolean()),
-    cloudId: v.optional(v.string()),
-    deletedLocally: v.optional(v.boolean()),
-    permissionsMask: v.optional(v.string()),
+    // Entity identification
+    cloudId: v.string(),
+    
+    // Trash state machine
+    inTrash: v.optional(v.boolean()),
+    trashMovedAt: v.optional(v.number()),
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.boolean(),
+    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
@@ -192,7 +187,9 @@ export default defineSchema({
     .index("by_user", ["user"])
     .index("by_target", ["target"])
     .index("by_action", ["action"])
-    .index("by_timestamp", ["timestamp"]),
+    .index("by_timestamp", ["timestamp"])
+    .index("by_cloudId", ["cloudId"])
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
 
   // ============================================================
   // GENERATOR_SETTINGS - Per-tenant singleton settings
@@ -207,9 +204,13 @@ export default defineSchema({
     address: v.string(),
     logoPath: v.optional(v.string()),
     
+    // Trash state machine
+    inTrash: v.optional(v.boolean()),
+    trashMovedAt: v.optional(v.number()),
+    
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.boolean(),
+    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
@@ -227,23 +228,23 @@ export default defineSchema({
     content: v.string(),
     isActive: v.number(), // 0 or 1
     
-    // Legacy sync metadata
-    lastModified: v.optional(v.number()),
-    lastSyncedAt: v.optional(v.number()),
-    syncStatus: v.optional(v.string()),
-    dirtyFlag: v.optional(v.boolean()),
-    cloudId: v.optional(v.string()),
-    deletedLocally: v.optional(v.boolean()),
-    permissionsMask: v.optional(v.string()),
+    // Entity identification
+    cloudId: v.string(),
+    
+    // Trash state machine
+    inTrash: v.optional(v.boolean()),
+    trashMovedAt: v.optional(v.number()),
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.boolean(),
+    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
     .index("by_ownerId", ["ownerId"])
-    .index("by_isActive", ["isActive"]),
+    .index("by_isActive", ["isActive"])
+    .index("by_cloudId", ["cloudId"])
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
 
   // ============================================================
   // EVENT_LOG - Append-only event log for event-sourced sync
