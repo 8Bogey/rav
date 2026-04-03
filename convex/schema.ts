@@ -244,4 +244,30 @@ export default defineSchema({
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_isActive", ["isActive"]),
+
+  // ============================================================
+  // EVENT_LOG - Append-only event log for event-sourced sync
+  // ============================================================
+  // This table is the source of truth for all data changes.
+  // Events are immutable and never deleted (kept forever for audit trail).
+  eventLog: defineTable({
+    // Multi-tenant isolation
+    ownerId: v.string(),
+    
+    // Event metadata
+    eventType: v.string(), // 'ENTITY_CREATED', 'ENTITY_UPDATED', 'ENTITY_MOVED_TO_TRASH', 'ENTITY_RESTORED_FROM_TRASH', 'ENTITY_PERMANENTLY_DELETED'
+    entityType: v.string(), // 'subscribers', 'cabinets', 'payments', 'workers', etc.
+    entityId: v.string(), // The client's UUID for the entity
+    payload: v.string(), // JSON serialized event data
+    
+    // Versioning and timing
+    version: v.number(), // Entity version at time of event
+    occurredAt: v.number(), // Unix timestamp when event occurred on client
+    recordedAt: v.number(), // Unix timestamp when event was recorded in Convex
+    recordedBy: v.string(), // Device/client identifier (e.g., device UUID)
+  })
+    .index("by_ownerId", ["ownerId"])
+    .index("by_entityType_entityId", ["entityType", "entityId"])
+    .index("by_occurredAt", ["occurredAt"])
+    .index("by_ownerId_occurredAt", ["ownerId", "occurredAt"]),
 });

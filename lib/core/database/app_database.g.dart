@@ -6499,6 +6499,477 @@ class OutboxTableCompanion extends UpdateCompanion<OutboxEntry> {
   }
 }
 
+class $EventsTableTable extends EventsTable
+    with TableInfo<$EventsTableTable, EventEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EventsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _eventTypeMeta =
+      const VerificationMeta('eventType');
+  @override
+  late final GeneratedColumn<String> eventType = GeneratedColumn<String>(
+      'event_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _entityTypeMeta =
+      const VerificationMeta('entityType');
+  @override
+  late final GeneratedColumn<String> entityType = GeneratedColumn<String>(
+      'entity_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _entityIdMeta =
+      const VerificationMeta('entityId');
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+      'entity_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _payloadMeta =
+      const VerificationMeta('payload');
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+      'payload', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _versionMeta =
+      const VerificationMeta('version');
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+      'version', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _occurredAtMeta =
+      const VerificationMeta('occurredAt');
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+      'occurred_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        eventType,
+        entityType,
+        entityId,
+        payload,
+        version,
+        occurredAt,
+        status,
+        createdAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'events_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<EventEntry> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('event_type')) {
+      context.handle(_eventTypeMeta,
+          eventType.isAcceptableOrUnknown(data['event_type']!, _eventTypeMeta));
+    } else if (isInserting) {
+      context.missing(_eventTypeMeta);
+    }
+    if (data.containsKey('entity_type')) {
+      context.handle(
+          _entityTypeMeta,
+          entityType.isAcceptableOrUnknown(
+              data['entity_type']!, _entityTypeMeta));
+    } else if (isInserting) {
+      context.missing(_entityTypeMeta);
+    }
+    if (data.containsKey('entity_id')) {
+      context.handle(_entityIdMeta,
+          entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta));
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(_payloadMeta,
+          payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta));
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('version')) {
+      context.handle(_versionMeta,
+          version.isAcceptableOrUnknown(data['version']!, _versionMeta));
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+          _occurredAtMeta,
+          occurredAt.isAcceptableOrUnknown(
+              data['occurred_at']!, _occurredAtMeta));
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EventEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EventEntry(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      eventType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}event_type'])!,
+      entityType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entity_type'])!,
+      entityId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entity_id'])!,
+      payload: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}payload'])!,
+      version: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
+      occurredAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}occurred_at'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $EventsTableTable createAlias(String alias) {
+    return $EventsTableTable(attachedDatabase, alias);
+  }
+}
+
+class EventEntry extends DataClass implements Insertable<EventEntry> {
+  final String id;
+  final String eventType;
+  final String entityType;
+  final String entityId;
+  final String payload;
+  final int version;
+  final DateTime occurredAt;
+  final String status;
+  final DateTime createdAt;
+  const EventEntry(
+      {required this.id,
+      required this.eventType,
+      required this.entityType,
+      required this.entityId,
+      required this.payload,
+      required this.version,
+      required this.occurredAt,
+      required this.status,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['event_type'] = Variable<String>(eventType);
+    map['entity_type'] = Variable<String>(entityType);
+    map['entity_id'] = Variable<String>(entityId);
+    map['payload'] = Variable<String>(payload);
+    map['version'] = Variable<int>(version);
+    map['occurred_at'] = Variable<DateTime>(occurredAt);
+    map['status'] = Variable<String>(status);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  EventsTableCompanion toCompanion(bool nullToAbsent) {
+    return EventsTableCompanion(
+      id: Value(id),
+      eventType: Value(eventType),
+      entityType: Value(entityType),
+      entityId: Value(entityId),
+      payload: Value(payload),
+      version: Value(version),
+      occurredAt: Value(occurredAt),
+      status: Value(status),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory EventEntry.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EventEntry(
+      id: serializer.fromJson<String>(json['id']),
+      eventType: serializer.fromJson<String>(json['eventType']),
+      entityType: serializer.fromJson<String>(json['entityType']),
+      entityId: serializer.fromJson<String>(json['entityId']),
+      payload: serializer.fromJson<String>(json['payload']),
+      version: serializer.fromJson<int>(json['version']),
+      occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
+      status: serializer.fromJson<String>(json['status']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'eventType': serializer.toJson<String>(eventType),
+      'entityType': serializer.toJson<String>(entityType),
+      'entityId': serializer.toJson<String>(entityId),
+      'payload': serializer.toJson<String>(payload),
+      'version': serializer.toJson<int>(version),
+      'occurredAt': serializer.toJson<DateTime>(occurredAt),
+      'status': serializer.toJson<String>(status),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  EventEntry copyWith(
+          {String? id,
+          String? eventType,
+          String? entityType,
+          String? entityId,
+          String? payload,
+          int? version,
+          DateTime? occurredAt,
+          String? status,
+          DateTime? createdAt}) =>
+      EventEntry(
+        id: id ?? this.id,
+        eventType: eventType ?? this.eventType,
+        entityType: entityType ?? this.entityType,
+        entityId: entityId ?? this.entityId,
+        payload: payload ?? this.payload,
+        version: version ?? this.version,
+        occurredAt: occurredAt ?? this.occurredAt,
+        status: status ?? this.status,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  EventEntry copyWithCompanion(EventsTableCompanion data) {
+    return EventEntry(
+      id: data.id.present ? data.id.value : this.id,
+      eventType: data.eventType.present ? data.eventType.value : this.eventType,
+      entityType:
+          data.entityType.present ? data.entityType.value : this.entityType,
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      version: data.version.present ? data.version.value : this.version,
+      occurredAt:
+          data.occurredAt.present ? data.occurredAt.value : this.occurredAt,
+      status: data.status.present ? data.status.value : this.status,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EventEntry(')
+          ..write('id: $id, ')
+          ..write('eventType: $eventType, ')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('payload: $payload, ')
+          ..write('version: $version, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, eventType, entityType, entityId, payload,
+      version, occurredAt, status, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EventEntry &&
+          other.id == this.id &&
+          other.eventType == this.eventType &&
+          other.entityType == this.entityType &&
+          other.entityId == this.entityId &&
+          other.payload == this.payload &&
+          other.version == this.version &&
+          other.occurredAt == this.occurredAt &&
+          other.status == this.status &&
+          other.createdAt == this.createdAt);
+}
+
+class EventsTableCompanion extends UpdateCompanion<EventEntry> {
+  final Value<String> id;
+  final Value<String> eventType;
+  final Value<String> entityType;
+  final Value<String> entityId;
+  final Value<String> payload;
+  final Value<int> version;
+  final Value<DateTime> occurredAt;
+  final Value<String> status;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const EventsTableCompanion({
+    this.id = const Value.absent(),
+    this.eventType = const Value.absent(),
+    this.entityType = const Value.absent(),
+    this.entityId = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.version = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EventsTableCompanion.insert({
+    required String id,
+    required String eventType,
+    required String entityType,
+    required String entityId,
+    required String payload,
+    required int version,
+    required DateTime occurredAt,
+    this.status = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        eventType = Value(eventType),
+        entityType = Value(entityType),
+        entityId = Value(entityId),
+        payload = Value(payload),
+        version = Value(version),
+        occurredAt = Value(occurredAt),
+        createdAt = Value(createdAt);
+  static Insertable<EventEntry> custom({
+    Expression<String>? id,
+    Expression<String>? eventType,
+    Expression<String>? entityType,
+    Expression<String>? entityId,
+    Expression<String>? payload,
+    Expression<int>? version,
+    Expression<DateTime>? occurredAt,
+    Expression<String>? status,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (eventType != null) 'event_type': eventType,
+      if (entityType != null) 'entity_type': entityType,
+      if (entityId != null) 'entity_id': entityId,
+      if (payload != null) 'payload': payload,
+      if (version != null) 'version': version,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+      if (status != null) 'status': status,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EventsTableCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? eventType,
+      Value<String>? entityType,
+      Value<String>? entityId,
+      Value<String>? payload,
+      Value<int>? version,
+      Value<DateTime>? occurredAt,
+      Value<String>? status,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
+    return EventsTableCompanion(
+      id: id ?? this.id,
+      eventType: eventType ?? this.eventType,
+      entityType: entityType ?? this.entityType,
+      entityId: entityId ?? this.entityId,
+      payload: payload ?? this.payload,
+      version: version ?? this.version,
+      occurredAt: occurredAt ?? this.occurredAt,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (eventType.present) {
+      map['event_type'] = Variable<String>(eventType.value);
+    }
+    if (entityType.present) {
+      map['entity_type'] = Variable<String>(entityType.value);
+    }
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EventsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('eventType: $eventType, ')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('payload: $payload, ')
+          ..write('version: $version, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6513,6 +6984,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $GeneratorSettingsTableTable generatorSettingsTable =
       $GeneratorSettingsTableTable(this);
   late final $OutboxTableTable outboxTable = $OutboxTableTable(this);
+  late final $EventsTableTable eventsTable = $EventsTableTable(this);
   late final SubscribersDao subscribersDao =
       SubscribersDao(this as AppDatabase);
   late final CabinetsDao cabinetsDao = CabinetsDao(this as AppDatabase);
@@ -6523,6 +6995,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       WhatsappTemplatesDao(this as AppDatabase);
   late final GeneratorSettingsDao generatorSettingsDao =
       GeneratorSettingsDao(this as AppDatabase);
+  late final EventsDao eventsDao = EventsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6535,7 +7008,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         auditLogTable,
         whatsappTemplatesTable,
         generatorSettingsTable,
-        outboxTable
+        outboxTable,
+        eventsTable
       ];
 }
 
@@ -9382,6 +9856,233 @@ typedef $$OutboxTableTableProcessedTableManager = ProcessedTableManager<
     ),
     OutboxEntry,
     PrefetchHooks Function()>;
+typedef $$EventsTableTableCreateCompanionBuilder = EventsTableCompanion
+    Function({
+  required String id,
+  required String eventType,
+  required String entityType,
+  required String entityId,
+  required String payload,
+  required int version,
+  required DateTime occurredAt,
+  Value<String> status,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$EventsTableTableUpdateCompanionBuilder = EventsTableCompanion
+    Function({
+  Value<String> id,
+  Value<String> eventType,
+  Value<String> entityType,
+  Value<String> entityId,
+  Value<String> payload,
+  Value<int> version,
+  Value<DateTime> occurredAt,
+  Value<String> status,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+class $$EventsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $EventsTableTable> {
+  $$EventsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get eventType => $composableBuilder(
+      column: $table.eventType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get entityType => $composableBuilder(
+      column: $table.entityType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get entityId => $composableBuilder(
+      column: $table.entityId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get payload => $composableBuilder(
+      column: $table.payload, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$EventsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $EventsTableTable> {
+  $$EventsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get eventType => $composableBuilder(
+      column: $table.eventType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get entityType => $composableBuilder(
+      column: $table.entityType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get entityId => $composableBuilder(
+      column: $table.entityId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+      column: $table.payload, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get version => $composableBuilder(
+      column: $table.version, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$EventsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EventsTableTable> {
+  $$EventsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get eventType =>
+      $composableBuilder(column: $table.eventType, builder: (column) => column);
+
+  GeneratedColumn<String> get entityType => $composableBuilder(
+      column: $table.entityType, builder: (column) => column);
+
+  GeneratedColumn<String> get entityId =>
+      $composableBuilder(column: $table.entityId, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$EventsTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $EventsTableTable,
+    EventEntry,
+    $$EventsTableTableFilterComposer,
+    $$EventsTableTableOrderingComposer,
+    $$EventsTableTableAnnotationComposer,
+    $$EventsTableTableCreateCompanionBuilder,
+    $$EventsTableTableUpdateCompanionBuilder,
+    (EventEntry, BaseReferences<_$AppDatabase, $EventsTableTable, EventEntry>),
+    EventEntry,
+    PrefetchHooks Function()> {
+  $$EventsTableTableTableManager(_$AppDatabase db, $EventsTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EventsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EventsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EventsTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> eventType = const Value.absent(),
+            Value<String> entityType = const Value.absent(),
+            Value<String> entityId = const Value.absent(),
+            Value<String> payload = const Value.absent(),
+            Value<int> version = const Value.absent(),
+            Value<DateTime> occurredAt = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              EventsTableCompanion(
+            id: id,
+            eventType: eventType,
+            entityType: entityType,
+            entityId: entityId,
+            payload: payload,
+            version: version,
+            occurredAt: occurredAt,
+            status: status,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String eventType,
+            required String entityType,
+            required String entityId,
+            required String payload,
+            required int version,
+            required DateTime occurredAt,
+            Value<String> status = const Value.absent(),
+            required DateTime createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              EventsTableCompanion.insert(
+            id: id,
+            eventType: eventType,
+            entityType: entityType,
+            entityId: entityId,
+            payload: payload,
+            version: version,
+            occurredAt: occurredAt,
+            status: status,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$EventsTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $EventsTableTable,
+    EventEntry,
+    $$EventsTableTableFilterComposer,
+    $$EventsTableTableOrderingComposer,
+    $$EventsTableTableAnnotationComposer,
+    $$EventsTableTableCreateCompanionBuilder,
+    $$EventsTableTableUpdateCompanionBuilder,
+    (EventEntry, BaseReferences<_$AppDatabase, $EventsTableTable, EventEntry>),
+    EventEntry,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9404,4 +10105,6 @@ class $AppDatabaseManager {
           _db, _db.generatorSettingsTable);
   $$OutboxTableTableTableManager get outboxTable =>
       $$OutboxTableTableTableManager(_db, _db.outboxTable);
+  $$EventsTableTableTableManager get eventsTable =>
+      $$EventsTableTableTableManager(_db, _db.eventsTable);
 }

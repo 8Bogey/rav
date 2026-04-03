@@ -13,6 +13,7 @@ import 'daos/workers_dao.dart';
 import 'daos/audit_log_dao.dart';
 import 'daos/whatsapp_templates_dao.dart';
 import 'daos/generator_settings_dao.dart';
+import 'daos/events_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -26,6 +27,7 @@ part 'app_database.g.dart';
     WhatsappTemplatesTable,
     GeneratorSettingsTable,
     OutboxTable,
+    EventsTable,
   ],
   daos: [
     SubscribersDao,
@@ -35,6 +37,7 @@ part 'app_database.g.dart';
     AuditLogDao,
     WhatsappTemplatesDao,
     GeneratorSettingsDao,
+    EventsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -82,7 +85,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -236,6 +239,12 @@ class AppDatabase extends _$AppDatabase {
           );
           
           print('Database migration to v4 completed successfully');
+        }
+        
+        // Migrate to version 5: add EventsTable for event-sourced sync
+        if (from < 5) {
+          await m.createTable(eventsTable);
+          print('Database migration to v5 completed successfully (EventsTable added)');
         }
       },
       beforeOpen: (details) async {
@@ -486,6 +495,25 @@ class GeneratorSettingsTable extends Table {
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// ============================================================
+// EVENTS TABLE - For event-sourced sync (Phase 1)
+// ============================================================
+@DataClassName('EventEntry')
+class EventsTable extends Table {
+  TextColumn get id => text()(); // UUID
+  TextColumn get eventType => text()(); // 'ENTITY_CREATED', 'ENTITY_UPDATED', etc.
+  TextColumn get entityType => text()(); // 'subscribers', 'cabinets', etc.
+  TextColumn get entityId => text()(); // The entity's UUID
+  TextColumn get payload => text()(); // JSON serialized event data
+  IntColumn get version => integer()(); // Entity version at time of event
+  DateTimeColumn get occurredAt => dateTime()(); // When event occurred
+  TextColumn get status => text().withDefault(const Constant('pending'))(); // 'pending', 'synced', 'failed'
+  DateTimeColumn get createdAt => dateTime()();
+  
   @override
   Set<Column> get primaryKey => {id};
 }
