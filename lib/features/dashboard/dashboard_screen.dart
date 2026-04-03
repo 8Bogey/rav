@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+
 import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 import 'package:mawlid_al_dhaki/core/services/dashboard_service.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
@@ -10,8 +11,6 @@ import 'package:mawlid_al_dhaki/core/theme/app_dimens.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_shadows.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
-import 'package:mawlid_al_dhaki/features/subscribers/dialogs/subscriber_dialog.dart';
-import 'package:mawlid_al_dhaki/shared/utils/app_transitions.dart';
 import 'package:mawlid_al_dhaki/features/dashboard/widgets/dashboard_header.dart';
 import 'package:mawlid_al_dhaki/features/dashboard/widgets/quick_actions_panel.dart';
 import 'package:gap/gap.dart';
