@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:uuid/uuid.dart';
 
@@ -29,6 +30,7 @@ class OutboxService {
     );
 
     await database.into(database.outboxTable).insert(entry);
+    debugPrint('[Outbox] Added entry: $targetTable/$operationType for document: $documentId');
   }
 
   /// Get all pending outbox entries

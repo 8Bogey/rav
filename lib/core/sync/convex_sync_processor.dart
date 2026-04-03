@@ -60,10 +60,10 @@ class ConvexSyncProcessor {
   /// Check if sync should proceed.
   /// Allow sync if Convex is initialized and user is authenticated.
   bool get _canSync {
-    if (!AppConvexConfig.isInitialized) return false;
-    
-    // Allow sync when authenticated (simple password login)
-    return AppConvexConfig.isAuthenticated;
+    final initialized = AppConvexConfig.isInitialized;
+    final authenticated = AppConvexConfig.isAuthenticated;
+    debugPrint('[Sync] _canSync: initialized=$initialized, authenticated=$authenticated');
+    return initialized && authenticated;
   }
 
   /// Start the background sync loop.
@@ -96,6 +96,8 @@ class ConvexSyncProcessor {
             ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
           .get();
 
+      debugPrint('[Sync] Found ${pendingEntries.length} pending entries');
+      
       if (pendingEntries.isNotEmpty) {
         debugPrint('ConvexSyncProcessor: Processing ${pendingEntries.length} pending entries');
 
@@ -255,8 +257,12 @@ class ConvexSyncProcessor {
       
       final String mutationName = _getMutationName(entry.targetTable, entry.operationType);
       
+      debugPrint('[Sync] Calling mutation=$mutationName with payload: $resolvedPayload');
+      
       // Execute Convex mutation via HTTP
       final result = await AppConvexConfig.mutation(mutationName, resolvedPayload);
+      
+      debugPrint('[Sync] Mutation result: $result');
       
       if (result['success'] == true) {
         // Mark as synced
