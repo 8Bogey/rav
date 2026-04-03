@@ -44,14 +44,14 @@ class WorkersService extends BaseService {
       createdAt: Value(now),
       updatedAt: Value(now),
     );
-    
+
     // Add to outbox for Convex sync
     _outbox.addEntry(
       targetTable: 'workers',
       operationType: 'create',
       documentId: id,
       payload: {
-        'id': id,
+        'cloudId': id, // Client's local UUID for tracking
         'ownerId': ownerId,
         'name': worker.name,
         'phone': worker.phone,
@@ -64,7 +64,7 @@ class WorkersService extends BaseService {
         'createdAt': now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.addWorker(companion);
   }
 
@@ -73,11 +73,11 @@ class WorkersService extends BaseService {
     final now = DateTime.now();
     final newVersion = (worker.version ?? 0) + 1;
     final companion = worker.toCompanion(false).copyWith(
-      ownerId: Value(ownerId),
-      version: Value(newVersion),
-      updatedAt: Value(now),
-    );
-    
+          ownerId: Value(ownerId),
+          version: Value(newVersion),
+          updatedAt: Value(now),
+        );
+
     // Add to outbox for Convex sync
     _outbox.addEntry(
       targetTable: 'workers',
@@ -94,10 +94,11 @@ class WorkersService extends BaseService {
         'version': newVersion,
         'isDeleted': worker.isDeleted,
         'updatedAt': now.millisecondsSinceEpoch,
-        'createdAt': worker.createdAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch,
+        'createdAt': worker.createdAt?.millisecondsSinceEpoch ??
+            now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.updateWorker(companion);
   }
 
@@ -106,7 +107,7 @@ class WorkersService extends BaseService {
     final now = DateTime.now();
     final existing = await _dao.getWorkerById(id, ownerId: ownerId);
     final newVersion = (existing?.version ?? 0) + 1;
-    
+
     final companion = WorkersTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
@@ -114,19 +115,20 @@ class WorkersService extends BaseService {
       version: Value(newVersion),
       updatedAt: Value(now),
     );
-    
+
     // Add to outbox for Convex sync
+    // Use cloudId for delete lookup (local UUID)
     _outbox.addEntry(
       targetTable: 'workers',
       operationType: 'delete',
       documentId: id,
       payload: {
-        'id': id,
+        'cloudId': id, // Send cloudId for lookup instead of Convex id
         'ownerId': ownerId,
         'version': newVersion,
       },
     );
-    
+
     return _dao.updateWorker(companion);
   }
 

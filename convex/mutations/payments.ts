@@ -9,7 +9,7 @@ import { v } from "convex/values";
 
 export const savePayment = mutation({
   args: {
-    id: v.optional(v.id("payments")),
+    id: v.optional(v.string()), // Accept string for both Convex IDs and client UUIDs
     convexId: v.optional(v.string()), // Client's local ID or Convex mapping
     version: v.number(),
     ownerId: v.string(),
@@ -38,14 +38,30 @@ export const savePayment = mutation({
     
     // Determine Convex document ID
     // Priority: explicit id > cloudId lookup via index > create new
-    let documentId = args.id;
-    if (!documentId && args.cloudId) {
-      // Use the by_cloudId index for efficient lookup
+    let documentId: any = null;
+
+    if (args.id) {
+      // Check if it's a Convex document ID format (starts with table name)
+      if (args.id.startsWith('payments/')) {
+        documentId = args.id; // It's a Convex document ID
+      } else {
+        // It's a client UUID - look up by cloudId index
+        const existingByCloudId = await ctx.db
+          .query("payments")
+          .withIndex("by_cloudId", (q) => q.eq("cloudId", args.id!))
+          .first();
+
+        if (existingByCloudId) {
+          documentId = existingByCloudId._id;
+        }
+      }
+    } else if (args.cloudId) {
+      // Fallback: use cloudId lookup
       const existingByCloudId = await ctx.db
         .query("payments")
         .withIndex("by_cloudId", (q) => q.eq("cloudId", args.cloudId!))
         .first();
-      
+
       if (existingByCloudId) {
         documentId = existingByCloudId._id;
       }
@@ -82,26 +98,63 @@ export const savePayment = mutation({
       const { id, convexId, ...insertData } = args;
       const newId = await ctx.db.insert("payments", {
         ...insertData,
+        cloudId: args.cloudId,
         createdAt: now,
         updatedAt: now,
-        version: 0,
+        version: 1,
       });
 
-      return { success: true, id: newId, version: 0 };
+      return { success: true, id: newId, version: 1 };
     }
   },
 });
 
 export const deletePayment = mutation({
   args: {
-    id: v.id("payments"),
+    // Accept either Convex document ID or string (cloudId) for lookup
+    id: v.optional(v.string()),
+    cloudId: v.optional(v.string()),
     version: v.number(),
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
     const identitySubject = args.ownerId;
 
-    const existing = await ctx.db.get(args.id);
+    // Resolve the document ID: explicit id > cloudId lookup > error
+    let documentId: any = null;
+
+    if (args.id) {
+      // Check if it's a Convex document ID format (starts with table name)
+      if (args.id.startsWith('payments/')) {
+        documentId = args.id; // It's a Convex document ID
+      } else {
+        // It's a client UUID - look up by cloudId index
+        const existingByCloudId = await ctx.db
+          .query("payments")
+          .withIndex("by_cloudId", (q) => q.eq("cloudId", args.id!))
+          .first();
+
+        if (existingByCloudId) {
+          documentId = existingByCloudId._id;
+        }
+      }
+    } else if (args.cloudId) {
+      // Fallback: use cloudId lookup
+      const existingByCloudId = await ctx.db
+        .query("payments")
+        .withIndex("by_cloudId", (q) => q.eq("cloudId", args.cloudId!))
+        .first();
+
+      if (existingByCloudId) {
+        documentId = existingByCloudId._id;
+      }
+    }
+
+    if (!documentId) {
+      throw new Error("Not found: Document ID or cloudId required");
+    }
+
+    const existing = await ctx.db.get(documentId);
     if (!existing) {
       throw new Error("Not found: Document does not exist");
     }
@@ -120,12 +173,12 @@ export const deletePayment = mutation({
     }
 
     // Soft Delete
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch(documentId, {
       isDeleted: true,
       version: args.version,
       updatedAt: Date.now(),
     });
 
-    return { success: true, id: args.id };
+    return { success: true, id: documentId };
   },
 });

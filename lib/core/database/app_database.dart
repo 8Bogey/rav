@@ -12,6 +12,7 @@ import 'daos/payments_dao.dart';
 import 'daos/workers_dao.dart';
 import 'daos/audit_log_dao.dart';
 import 'daos/whatsapp_templates_dao.dart';
+import 'daos/generator_settings_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -33,6 +34,7 @@ part 'app_database.g.dart';
     WorkersDao,
     AuditLogDao,
     WhatsappTemplatesDao,
+    GeneratorSettingsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -196,10 +198,43 @@ class AppDatabase extends _$AppDatabase {
             'ALTER TABLE whatsapp_templates_table ADD COLUMN updated_at INTEGER',
             'ALTER TABLE whatsapp_templates_table ADD COLUMN created_at INTEGER',
             'ALTER TABLE whatsapp_templates_table ADD COLUMN is_deleted INTEGER DEFAULT 0',
+            
+            // GeneratorSettingsTable
+            'ALTER TABLE generator_settings_table ADD COLUMN id TEXT',
+            'ALTER TABLE generator_settings_table ADD COLUMN owner_id TEXT',
+            'ALTER TABLE generator_settings_table ADD COLUMN version INTEGER DEFAULT 1',
+            'ALTER TABLE generator_settings_table ADD COLUMN updated_at INTEGER',
+            'ALTER TABLE generator_settings_table ADD COLUMN created_at INTEGER',
+            'ALTER TABLE generator_settings_table ADD COLUMN is_deleted INTEGER DEFAULT 0',
           ];
           for (final sql in v4AlterStatements) {
             await _migrateAddColumn(sql);
           }
+          
+          // Backfill id columns with UUIDs for existing rows (prevents NULL primary key)
+          // Using ROWID as a seed for deterministic UUID generation
+          await customStatement(
+            "UPDATE subscribers_table SET id = 'sub-' || ROWID || '-' || RANDOM() WHERE id IS NULL"
+          );
+          await customStatement(
+            "UPDATE cabinets_table SET id = 'cab-' || ROWID || '-' || RANDOM() WHERE id IS NULL"
+          );
+          await customStatement(
+            "UPDATE payments_table SET id = 'pay-' || ROWID || '-' || RANDOM() WHERE id IS NULL"
+          );
+          await customStatement(
+            "UPDATE workers_table SET id = 'wrk-' || ROWID || '-' || RANDOM() WHERE id IS NULL"
+          );
+          await customStatement(
+            "UPDATE audit_log_table SET id = 'aud-' || ROWID || '-' || RANDOM() WHERE id IS NULL"
+          );
+          await customStatement(
+            "UPDATE whatsapp_templates_table SET id = 'wat-' || ROWID || '-' || RANDOM() WHERE id IS NULL"
+          );
+          await customStatement(
+            "UPDATE generator_settings_table SET id = 'gen-' || ROWID || '-' || RANDOM() WHERE id IS NULL"
+          );
+          
           print('Database migration to v4 completed successfully');
         }
       },

@@ -76,14 +76,19 @@ class PaymentsDao extends DatabaseAccessor<AppDatabase>
 
   // Update a payment
   Future<bool> updatePayment(Insertable<Payment> payment) {
-    return update(paymentsTable).replace(payment);
+    // Use write() for partial updates instead of replace() which requires all fields
+    final comp = payment as PaymentsTableCompanion;
+    return (update(paymentsTable)..where((tbl) => tbl.id.equals(comp.id.value)))
+        .write(payment)
+        .then((rows) => rows > 0);
   }
 
   // Soft delete a payment
   Future<int> deletePayment(String id) {
     return (update(paymentsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const PaymentsTableCompanion(
-          isDeleted: Value(true),
+        .write(PaymentsTableCompanion(
+          isDeleted: const Value(true),
+          updatedAt: Value(DateTime.now()),
         ));
   }
 

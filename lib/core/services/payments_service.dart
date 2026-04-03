@@ -23,7 +23,8 @@ class PaymentsService extends BaseService {
   }
 
   // Get payments by subscriber ID
-  Future<List<Payment>> getPaymentsBySubscriberId(String subscriberId, {required String ownerId}) {
+  Future<List<Payment>> getPaymentsBySubscriberId(String subscriberId,
+      {required String ownerId}) {
     return _dao.getPaymentsBySubscriberId(subscriberId, ownerId: ownerId);
   }
 
@@ -44,14 +45,14 @@ class PaymentsService extends BaseService {
       createdAt: Value(now),
       updatedAt: Value(now),
     );
-    
+
     // Add to outbox for Convex sync
     _outbox.addEntry(
       targetTable: 'payments',
       operationType: 'create',
       documentId: id,
       payload: {
-        'id': id,
+        'cloudId': id, // Client's local UUID for tracking
         'ownerId': ownerId,
         'subscriberId': payment.subscriberId,
         'amount': payment.amount,
@@ -64,7 +65,7 @@ class PaymentsService extends BaseService {
         'createdAt': now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.addPayment(companion);
   }
 
@@ -73,11 +74,11 @@ class PaymentsService extends BaseService {
     final now = DateTime.now();
     final newVersion = (payment.version ?? 0) + 1;
     final companion = payment.toCompanion(false).copyWith(
-      ownerId: Value(ownerId),
-      version: Value(newVersion),
-      updatedAt: Value(now),
-    );
-    
+          ownerId: Value(ownerId),
+          version: Value(newVersion),
+          updatedAt: Value(now),
+        );
+
     // Add to outbox for Convex sync
     _outbox.addEntry(
       targetTable: 'payments',
@@ -94,10 +95,11 @@ class PaymentsService extends BaseService {
         'version': newVersion,
         'isDeleted': payment.isDeleted,
         'updatedAt': now.millisecondsSinceEpoch,
-        'createdAt': payment.createdAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch,
+        'createdAt': payment.createdAt?.millisecondsSinceEpoch ??
+            now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.updatePayment(companion);
   }
 
@@ -106,7 +108,7 @@ class PaymentsService extends BaseService {
     final now = DateTime.now();
     final existing = await _dao.getPaymentById(id, ownerId: ownerId);
     final newVersion = (existing?.version ?? 0) + 1;
-    
+
     final companion = PaymentsTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
@@ -114,19 +116,20 @@ class PaymentsService extends BaseService {
       version: Value(newVersion),
       updatedAt: Value(now),
     );
-    
+
     // Add to outbox for Convex sync
+    // Use cloudId for delete lookup (local UUID)
     _outbox.addEntry(
       targetTable: 'payments',
       operationType: 'delete',
       documentId: id,
       payload: {
-        'id': id,
+        'cloudId': id, // Send cloudId for lookup instead of Convex id
         'ownerId': ownerId,
         'version': newVersion,
       },
     );
-    
+
     return _dao.updatePayment(companion);
   }
 

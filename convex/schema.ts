@@ -155,7 +155,8 @@ export default defineSchema({
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_name", ["name"])
-    .index("by_phone", ["phone"]),
+    .index("by_phone", ["phone"])
+    .index("by_cloudId", ["cloudId"]),
 
   // ============================================================
   // AUDIT_LOG - Financial compliance audit trail

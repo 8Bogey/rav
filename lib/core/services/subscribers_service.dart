@@ -23,12 +23,14 @@ class SubscribersService extends BaseService {
   }
 
   // Get subscriber by code
-  Future<Subscriber?> getSubscriberByCode(String code, {required String ownerId}) {
+  Future<Subscriber?> getSubscriberByCode(String code,
+      {required String ownerId}) {
     return _dao.getSubscriberByCode(code, ownerId: ownerId);
   }
 
   // Add a new subscriber
-  Future<String> addSubscriber(Subscriber subscriber, {required String ownerId}) {
+  Future<String> addSubscriber(Subscriber subscriber,
+      {required String ownerId}) {
     final id = _uuid.v4();
     final now = DateTime.now();
     final companion = SubscribersTableCompanion(
@@ -48,16 +50,15 @@ class SubscribersService extends BaseService {
       createdAt: Value(now),
       updatedAt: Value(now),
     );
-    
+
     // Add to outbox for Convex sync
-    // NOTE: Don't include 'id' for new documents - let Convex generate
-    // Convex will return the new document ID in the response
+    // Include cloudId so Convex can persist it for later delete lookups
     _outbox.addEntry(
       targetTable: 'subscribers',
       operationType: 'create',
       documentId: id,
       payload: {
-        // id field intentionally omitted for new docs - Convex auto-generates
+        'cloudId': id, // Client's local UUID for tracking
         'ownerId': ownerId,
         'name': subscriber.name,
         'code': subscriber.code,
@@ -74,20 +75,21 @@ class SubscribersService extends BaseService {
         'createdAt': now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.addSubscriber(companion);
   }
 
   // Update a subscriber
-  Future<bool> updateSubscriber(Subscriber subscriber, {required String ownerId}) {
+  Future<bool> updateSubscriber(Subscriber subscriber,
+      {required String ownerId}) {
     final now = DateTime.now();
     final newVersion = (subscriber.version ?? 0) + 1;
     final companion = subscriber.toCompanion(false).copyWith(
-      ownerId: Value(ownerId),
-      version: Value(newVersion),
-      updatedAt: Value(now),
-    );
-    
+          ownerId: Value(ownerId),
+          version: Value(newVersion),
+          updatedAt: Value(now),
+        );
+
     // Add to outbox for Convex sync
     // NOTE: Update operations - include id if we have Convex ID tracked
     // For now, use local UUID but this needs Convex ID tracking for full support
@@ -112,10 +114,11 @@ class SubscribersService extends BaseService {
         'version': newVersion,
         'isDeleted': subscriber.isDeleted,
         'updatedAt': now.millisecondsSinceEpoch,
-        'createdAt': subscriber.createdAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch,
+        'createdAt': subscriber.createdAt?.millisecondsSinceEpoch ??
+            now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.updateSubscriber(companion);
   }
 
@@ -125,7 +128,7 @@ class SubscribersService extends BaseService {
     // Get current subscriber to increment version
     final existing = await _dao.getSubscriberById(id, ownerId: ownerId);
     final newVersion = (existing?.version ?? 0) + 1;
-    
+
     final companion = SubscribersTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
@@ -133,24 +136,26 @@ class SubscribersService extends BaseService {
       version: Value(newVersion),
       updatedAt: Value(now),
     );
-    
+
     // Add to outbox for Convex sync
+    // Use cloudId for delete lookup (local UUID)
     _outbox.addEntry(
       targetTable: 'subscribers',
       operationType: 'delete',
       documentId: id,
       payload: {
-        'id': id,
+        'cloudId': id, // Send cloudId for lookup instead of Convex id
         'ownerId': ownerId,
         'version': newVersion,
       },
     );
-    
+
     return _dao.updateSubscriber(companion);
   }
 
   // Search subscribers by name or code
-  Future<List<Subscriber>> searchSubscribers(String query, {required String ownerId}) {
+  Future<List<Subscriber>> searchSubscribers(String query,
+      {required String ownerId}) {
     return _dao.searchSubscribers(query, ownerId: ownerId);
   }
 

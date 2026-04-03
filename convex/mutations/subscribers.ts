@@ -17,7 +17,7 @@ export const saveSubscriber = mutation({
     // Accept either Convex document ID (v.id) or string identifier for client-side tracking
     // When updating existing: pass Convex ID via convexId field
     // When creating new: omit both id and convexId
-    id: v.optional(v.id("subscribers")),
+    id: v.optional(v.string()), // Accept string for both Convex IDs and client UUIDs
     convexId: v.optional(v.string()), // Client's local ID (UUID) or Convex mapping
     version: v.number(),
     ownerId: v.string(),
@@ -50,16 +50,30 @@ export const saveSubscriber = mutation({
     
     // Determine the Convex document ID to use
     // Priority: explicit id > cloudId lookup via index > create new
-    let documentId = args.id;
-    
-    // If no explicit Convex ID but we have cloudId, use index lookup
-    if (!documentId && args.cloudId) {
-      // Use the by_cloudId index for efficient lookup
+    let documentId: any = null;
+
+    if (args.id) {
+      // Check if it's a Convex document ID format (starts with table name)
+      if (args.id.startsWith('subscribers/')) {
+        documentId = args.id; // It's a Convex document ID
+      } else {
+        // It's a client UUID - look up by cloudId index
+        const existingByCloudId = await ctx.db
+          .query("subscribers")
+          .withIndex("by_cloudId", (q) => q.eq("cloudId", args.id!))
+          .first();
+
+        if (existingByCloudId) {
+          documentId = existingByCloudId._id;
+        }
+      }
+    } else if (args.cloudId) {
+      // Fallback: use cloudId lookup
       const existingByCloudId = await ctx.db
         .query("subscribers")
         .withIndex("by_cloudId", (q) => q.eq("cloudId", args.cloudId!))
         .first();
-      
+
       if (existingByCloudId) {
         documentId = existingByCloudId._id;
       }
@@ -97,22 +111,26 @@ export const saveSubscriber = mutation({
       return { success: true, id: documentId, version: args.version };
     } else {
       // CREATE: Insert new document
+      // IMPORTANT: Persist cloudId so delete lookups work later
       const { id, convexId, ...insertData } = args;
       const newId = await ctx.db.insert("subscribers", {
         ...insertData,
+        cloudId: args.cloudId, // Persist the client's local UUID
         createdAt: now,
         updatedAt: now,
-        version: 0, // Initial version for new documents
+        version: 1, // Match Drift default version
       });
       
-      return { success: true, id: newId, version: 0 };
+      return { success: true, id: newId, version: 1 };
     }
   },
 });
 
 export const deleteSubscriber = mutation({
   args: {
-    id: v.id("subscribers"),
+    // Accept either Convex document ID or string (cloudId) for lookup
+    id: v.optional(v.string()),
+    cloudId: v.optional(v.string()),
     version: v.number(),
     ownerId: v.string(),
   },
@@ -120,8 +138,42 @@ export const deleteSubscriber = mutation({
     // Accept any ownerId from the client (dev mode)
     const identitySubject = args.ownerId;
 
+    // Resolve the document ID: explicit id > cloudId lookup > error
+    let documentId: any = null;
+
+    if (args.id) {
+      // Check if it's a Convex document ID format (starts with table name)
+      if (args.id.startsWith('subscribers/')) {
+        documentId = args.id; // It's a Convex document ID
+      } else {
+        // It's a client UUID - look up by cloudId index
+        const existingByCloudId = await ctx.db
+          .query("subscribers")
+          .withIndex("by_cloudId", (q) => q.eq("cloudId", args.id!))
+          .first();
+
+        if (existingByCloudId) {
+          documentId = existingByCloudId._id;
+        }
+      }
+    } else if (args.cloudId) {
+      // Fallback: use cloudId lookup
+      const existingByCloudId = await ctx.db
+        .query("subscribers")
+        .withIndex("by_cloudId", (q) => q.eq("cloudId", args.cloudId!))
+        .first();
+
+      if (existingByCloudId) {
+        documentId = existingByCloudId._id;
+      }
+    }
+
+    if (!documentId) {
+      throw new Error("Not found: Document ID or cloudId required");
+    }
+
     // Get existing document
-    const existing = await ctx.db.get(args.id);
+    const existing = await ctx.db.get(documentId);
     if (!existing) {
       throw new Error("Not found: Document does not exist");
     }
@@ -141,13 +193,13 @@ export const deleteSubscriber = mutation({
     }
 
     // Soft Delete: Set isDeleted = true instead of actual DELETE
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch(documentId, {
       isDeleted: true,
       version: args.version,
       updatedAt: Date.now(),
     });
 
-    return { success: true, id: args.id };
+    return { success: true, id: documentId };
   },
 });
 
@@ -155,7 +207,7 @@ export const deleteSubscriber = mutation({
 export const bulkSaveSubscribers = mutation({
   args: {
     subscribers: v.array(v.object({
-      id: v.optional(v.id("subscribers")),
+      id: v.optional(v.string()),
       version: v.number(),
       ownerId: v.string(),
       name: v.string(),
@@ -194,12 +246,31 @@ export const bulkSaveSubscribers = mutation({
         continue;
       }
 
+      let documentId: any = null;
+
       if (subscriber.id) {
-        const existing = await ctx.db.get(subscriber.id);
+        // Check if it's a Convex document ID format
+        if (subscriber.id.startsWith('subscribers/')) {
+          documentId = subscriber.id; // It's a Convex document ID
+        } else {
+          // It's a client UUID - look up by cloudId index
+          const existingByCloudId = await ctx.db
+            .query("subscribers")
+            .withIndex("by_cloudId", (q) => q.eq("cloudId", subscriber.id!))
+            .first();
+
+          if (existingByCloudId) {
+            documentId = existingByCloudId._id;
+          }
+        }
+      }
+
+      if (documentId) {
+        const existing = await ctx.db.get(documentId);
         if (existing && existing.ownerId === identity.subject && subscriber.version > existing.version) {
           const { id, ...data } = subscriber;
-          await ctx.db.patch(id, { ...data, updatedAt: now });
-          results.push({ success: true, id });
+          await ctx.db.patch(documentId, { ...data, updatedAt: now });
+          results.push({ success: true, id: documentId });
         } else {
           results.push({ success: false, error: "stale_version" });
         }

@@ -75,14 +75,34 @@ export const saveWhatsappTemplate = mutation({
 
 export const deleteWhatsappTemplate = mutation({
   args: {
-    id: v.id("whatsappTemplates"),
+    // Accept either Convex document ID or string (cloudId) for lookup
+    id: v.optional(v.id("whatsappTemplates")),
+    cloudId: v.optional(v.string()),
     version: v.number(),
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
     const identitySubject = args.ownerId;
 
-    const existing = await ctx.db.get(args.id);
+    // Resolve the document ID: explicit id > cloudId lookup > error
+    let documentId = args.id;
+    
+    if (!documentId && args.cloudId) {
+      const existingByCloudId = await ctx.db
+        .query("whatsappTemplates")
+        .withIndex("by_cloudId", (q) => q.eq("cloudId", args.cloudId!))
+        .first();
+      
+      if (existingByCloudId) {
+        documentId = existingByCloudId._id;
+      }
+    }
+
+    if (!documentId) {
+      throw new Error("Not found: Document ID or cloudId required");
+    }
+
+    const existing = await ctx.db.get(documentId);
     if (!existing) {
       throw new Error("Not found: Document does not exist");
     }
@@ -101,12 +121,12 @@ export const deleteWhatsappTemplate = mutation({
     }
 
     // Soft Delete
-    await ctx.db.patch(args.id, {
+    await ctx.db.patch(documentId, {
       isDeleted: true,
       version: args.version,
       updatedAt: Date.now(),
     });
 
-    return { success: true, id: args.id };
+    return { success: true, id: documentId };
   },
 });

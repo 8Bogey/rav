@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import '../app_database.dart';
 
 part 'cabinets_dao.g.dart';
@@ -11,40 +12,41 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
   // Get all active cabinets - REQUIRES ownerId
   Future<List<Cabinet>> getAllCabinets({required String ownerId}) {
     if (ownerId.isEmpty) return Future.value([]);
-    
+
     return (select(cabinetsTable)
-      ..where((tbl) => tbl.ownerId.equals(ownerId))
-      ..where((tbl) => tbl.isDeleted.equals(false)))
+          ..where((tbl) => tbl.ownerId.equals(ownerId))
+          ..where((tbl) => tbl.isDeleted.equals(false)))
         .get();
   }
 
   // Watch all active cabinets - REQUIRES ownerId
   Stream<List<Cabinet>> watchAllCabinets({required String ownerId}) {
     if (ownerId.isEmpty) return Stream.value([]);
-    
+
     return (select(cabinetsTable)
-      ..where((tbl) => tbl.ownerId.equals(ownerId))
-      ..where((tbl) => tbl.isDeleted.equals(false)))
+          ..where((tbl) => tbl.ownerId.equals(ownerId))
+          ..where((tbl) => tbl.isDeleted.equals(false)))
         .watch();
   }
 
   // Get cabinet by ID (UUID) - REQUIRES ownerId
   Future<Cabinet?> getCabinetById(String id, {required String ownerId}) async {
     if (ownerId.isEmpty) return null;
-    
+
     return await (select(cabinetsTable)
-      ..where((tbl) => tbl.id.equals(id))
-      ..where((tbl) => tbl.ownerId.equals(ownerId)))
+          ..where((tbl) => tbl.id.equals(id))
+          ..where((tbl) => tbl.ownerId.equals(ownerId)))
         .getSingleOrNull();
   }
 
   // Get cabinet by name - REQUIRES ownerId
-  Future<Cabinet?> getCabinetByName(String name, {required String ownerId}) async {
+  Future<Cabinet?> getCabinetByName(String name,
+      {required String ownerId}) async {
     if (ownerId.isEmpty) return null;
-    
+
     return await (select(cabinetsTable)
-      ..where((tbl) => tbl.name.equals(name))
-      ..where((tbl) => tbl.ownerId.equals(ownerId)))
+          ..where((tbl) => tbl.name.equals(name))
+          ..where((tbl) => tbl.ownerId.equals(ownerId)))
         .getSingleOrNull();
   }
 
@@ -75,12 +77,16 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
 
   // Soft delete a cabinet
   Future<bool> softDeleteCabinet(String id) {
+    debugPrint('[CabinetsDao] softDeleteCabinet: $id');
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
         .write(CabinetsTableCompanion(
-          isDeleted: const Value(true),
-          updatedAt: Value(DateTime.now()),
-        ))
-        .then((rows) => rows > 0);
+      isDeleted: const Value(true),
+      updatedAt: Value(DateTime.now()),
+    ))
+        .then((rows) {
+      debugPrint('[CabinetsDao] softDeleteCabinet result: $rows rows affected');
+      return rows > 0;
+    });
   }
 
   // Hard delete
@@ -91,10 +97,10 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
   // Get dirty cabinets - REQUIRES ownerId
   Future<List<Cabinet>> getDirtyCabinets({required String ownerId}) {
     if (ownerId.isEmpty) return Future.value([]);
-    
+
     return (select(cabinetsTable)
-      ..where((tbl) => tbl.ownerId.equals(ownerId))
-      ..where((tbl) => tbl.dirtyFlag.equals(true)))
+          ..where((tbl) => tbl.ownerId.equals(ownerId))
+          ..where((tbl) => tbl.dirtyFlag.equals(true)))
         .get();
   }
 
@@ -102,9 +108,9 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
   Future<int> markRecordAsDirty(String id) {
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
         .write(CabinetsTableCompanion(
-          dirtyFlag: const Value(true),
-          updatedAt: Value(DateTime.now()),
-        ));
+      dirtyFlag: const Value(true),
+      updatedAt: Value(DateTime.now()),
+    ));
   }
 
   // Clear dirty flag
@@ -117,15 +123,16 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
   Future<int> updateLastSyncedAt(String id) {
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
         .write(CabinetsTableCompanion(
-          lastSyncedAt: Value(DateTime.now()),
-        ));
+      lastSyncedAt: Value(DateTime.now()),
+    ));
   }
-  
+
   // Get cabinet stats (count active subscribers, sum collected)
-  Future<Map<String, dynamic>> getCabinetStats(String id, {required String ownerId}) async {
+  Future<Map<String, dynamic>> getCabinetStats(String id,
+      {required String ownerId}) async {
     final cabinet = await getCabinetById(id, ownerId: ownerId);
     if (cabinet == null) return {};
-    
+
     return {
       'totalSubscribers': cabinet.totalSubscribers,
       'currentSubscribers': cabinet.currentSubscribers,
@@ -133,29 +140,29 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
       'delayedSubscribers': cabinet.delayedSubscribers,
     };
   }
-  
+
   // Count cabinets - REQUIRES ownerId
   Future<int> countCabinets({required String ownerId}) async {
     if (ownerId.isEmpty) return 0;
-    
+
     final query = selectOnly(cabinetsTable)
       ..addColumns([cabinetsTable.id.count()])
       ..where(cabinetsTable.ownerId.equals(ownerId))
       ..where(cabinetsTable.isDeleted.equals(false));
-    
+
     final result = await query.getSingle();
     return result.read(cabinetsTable.id.count()) ?? 0;
   }
-  
+
   // Sum collected amount - REQUIRES ownerId
   Future<double> sumCollectedAmount({required String ownerId}) async {
     if (ownerId.isEmpty) return 0.0;
-    
+
     final query = selectOnly(cabinetsTable)
       ..addColumns([cabinetsTable.collectedAmount.sum()])
       ..where(cabinetsTable.ownerId.equals(ownerId))
       ..where(cabinetsTable.isDeleted.equals(false));
-    
+
     final result = await query.getSingle();
     return result.read(cabinetsTable.collectedAmount.sum()) ?? 0.0;
   }

@@ -76,14 +76,19 @@ class WorkersDao extends DatabaseAccessor<AppDatabase>
 
   // Update a worker
   Future<bool> updateWorker(Insertable<Worker> worker) {
-    return update(workersTable).replace(worker);
+    // Use write() for partial updates instead of replace() which requires all fields
+    final comp = worker as WorkersTableCompanion;
+    return (update(workersTable)..where((tbl) => tbl.id.equals(comp.id.value)))
+        .write(worker)
+        .then((rows) => rows > 0);
   }
 
   // Soft delete a worker
   Future<int> deleteWorker(String id) {
     return (update(workersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const WorkersTableCompanion(
-          isDeleted: Value(true),
+        .write(WorkersTableCompanion(
+          isDeleted: const Value(true),
+          updatedAt: Value(DateTime.now()),
         ));
   }
 

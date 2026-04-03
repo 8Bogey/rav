@@ -6521,6 +6521,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final AuditLogDao auditLogDao = AuditLogDao(this as AppDatabase);
   late final WhatsappTemplatesDao whatsappTemplatesDao =
       WhatsappTemplatesDao(this as AppDatabase);
+  late final GeneratorSettingsDao generatorSettingsDao =
+      GeneratorSettingsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

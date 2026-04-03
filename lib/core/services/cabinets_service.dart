@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/cabinets_dao.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
@@ -31,7 +32,7 @@ class CabinetsService extends BaseService {
     // Generate a UUID for the new cabinet
     final id = const Uuid().v4();
     final now = DateTime.now();
-    
+
     final companion = CabinetsTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
@@ -47,7 +48,7 @@ class CabinetsService extends BaseService {
       version: const Value(1),
       isDeleted: const Value(false),
     );
-    
+
     // Add to outbox for Convex sync
     // Use cloudId to track Convex document ID for updates
     _outbox.addEntry(
@@ -70,7 +71,7 @@ class CabinetsService extends BaseService {
         'createdAt': now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.addCabinet(companion);
   }
 
@@ -79,11 +80,11 @@ class CabinetsService extends BaseService {
     final now = DateTime.now();
     final newVersion = (cabinet.version ?? 0) + 1;
     final companion = cabinet.toCompanion(false).copyWith(
-      ownerId: Value(ownerId),
-      version: Value(newVersion),
-      updatedAt: Value(now),
-    );
-    
+          ownerId: Value(ownerId),
+          version: Value(newVersion),
+          updatedAt: Value(now),
+        );
+
     // Add to outbox for Convex sync
     _outbox.addEntry(
       targetTable: 'cabinets',
@@ -102,34 +103,42 @@ class CabinetsService extends BaseService {
         'version': newVersion,
         'isDeleted': cabinet.isDeleted,
         'updatedAt': now.millisecondsSinceEpoch,
-        'createdAt': cabinet.createdAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch,
+        'createdAt': cabinet.createdAt?.millisecondsSinceEpoch ??
+            now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.updateCabinet(companion);
   }
 
   // Delete a cabinet (soft delete)
   Future<bool> deleteCabinet(String id, {required String ownerId}) async {
+    debugPrint(
+        '[CabinetsService] deleteCabinet called: id=$id, ownerId=$ownerId');
     final now = DateTime.now();
     final existing = await _dao.getCabinetById(id, ownerId: ownerId);
+    debugPrint('[CabinetsService] existing cabinet: $existing');
     final newVersion = (existing?.version ?? 0) + 1;
-    
+    debugPrint('[CabinetsService] newVersion: $newVersion');
+
     // Use soft delete which only updates isDeleted and updatedAt
     final result = await _dao.softDeleteCabinet(id);
-    
+    debugPrint('[CabinetsService] softDeleteCabinet result: $result');
+
     // Add to outbox for Convex sync
+    // Use cloudId for delete lookup (local UUID)
     _outbox.addEntry(
       targetTable: 'cabinets',
       operationType: 'delete',
       documentId: id,
       payload: {
-        'id': id,
+        'cloudId': id, // Send cloudId for lookup instead of Convex id
         'ownerId': ownerId,
         'version': newVersion,
       },
     );
-    
+    debugPrint('[CabinetsService] outbox entry added');
+
     return result;
   }
 }
