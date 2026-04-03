@@ -74,7 +74,8 @@ class AppConvexConfig {
       throw Exception('Convex not initialized');
     }
 
-    final url = Uri.parse('$_deploymentUrl/api/mutation/$mutationName');
+    // Convex HTTP API format: POST /api/mutation with JSON body containing path and args
+    final url = Uri.parse('$_deploymentUrl/api/mutation');
     
     debugPrint('════════════════════════════════════════');
     debugPrint('CONVEX HTTP REQUEST:');
@@ -89,13 +90,26 @@ class AppConvexConfig {
     debugPrint('Body: ${jsonEncode(args)}');
     debugPrint('════════════════════════════════════════');
     
+    // Build request body per Convex HTTP API spec
+    final requestBody = {
+      'path': mutationName,
+      'args': args,
+      'format': 'json',
+    };
+    
+    // Only send auth header if we have a REAL JWT (not a demo placeholder)
+    // Demo tokens like "session-demo-user-001" are not valid JWTs
+    final hasValidJwt = _authToken != null && 
+        _authToken!.contains('.') && 
+        !_authToken!.startsWith('session-');
+    
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
-        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+        if (hasValidJwt) 'Authorization': 'Bearer $_authToken',
       },
-      body: jsonEncode(args),
+      body: jsonEncode(requestBody),
     );
 
     debugPrint('RESPONSE STATUS: ${response.statusCode}');
@@ -105,7 +119,14 @@ class AppConvexConfig {
     
     if (response.statusCode == 200) {
       try {
-        return jsonDecode(response.body);
+        final responseData = jsonDecode(response.body);
+        // Convex returns {"status": "success", "value": {...}} or {"status": "error", "errorMessage": "..."}
+        if (responseData['status'] == 'success') {
+          return responseData['value'] as Map<String, dynamic>;
+        } else if (responseData['status'] == 'error') {
+          throw Exception('Convex error: ${responseData['errorMessage']}');
+        }
+        return responseData;
       } catch (e) {
         debugPrint('JSON DECODE ERROR: $e');
         debugPrint('Response was not valid JSON: ${response.body}');
@@ -126,19 +147,50 @@ class AppConvexConfig {
       throw Exception('Convex not initialized');
     }
 
-    final url = Uri.parse('$_deploymentUrl/api/query/$queryName');
+    // Convex HTTP API format: POST /api/query with JSON body containing path and args
+    final url = Uri.parse('$_deploymentUrl/api/query');
+    
+    debugPrint('════════════════════════════════════════');
+    debugPrint('CONVEX HTTP QUERY:');
+    debugPrint('URL: $url');
+    debugPrint('Query: $queryName');
+    debugPrint('Body: ${jsonEncode(args)}');
+    debugPrint('════════════════════════════════════════');
+    
+    // Build request body per Convex HTTP API spec
+    final requestBody = {
+      'path': queryName,
+      'args': args,
+      'format': 'json',
+    };
+    
+    // Only send auth header if we have a REAL JWT (not a demo placeholder)
+    final hasValidJwt = _authToken != null && 
+        _authToken!.contains('.') && 
+        !_authToken!.startsWith('session-');
     
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
-        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+        if (hasValidJwt) 'Authorization': 'Bearer $_authToken',
       },
-      body: jsonEncode(args),
+      body: jsonEncode(requestBody),
     );
 
+    debugPrint('RESPONSE STATUS: ${response.statusCode}');
+    debugPrint('RESPONSE BODY: ${response.body}');
+    debugPrint('═══════════════════════════════════════');
+    
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final responseData = jsonDecode(response.body);
+      // Convex returns {"status": "success", "value": {...}} or {"status": "error", "errorMessage": "..."}
+      if (responseData['status'] == 'success') {
+        return responseData['value'];
+      } else if (responseData['status'] == 'error') {
+        throw Exception('Convex error: ${responseData['errorMessage']}');
+      }
+      return responseData;
     } else {
       throw Exception('Convex query failed: ${response.body}');
     }

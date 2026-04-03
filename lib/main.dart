@@ -45,8 +45,8 @@ Future<void> main() async {
     );
   }
 
-  // Initialize Convex client with dev deployment URL
-  // The Convex dashboard showed: https://hearty-meadowlark-390.convex.cloud
+  // Initialize Convex client with deployment URL
+  // Using the correct deployment URL from .env configuration
   const convexUrl = 'https://hearty-meadowlark-390.convex.cloud';
   
   try {
@@ -56,10 +56,23 @@ Future<void> main() async {
     debugPrint('Failed to initialize Convex: $e');
   }
 
-  // Initialize Auth0 service
+  // Initialize Auth0 service and restore session if exists
   try {
     await Auth0Service.instance.initialize();
-    debugPrint('Auth0Service initialized');
+    
+    // Check for existing session before starting
+    final hasSession = await Auth0Service.instance.checkExistingSession();
+    if (hasSession) {
+      debugPrint('Auth0Service: Restored existing session');
+      // Set the auth token in Convex config
+      final token = Auth0Service.instance.accessToken;
+      if (token != null) {
+        await AppConvexConfig.setAuth(token);
+        debugPrint('Convex: Auth token restored from session');
+      }
+    } else {
+      debugPrint('Auth0Service: No existing session found');
+    }
   } catch (e) {
     debugPrint('Failed to initialize Auth0: $e');
   }

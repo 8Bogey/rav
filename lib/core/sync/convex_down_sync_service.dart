@@ -69,8 +69,24 @@ class ConvexDownSyncService {
     Future<void> Function(List<Map<String, dynamic>>) applyChanges,
   ) async {
     try {
-      // Query Convex for changes since last sync using new ModifiedSince queries
-      final queryName = 'get${_toSingular(tableName)}sModifiedSince';
+      // Query Convex for changes since last sync using correct Convex path format
+      // Path format: queries/module:functionName (e.g., queries/subscribers:getSubscribersModifiedSince)
+      final queryMappings = {
+        'subscribers': 'queries/subscribers:getSubscribersModifiedSince',
+        'cabinets': 'queries/cabinets:getCabinetsModifiedSince',
+        'payments': 'queries/payments:getPaymentsModifiedSince',
+        'workers': 'queries/workers:getWorkersModifiedSince',
+        'auditLog': 'queries/auditLog:getAuditLogsModifiedSince',
+        'whatsappTemplates': 'queries/whatsappTemplates:getWhatsappTemplatesModifiedSince',
+        'generatorSettings': 'queries/generatorSettings:getGeneratorSettingsModifiedSince',
+      };
+      
+      final queryName = queryMappings[tableName];
+      if (queryName == null) {
+        debugPrint('ConvexDownSyncService: No query mapping for table: $tableName');
+        return;
+      }
+      
       final result = await AppConvexConfig.query(queryName, {
         'ownerId': _getCurrentOwnerId(),
         'since': sinceTimestamp,
@@ -275,9 +291,16 @@ class ConvexDownSyncService {
   }
 
   String _toSingular(String table) {
-    if (table.endsWith('s')) {
-      return table[0].toUpperCase() + table.substring(1, table.length - 1);
-    }
-    return table[0].toUpperCase() + table.substring(1);
+    // Handle special cases with proper capitalization
+    final singularMappings = {
+      'cabinets': 'Cabinet',
+      'subscribers': 'Subscriber',
+      'payments': 'Payment',
+      'workers': 'Worker',
+      'auditLog': 'AuditLog',
+      'whatsappTemplates': 'WhatsappTemplate',
+      'generatorSettings': 'GeneratorSetting',
+    };
+    return singularMappings[table] ?? table;
   }
 }

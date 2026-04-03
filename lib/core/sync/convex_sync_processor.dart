@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
-import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
 import 'package:mawlid_al_dhaki/core/sync/convex_down_sync_service.dart';
 
 /// Conflict resolution strategies
@@ -119,14 +119,26 @@ class ConvexSyncProcessor {
 
   /// Check for conflicts before syncing
   Future<ConflictResult> _checkConflict(
-    String tableName, 
+    String tableName,
     String documentId,
     int localVersion,
   ) async {
     try {
-      // Query cloud for the document's version
-      final queryName = 'get${_toSingular(tableName)}';
-      final cloudData = await AppConvexConfig.query(queryName, {'id': documentId});
+      // Query cloud for the document's version using correct Convex path format
+      // Path format: modulePath:functionName (e.g., queries/subscribers:getSubscriberById)
+      final queryName = _getQueryName(tableName, 'ById');
+      if (queryName == null) {
+        return ConflictResult(
+          hasConflict: false,
+          localVersion: localVersion,
+          cloudVersion: 0,
+          strategy: defaultStrategy,
+        );
+      }
+      final cloudData = await AppConvexConfig.query(queryName, {
+        'ownerId': _getCurrentOwnerId(),
+        'id': documentId,
+      });
       
       if (cloudData == null) {
         // No cloud version exists - no conflict
@@ -293,33 +305,67 @@ class ConvexSyncProcessor {
     }
   }
 
+  /// Get the full Convex query path (module:function)
+  String? _getQueryName(String table, String suffix) {
+    // Map table names to their Convex query module and function names
+    final queryMappings = {
+      'subscribers': 'queries/subscribers:getSubscriber$suffix',
+      'cabinets': 'queries/cabinets:getCabinet$suffix',
+      'payments': 'queries/payments:getPayment$suffix',
+      'workers': 'queries/workers:getWorker$suffix',
+      'auditLog': 'queries/auditLog:getAuditLog$suffix',
+      'whatsappTemplates': 'queries/whatsappTemplates:getWhatsappTemplate$suffix',
+      'generatorSettings': 'queries/generatorSettings:getGeneratorSetting$suffix',
+    };
+    return queryMappings[table];
+  }
+
   String _getMutationName(String table, String operation) {
-    // Handle special table names
-    final tableMappings = {
+    // Map table names to their Convex mutation module and function names
+    // Path format: mutations/moduleName:functionName
+    final mutationModuleMappings = {
+      'subscribers': 'mutations/subscribers',
+      'cabinets': 'mutations/cabinets',
+      'payments': 'mutations/payments',
+      'workers': 'mutations/workers',
+      'auditLog': 'mutations/auditLog',
+      'whatsappTemplates': 'mutations/whatsappTemplates',
+      'generatorSettings': 'mutations/generatorSettings',
+    };
+    
+    final singular = _toSingular(table);
+    final module = mutationModuleMappings[table] ?? 'mutations/$table';
+    
+    // For delete operations, use delete mutation
+    if (operation == 'delete') {
+      return '$module:delete$singular';
+    }
+    
+    // For create/update, use save mutation
+    return '$module:save$singular';
+  }
+  
+  String _toSingular(String table) {
+    // Handle special cases with proper capitalization
+    final singularMappings = {
+      'cabinets': 'Cabinet',
       'subscribers': 'Subscriber',
       'payments': 'Payment',
-      'cabinets': 'Cabinet',
       'workers': 'Worker',
       'auditLog': 'AuditLog',
       'whatsappTemplates': 'WhatsappTemplate',
       'generatorSettings': 'GeneratorSetting',
     };
-    
-    // For delete operations, use delete mutation
-    if (operation == 'delete') {
-      final singular = tableMappings[table] ?? _toSingular(table);
-      return 'delete$singular';
-    }
-    
-    // For create/update, use save mutation
-    final singular = tableMappings[table] ?? _toSingular(table);
-    return 'save$singular';
+    return singularMappings[table] ?? table;
   }
   
-  String _toSingular(String table) {
-    if (table.endsWith('s')) {
-      return table[0].toUpperCase() + table.substring(1, table.length - 1);
+  /// Get current owner ID from Auth0 user
+  String _getCurrentOwnerId() {
+    final auth = Auth0Service.instance;
+    final userId = auth.userId;
+    if (userId != null && userId.isNotEmpty) {
+      return userId;
     }
-    return table[0].toUpperCase() + table.substring(1);
+    return 'demo-user';
   }
 }

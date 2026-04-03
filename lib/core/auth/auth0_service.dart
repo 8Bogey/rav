@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'dart:math';
+import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 
 /// Auth0 Configuration
 /// 
@@ -18,7 +19,7 @@ class Auth0Config {
   static const String domain = 'dev-cqkioj1eiksobor3.us.auth0.com';
   static const String clientId = 'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB';
   
-  // Convex deployment URL as audience (requires API setup in Auth0)
+  // Convex deployment URL as audience (must match Convex deployment)
   static const String audience = 'https://hearty-meadowlark-390.convex.cloud';
   
   // Callback URL for Native app
@@ -278,15 +279,15 @@ class Auth0Service {
       final response = await http.post(
         Uri.parse(Auth0Config.tokenUrl),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: jsonEncode({
+        body: {
           'grant_type': 'authorization_code',
           'client_id': Auth0Config.clientId,
           'code': code,
           'redirect_uri': Auth0Config.redirectUri,
           'code_verifier': _codeVerifier,
-        }),
+        },
       );
       
       if (response.statusCode == 200) {
@@ -299,8 +300,18 @@ class Auth0Service {
           _userId = _extractSubjectFromIdToken(_idToken!);
         }
         
-        // Save tokens
+        // Save tokens to local storage
         await _saveTokens();
+        
+        // Set the auth token in Convex config for API calls
+        if (_accessToken != null) {
+          try {
+            // Import and set auth token in Convex config
+            await _setConvexAuthToken(_accessToken!);
+          } catch (e) {
+            debugPrint('[Auth0Service] Warning: Failed to set Convex auth token: $e');
+          }
+        }
         
         debugPrint('[Auth0Service] Token exchange successful, userId: $_userId');
         
@@ -400,7 +411,7 @@ class Auth0Service {
     }
   }
   
-  /// Check for existing session
+  /// Check for existing session and restore tokens
   Future<bool> checkExistingSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -410,6 +421,13 @@ class Auth0Service {
       if (savedToken != null && savedUserId != null) {
         _accessToken = savedToken;
         _userId = savedUserId;
+        
+        // Also set the Convex auth token for API calls
+        try {
+          await _setConvexAuthToken(_accessToken!);
+        } catch (e) {
+          debugPrint('[Auth0Service] Warning: Failed to set Convex auth token on session restore: $e');
+        }
         
         debugPrint('[Auth0Service] Restored session for user: $_userId');
         return true;
@@ -444,6 +462,17 @@ class Auth0Service {
       await prefs.remove('auth0_user_id');
     } catch (e) {
       debugPrint('[Auth0Service] Token clear error: $e');
+    }
+  }
+  
+  /// Set Convex auth token after successful authentication
+  Future<void> _setConvexAuthToken(String token) async {
+    try {
+      await AppConvexConfig.setAuth(token);
+      debugPrint('[Auth0Service] Convex auth token set successfully');
+    } catch (e) {
+      debugPrint('[Auth0Service] Failed to set Convex auth token: $e');
+      rethrow;
     }
   }
 }
