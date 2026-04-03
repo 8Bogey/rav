@@ -85,7 +85,8 @@ export default defineSchema({
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_name", ["name"])
-    .index("by_letter", ["letter"]),
+    .index("by_letter", ["letter"])
+    .index("by_cloudId", ["cloudId"]),
 
   // ============================================================
   // PAYMENTS - Payment records for subscribers

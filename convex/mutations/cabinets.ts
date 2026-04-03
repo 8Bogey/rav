@@ -10,6 +10,7 @@ import { v } from "convex/values";
 export const saveCabinet = mutation({
   args: {
     id: v.optional(v.id("cabinets")),
+    convexId: v.optional(v.string()), // Client's local ID or Convex mapping
     version: v.number(),
     ownerId: v.string(),
     name: v.string(),
@@ -41,9 +42,24 @@ export const saveCabinet = mutation({
     }
 
     const now = Date.now();
+    
+    // Determine Convex document ID
+    // Priority: explicit id > cloudId lookup via index > create new
+    let documentId = args.id;
+    if (!documentId && args.cloudId) {
+      // Use the by_cloudId index for efficient lookup
+      const existingByCloudId = await ctx.db
+        .query("cabinets")
+        .withIndex("by_cloudId", (q) => q.eq("cloudId", args.cloudId!))
+        .first();
+      
+      if (existingByCloudId) {
+        documentId = existingByCloudId._id;
+      }
+    }
 
-    if (args.id) {
-      const existing = await ctx.db.get(args.id);
+    if (documentId) {
+      const existing = await ctx.db.get(documentId);
       if (!existing) {
         throw new Error("Not found: Document does not exist");
       }
@@ -61,16 +77,16 @@ export const saveCabinet = mutation({
         };
       }
 
-      const { id, ...updateData } = args;
-      await ctx.db.patch(id, {
+      const { id, convexId, ...updateData } = args;
+      await ctx.db.patch(documentId, {
         ...updateData,
         updatedAt: now,
         version: args.version,
       });
 
-      return { success: true, id: args.id, version: args.version };
+      return { success: true, id: documentId, version: args.version };
     } else {
-      const { id, ...insertData } = args;
+      const { id, convexId, ...insertData } = args;
       const newId = await ctx.db.insert("cabinets", {
         ...insertData,
         createdAt: now,

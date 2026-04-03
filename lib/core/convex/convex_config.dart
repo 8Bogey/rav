@@ -76,6 +76,8 @@ class AppConvexConfig {
 
     final url = Uri.parse('$_deploymentUrl/api/mutation/$mutationName');
     
+    debugPrint('[Convex] mutation=$mutationName, authenticated=$isAuthenticated');
+    
     final response = await http.post(
       url,
       headers: {
@@ -88,6 +90,7 @@ class AppConvexConfig {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
+      debugPrint('[Convex] mutation failed: ${response.statusCode} ${response.body}');
       throw Exception('Convex mutation failed: ${response.body}');
     }
   }

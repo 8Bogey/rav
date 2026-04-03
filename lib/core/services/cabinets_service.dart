@@ -49,13 +49,13 @@ class CabinetsService extends BaseService {
     );
     
     // Add to outbox for Convex sync
-    // NOTE: Don't include 'id' for new documents - let Convex generate
+    // Use cloudId to track Convex document ID for updates
     _outbox.addEntry(
       targetTable: 'cabinets',
       operationType: 'create',
       documentId: id,
       payload: {
-        // id field intentionally omitted for new docs - Convex auto-generates
+        'cloudId': id, // Use local UUID as cloudId for tracking
         'ownerId': ownerId,
         'name': cabinet.name,
         'letter': cabinet.letter,
