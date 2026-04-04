@@ -10,6 +10,7 @@
 
 import type * as auth_auth from "../auth/auth.js";
 import type * as auth_rbac from "../auth/rbac.js";
+import type * as cron from "../cron.js";
 import type * as mutations_auditLog from "../mutations/auditLog.js";
 import type * as mutations_cabinets from "../mutations/cabinets.js";
 import type * as mutations_events from "../mutations/events.js";
@@ -39,6 +40,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "auth/auth": typeof auth_auth;
   "auth/rbac": typeof auth_rbac;
+  cron: typeof cron;
   "mutations/auditLog": typeof mutations_auditLog;
   "mutations/cabinets": typeof mutations_cabinets;
   "mutations/events": typeof mutations_events;
