@@ -79,7 +79,7 @@ class SettingsService {
         final now = DateTime.now();
         final defaultSettings = GeneratorSettings(
           id: _uuid.v4(),
-          name: 'المولد الذكي',
+          name: 'Smart_gen',
           phoneNumber: '07701234567',
           address: 'بغداد - المنصور - شارع الحرية',
           logoPath: '',
@@ -136,7 +136,7 @@ class SettingsService {
       final now = DateTime.now();
       return GeneratorSettings(
         id: _uuid.v4(),
-        name: 'المولد الذكي',
+        name: 'Smart_gen',
         phoneNumber: '07701234567',
         address: 'بغداد - المنصور - شارع الحرية',
         logoPath: '',

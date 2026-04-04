@@ -209,7 +209,7 @@ class _PaymentRegistrationDialogState
             pw.Divider(),
             pw.SizedBox(height: 10),
             pw.Text(
-              'شكراً لاستخدامكم نظام المولد الذكي',
+              'شكراً لاستخدامكم نظام Smart_gen',
               style: const pw.TextStyle(fontSize: 10),
             ),
           ],

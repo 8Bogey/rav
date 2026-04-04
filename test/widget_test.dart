@@ -18,6 +18,6 @@ void main() {
       ),
     );
     await tester.pumpAndSettle(const Duration(seconds: 3));
-    expect(find.text('المولد الذكي'), findsWidgets);
+    expect(find.text('Smart_gen'), findsWidgets);
   });
 }

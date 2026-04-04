@@ -19,7 +19,7 @@ String _getRouteTitle(String location) {
   if (location.contains('/whatsapp')) return 'واتساب';
   if (location.contains('/settings')) return 'الإعدادات';
   if (location.contains('/audit')) return 'سجل التدقيق';
-  return 'المولد الذكي';
+  return 'Smart_gen';
 }
 
 class AppShell extends ConsumerWidget {

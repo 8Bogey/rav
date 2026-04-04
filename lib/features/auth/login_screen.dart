@@ -111,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ).animate().scaleXY(begin: 0.8, end: 1.0, duration: 600.ms),
                         const SizedBox(height: 16),
                         Text(
-                          'المولد الذكي',
+                          'Smart_gen',
                           style: AppTypography.h2.copyWith(
                             color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
                             fontWeight: FontWeight.bold,
@@ -325,7 +325,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ).animate(delay: 600.ms).fadeIn(duration: 400.ms),
                     Text(
-                      '© 2026 المولد الذكي',
+                      '© 2026 Smart_gen',
                       style: AppTypography.bodySm.copyWith(
                         color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
                       ),

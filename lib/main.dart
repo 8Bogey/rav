@@ -33,7 +33,7 @@ Future<void> main() async {
         size: Size(w.toDouble(), h.toDouble()),
         minimumSize: Size(w.toDouble(), h.toDouble()),
         center: false,
-        title: 'المولد الذكي',
+        title: 'Smart_gen',
         titleBarStyle: TitleBarStyle.hidden,
         backgroundColor: Colors.transparent,
       ),
@@ -112,7 +112,7 @@ class AppRoot extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'المولد الذكي',
+      title: 'Smart_gen',
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       theme: ThemeData(

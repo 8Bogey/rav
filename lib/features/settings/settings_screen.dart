@@ -30,7 +30,7 @@ final subscriptionLoadingProvider = StateProvider<bool>((ref) => false);
 final logoPathProvider = StateProvider<String>((ref) => '');
 
 // Generator info providers (for persistent editing)
-final generatorNameProvider = StateProvider<String>((ref) => 'المولد الذكي');
+final generatorNameProvider = StateProvider<String>((ref) => 'Smart_gen');
 final generatorPhoneProvider = StateProvider<String>((ref) => '07701234567');
 final generatorAddressProvider =
     StateProvider<String>((ref) => 'بغداد - المنصور - شارع الحرية');
@@ -1489,7 +1489,7 @@ class SettingsScreen extends ConsumerWidget {
               const Icon(Icons.flash_on, size: 48, color: AppColors.primary),
               const SizedBox(height: 16),
               Text(
-                'المولد الذكي',
+                'Smart_gen',
                 style: AppTypography.h3.copyWith(
                   color: isDarkMode
                       ? AppColors.darkTextHead

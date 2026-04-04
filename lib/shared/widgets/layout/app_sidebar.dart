@@ -88,7 +88,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
-                        'المولد الذكي',
+                        'Smart_gen',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
