@@ -92,6 +92,8 @@ class _PaymentRegistrationDialogState
     try {
       final worker = ref.read(workersProvider).workers.firstWhere(
             (w) => w.id == _selectedWorkerId,
+            orElse: () =>
+                throw StateError('Worker not found: $_selectedWorkerId'),
           );
 
       // Add payment
@@ -117,7 +119,7 @@ class _PaymentRegistrationDialogState
           status: 1, // Active
         );
         await ref
-            .read(subscribersDaoProvider)
+            .read(subscribersProvider.notifier)
             .updateSubscriber(updatedSubscriber);
       } else {
         // Update remaining debt
@@ -125,7 +127,7 @@ class _PaymentRegistrationDialogState
           accumulatedDebt: newDebt,
         );
         await ref
-            .read(subscribersDaoProvider)
+            .read(subscribersProvider.notifier)
             .updateSubscriber(updatedSubscriber);
       }
 
@@ -150,8 +152,10 @@ class _PaymentRegistrationDialogState
       if (_printReceipt) {
         // Get worker name from workersState
         final workersState = ref.read(workersProvider);
-        final selectedWorker = workersState.workers.where((w) => w.id == _selectedWorkerId).firstOrNull;
-        
+        final selectedWorker = workersState.workers
+            .where((w) => w.id == _selectedWorkerId)
+            .firstOrNull;
+
         await _printPaymentReceipt(
           subscriberName: widget.subscriber?.name ?? 'غير محدد',
           subscriberCode: widget.subscriber?.code ?? '',
@@ -182,7 +186,7 @@ class _PaymentRegistrationDialogState
     required String cabinetName,
   }) async {
     final pdf = pw.Document();
-    
+
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a5,
@@ -199,7 +203,8 @@ class _PaymentRegistrationDialogState
             pw.SizedBox(height: 20),
             pw.Divider(),
             pw.SizedBox(height: 20),
-            _buildReceiptRow('التاريخ', DateTime.now().toString().substring(0, 16)),
+            _buildReceiptRow(
+                'التاريخ', DateTime.now().toString().substring(0, 16)),
             _buildReceiptRow('اسم المشترك', subscriberName),
             _buildReceiptRow('كود المشترك', subscriberCode),
             _buildReceiptRow('الكابينة', cabinetName),
@@ -230,7 +235,9 @@ class _PaymentRegistrationDialogState
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(label, style: const pw.TextStyle(fontSize: 12)),
-          pw.Text(value, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+          pw.Text(value,
+              style:
+                  pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
         ],
       ),
     );

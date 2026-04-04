@@ -8,6 +8,8 @@ import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/screen_header.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/error_state_widget.dart';
 
 // Provider for ReportsService
 final reportsServiceProvider = Provider((ref) {
@@ -16,23 +18,44 @@ final reportsServiceProvider = Provider((ref) {
   return ReportsService(database, ownerId: ownerId);
 });
 
-
-
-class ReportsScreen extends ConsumerWidget {
+class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
+}
+
+class _ReportsScreenState extends ConsumerState<ReportsScreen> {
+  late Future<List<dynamic>> _reportsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _reportsFuture = _loadReports();
+  }
+
+  Future<List<dynamic>> _loadReports() async {
+    final reportsService = ref.read(reportsServiceProvider);
+    return Future.wait([
+      reportsService.getPaymentRatioData(),
+      reportsService.getMonthlyRevenueData(),
+      reportsService.getMonthlyProgressData(),
+    ]);
+  }
+
+  void _retry() {
+    setState(() {
+      _reportsFuture = _loadReports();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
-    final reportsService = ref.watch(reportsServiceProvider);
-    
+
     return FutureBuilder(
-      future: Future.wait([
-        reportsService.getPaymentRatioData(),
-        reportsService.getMonthlyRevenueData(),
-        reportsService.getMonthlyProgressData(),
-      ]),
+      future: _reportsFuture,
       builder: (context, snapshot) {
         // Handle loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -52,7 +75,7 @@ class ReportsScreen extends ConsumerWidget {
             ),
           );
         }
-        
+
         // Handle error state
         if (snapshot.hasError) {
           return Padding(
@@ -60,157 +83,72 @@ class ReportsScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(isDarkMode),
+                const ScreenHeader(title: 'التقارير'),
                 const SizedBox(height: 24),
                 Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error,
-                          size: 64,
-                          color: AppColors.statusDanger,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'حدث خطأ أثناء تحميل التقارير',
-                          style: AppTypography.h3.copyWith(
-                            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          snapshot.error.toString(),
-                          style: AppTypography.bodyMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            // Retry loading
-                            (context as Element).markNeedsBuild();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.textOnPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            'إعادة المحاولة',
-                            style: AppTypography.labelLg.copyWith(
-                              color: AppColors.textOnPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: ErrorStateWidget(
+                    message: 'حدث خطأ أثناء تحميل التقارير',
+                    errorDetail: snapshot.error.toString(),
+                    onRetry: _retry,
                   ),
                 ),
               ],
             ),
           );
         }
-        
+
         // Extract data from snapshot
         final data = snapshot.data as List<dynamic>;
         final paymentRatioData = data[0] as Map<String, double>;
         final monthlyRevenueData = data[1] as List<double>;
         final monthlyProgressData = data[2] as List<double>;
-        
+
         return Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with title and actions - matching Bitepoint style
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'التقارير',
-                    style: AppTypography.h2.copyWith(
+              // Header with title and actions
+              ScreenHeader(
+                title: 'التقارير',
+                trailing: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
                       color: isDarkMode
-                          ? AppColors.darkTextHead
-                          : AppColors.textHeading,
+                          ? AppColors.darkBgSurface
+                          : AppColors.bgSurface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? AppColors.darkBorder
+                            : AppColors.borderLight,
+                      ),
                     ),
-                  ).animate().fadeIn(duration: 300.ms),
-                  Row(
-                    children: [
-                      // Month selector
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? AppColors.darkBgSurface
-                              : AppColors.bgSurface,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_month,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'تحديد الشهر ▼',
+                          style: AppTypography.labelLg.copyWith(
                             color: isDarkMode
-                                ? AppColors.darkBorder
-                                : AppColors.borderLight,
+                                ? AppColors.darkTextBody
+                                : AppColors.textBody,
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_month,
-                              color: AppColors.textSecondary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'تحديد الشهر ▼',
-                              style: AppTypography.labelLg.copyWith(
-                                color: isDarkMode
-                                    ? AppColors.darkTextBody
-                                    : AppColors.textBody,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.gold.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.description,
-                              color: AppColors.textOnGold,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '📄 تصدير PDF',
-                              style: AppTypography.labelLg.copyWith(
-                                color: AppColors.textOnGold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                          .animate(delay: 100.ms)
-                          .scaleXY(begin: 0.95, end: 1.0, duration: 400.ms),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 12),
                 ],
+                actionLabel: '📄 تصدير PDF',
+                actionIcon: Icons.description,
               ).animate().fadeIn(duration: 300.ms),
               const SizedBox(height: 24),
 
@@ -256,7 +194,8 @@ class ReportsScreen extends ConsumerWidget {
                       ),
                       child: Row(
                         children: [
-                          _buildTab('تقرير العمال', true, isDarkMode: isDarkMode),
+                          _buildTab('تقرير العمال', true,
+                              isDarkMode: isDarkMode),
                           const SizedBox(width: 16),
                           _buildTab('تقرير المديونين', false,
                               isDarkMode: isDarkMode),
@@ -334,7 +273,7 @@ class ReportsScreen extends ConsumerWidget {
       },
     );
   }
-  
+
   Widget _buildHeader(bool isDarkMode) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -342,26 +281,21 @@ class ReportsScreen extends ConsumerWidget {
         Text(
           'التقارير',
           style: AppTypography.h2.copyWith(
-            color: isDarkMode
-                ? AppColors.darkTextHead
-                : AppColors.textHeading,
+            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
           ),
         ).animate().fadeIn(duration: 300.ms),
         Row(
           children: [
             // Month selector
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDarkMode
-                    ? AppColors.darkBgSurface
-                    : AppColors.bgSurface,
+                color:
+                    isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isDarkMode
-                      ? AppColors.darkBorder
-                      : AppColors.borderLight,
+                  color:
+                      isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
                 ),
               ),
               child: Row(
@@ -385,8 +319,7 @@ class ReportsScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 16),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.gold,
                 borderRadius: BorderRadius.circular(8),

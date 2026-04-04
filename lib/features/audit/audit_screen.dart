@@ -8,6 +8,8 @@ import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/screen_header.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/error_state_widget.dart';
 
 // Provider for AuditLogService
 final auditLogServiceProvider = Provider((ref) {
@@ -16,19 +18,40 @@ final auditLogServiceProvider = Provider((ref) {
   return AuditLogService(database, ownerId: ownerId);
 });
 
-
-
-class AuditScreen extends ConsumerWidget {
+class AuditScreen extends ConsumerStatefulWidget {
   const AuditScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AuditScreen> createState() => _AuditScreenState();
+}
+
+class _AuditScreenState extends ConsumerState<AuditScreen> {
+  late Future<List<AuditLogEntry>> _auditFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _auditFuture = _loadAuditLogs();
+  }
+
+  Future<List<AuditLogEntry>> _loadAuditLogs() async {
+    final auditLogService = ref.read(auditLogServiceProvider);
+    return auditLogService.getAllAuditLogEntries();
+  }
+
+  void _retry() {
+    setState(() {
+      _auditFuture = _loadAuditLogs();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
-    final auditLogService = ref.watch(auditLogServiceProvider);
-    
+
     return FutureBuilder<List<AuditLogEntry>>(
-      future: auditLogService.getAllAuditLogEntries(),
+      future: _auditFuture,
       builder: (context, snapshot) {
         // Handle loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -37,7 +60,116 @@ class AuditScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(isDarkMode),
+                ScreenHeader(
+                  title: 'سجل التدقيق',
+                  trailing: [
+                    // Date filter
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? AppColors.darkBgSurface
+                            : AppColors.bgSurface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDarkMode
+                              ? AppColors.darkBorder
+                              : AppColors.borderLight,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_month,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'فلتر بالتاريخ ▼',
+                            style: AppTypography.labelLg.copyWith(
+                              color: isDarkMode
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textBody,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Action filter
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? AppColors.darkBgSurface
+                            : AppColors.bgSurface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDarkMode
+                              ? AppColors.darkBorder
+                              : AppColors.borderLight,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.filter_alt,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'فلتر بالإجراء ▼',
+                            style: AppTypography.labelLg.copyWith(
+                              color: isDarkMode
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textBody,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Search bar
+                    Container(
+                      width: 200,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? AppColors.darkBgSurface
+                            : AppColors.bgSurface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDarkMode
+                              ? AppColors.darkBorder
+                              : AppColors.borderLight,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.search,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'بحث...',
+                            style: AppTypography.labelLg.copyWith(
+                              color: isDarkMode
+                                  ? AppColors.darkTextMuted
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ).animate().fadeIn(duration: 300.ms),
                 const SizedBox(height: 24),
                 const Expanded(
                   child: Center(
@@ -48,7 +180,7 @@ class AuditScreen extends ConsumerWidget {
             ),
           );
         }
-        
+
         // Handle error state
         if (snapshot.hasError) {
           return Padding(
@@ -56,61 +188,20 @@ class AuditScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(isDarkMode),
+                const ScreenHeader(title: 'سجل التدقيق'),
                 const SizedBox(height: 24),
                 Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error,
-                          size: 64,
-                          color: AppColors.statusDanger,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'حدث خطأ أثناء تحميل سجل التدقيق',
-                          style: AppTypography.h3.copyWith(
-                            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          snapshot.error.toString(),
-                          style: AppTypography.bodyMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            // Retry loading
-                            (context as Element).markNeedsBuild();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.textOnPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            'إعادة المحاولة',
-                            style: AppTypography.labelLg.copyWith(
-                              color: AppColors.textOnPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: ErrorStateWidget(
+                    message: 'حدث خطأ أثناء تحميل سجل التدقيق',
+                    errorDetail: snapshot.error.toString(),
+                    onRetry: _retry,
                   ),
                 ),
               ],
             ),
           );
         }
-        
+
         // Handle empty state and success state
         final auditLogs = snapshot.data ?? [];
         return Padding(
@@ -120,13 +211,15 @@ class AuditScreen extends ConsumerWidget {
             children: [
               _buildHeader(isDarkMode),
               const SizedBox(height: 24),
-              
+
               // Timeline view - matching PRD requirements
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+                    color: isDarkMode
+                        ? AppColors.darkBgSurface
+                        : AppColors.bgSurface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: const [
                       BoxShadow(
@@ -152,20 +245,26 @@ class AuditScreen extends ConsumerWidget {
                               Icon(
                                 Icons.assignment,
                                 size: 64,
-                                color: isDarkMode ? AppColors.darkTextBody : AppColors.textSecondary,
+                                color: isDarkMode
+                                    ? AppColors.darkTextBody
+                                    : AppColors.textSecondary,
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 'لا توجد سجلات تدقيق',
                                 style: AppTypography.h3.copyWith(
-                                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                                  color: isDarkMode
+                                      ? AppColors.darkTextHead
+                                      : AppColors.textHeading,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'سيتم إضافة السجلات هنا عند تنفيذ الإجراءات',
                                 style: AppTypography.bodyMd.copyWith(
-                                  color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                                  color: isDarkMode
+                                      ? AppColors.darkTextBody
+                                      : AppColors.textBody,
                                 ),
                               ),
                             ],
@@ -173,7 +272,8 @@ class AuditScreen extends ConsumerWidget {
                         );
                       }
                       final log = auditLogs[index];
-                      return _buildTimelineItem(log, index, isDarkMode: isDarkMode);
+                      return _buildTimelineItem(log, index,
+                          isDarkMode: isDarkMode);
                     },
                   ),
                 ),
@@ -201,10 +301,12 @@ class AuditScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+                color:
+                    isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                  color:
+                      isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
                 ),
               ),
               child: Row(
@@ -218,7 +320,9 @@ class AuditScreen extends ConsumerWidget {
                   Text(
                     'فلتر بالتاريخ ▼',
                     style: AppTypography.labelLg.copyWith(
-                      color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                      color: isDarkMode
+                          ? AppColors.darkTextBody
+                          : AppColors.textBody,
                     ),
                   ),
                 ],
@@ -229,10 +333,12 @@ class AuditScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+                color:
+                    isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                  color:
+                      isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
                 ),
               ),
               child: Row(
@@ -246,7 +352,9 @@ class AuditScreen extends ConsumerWidget {
                   Text(
                     'فلتر بالإجراء ▼',
                     style: AppTypography.labelLg.copyWith(
-                      color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                      color: isDarkMode
+                          ? AppColors.darkTextBody
+                          : AppColors.textBody,
                     ),
                   ),
                 ],
@@ -258,10 +366,12 @@ class AuditScreen extends ConsumerWidget {
               width: 200,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+                color:
+                    isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                  color:
+                      isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
                 ),
               ),
               child: Row(
@@ -275,7 +385,9 @@ class AuditScreen extends ConsumerWidget {
                   Text(
                     'بحث...',
                     style: AppTypography.labelLg.copyWith(
-                      color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                      color: isDarkMode
+                          ? AppColors.darkTextMuted
+                          : AppColors.textMuted,
                     ),
                   ),
                 ],
@@ -287,11 +399,12 @@ class AuditScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTimelineItem(dynamic log, int index, {required bool isDarkMode}) {
+  Widget _buildTimelineItem(dynamic log, int index,
+      {required bool isDarkMode}) {
     // Determine color based on log type
     Color color = AppColors.statusActive;
     String type = '';
-    
+
     if (log is AuditLogEntry) {
       // Real audit log entry from database
       type = log.type;
@@ -316,15 +429,16 @@ class AuditScreen extends ConsumerWidget {
       color = log['color'];
       type = log['type'];
     }
-    
+
     // Format time display
     String timeDisplay = '';
     if (log is AuditLogEntry) {
-      timeDisplay = '${log.timestamp.hour}:${log.timestamp.minute.toString().padLeft(2, '0')}';
+      timeDisplay =
+          '${log.timestamp.hour}:${log.timestamp.minute.toString().padLeft(2, '0')}';
     } else if (log is Map<String, dynamic>) {
       timeDisplay = log['time'];
     }
-    
+
     // Format user display
     String userDisplay = '';
     if (log is AuditLogEntry) {
@@ -332,7 +446,7 @@ class AuditScreen extends ConsumerWidget {
     } else if (log is Map<String, dynamic>) {
       userDisplay = log['user'];
     }
-    
+
     // Format action display
     String actionDisplay = '';
     if (log is AuditLogEntry) {
@@ -340,7 +454,7 @@ class AuditScreen extends ConsumerWidget {
     } else if (log is Map<String, dynamic>) {
       actionDisplay = log['action'];
     }
-    
+
     // Format target display
     String targetDisplay = '';
     if (log is AuditLogEntry) {
@@ -348,7 +462,7 @@ class AuditScreen extends ConsumerWidget {
     } else if (log is Map<String, dynamic>) {
       targetDisplay = log['target'];
     }
-    
+
     // Format details display
     String detailsDisplay = '';
     if (log is AuditLogEntry) {
@@ -356,7 +470,7 @@ class AuditScreen extends ConsumerWidget {
     } else if (log is Map<String, dynamic>) {
       detailsDisplay = log['details'];
     }
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       child: Row(
@@ -380,7 +494,9 @@ class AuditScreen extends ConsumerWidget {
                   width: 2,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                    color: isDarkMode
+                        ? AppColors.darkBorder
+                        : AppColors.borderLight,
                   ),
                 ),
             ],
@@ -391,10 +507,13 @@ class AuditScreen extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+                color: isDarkMode
+                    ? AppColors.darkBgSurfaceAlt
+                    : AppColors.bgSurfaceAlt,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                  color:
+                      isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
                 ),
               ),
               child: Column(
@@ -406,11 +525,14 @@ class AuditScreen extends ConsumerWidget {
                       Text(
                         '[$timeDisplay]',
                         style: AppTypography.bodySm.copyWith(
-                          color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                          color: isDarkMode
+                              ? AppColors.darkTextMuted
+                              : AppColors.textMuted,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: color.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
@@ -431,33 +553,40 @@ class AuditScreen extends ConsumerWidget {
                         TextSpan(
                           text: userDisplay,
                           style: AppTypography.bodyMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                            color: isDarkMode
+                                ? AppColors.darkTextHead
+                                : AppColors.textHeading,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         TextSpan(
                           text: ' ← $actionDisplay ← ',
                           style: AppTypography.bodyMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                            color: isDarkMode
+                                ? AppColors.darkTextBody
+                                : AppColors.textBody,
                           ),
                         ),
                         TextSpan(
                           text: targetDisplay,
                           style: AppTypography.bodyMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                            color: isDarkMode
+                                ? AppColors.darkTextHead
+                                : AppColors.textHeading,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (detailsDisplay.isNotEmpty)
-                    const SizedBox(height: 4),
+                  if (detailsDisplay.isNotEmpty) const SizedBox(height: 4),
                   if (detailsDisplay.isNotEmpty)
                     Text(
                       detailsDisplay,
                       style: AppTypography.bodySm.copyWith(
-                        color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                        color: isDarkMode
+                            ? AppColors.darkTextBody
+                            : AppColors.textBody,
                       ),
                     ),
                 ],
@@ -466,6 +595,6 @@ class AuditScreen extends ConsumerWidget {
           ),
         ],
       ),
-      );
+    );
   }
 }

@@ -23,45 +23,68 @@ final dashboardServiceProvider = Provider((ref) {
   return DashboardService(database, ownerId: ownerId);
 });
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  late Future<List<dynamic>> _dashboardFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _dashboardFuture = _loadDashboard();
+  }
+
+  Future<List<dynamic>> _loadDashboard() async {
+    final dashboardService = ref.read(dashboardServiceProvider);
+    return Future.wait([
+      dashboardService.getTotalSubscribers(),
+      dashboardService.getTotalCabinets(),
+      dashboardService.getCompletedCabinets(),
+      dashboardService.getTodayCollectedAmount(),
+      dashboardService.getWeeklyCollectedAmount(),
+      dashboardService.getMonthlyCollectedAmount(),
+      dashboardService.getActiveSubscribers(),
+      dashboardService.getNonPayingSubscribers(),
+      dashboardService.getRecentActivities(),
+      dashboardService.getPaymentTrends(),
+      dashboardService.getDailyCollections(),
+      dashboardService.getPaymentStatusDistribution(),
+      dashboardService.getCabinetsWithProgress(),
+      dashboardService.getAlerts(),
+      dashboardService.getCabinetCompletionRate(),
+      dashboardService.getWorkerPerformance(),
+    ]);
+  }
+
+  void _retry() {
+    setState(() {
+      _dashboardFuture = _loadDashboard();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
-    final dashboardService = ref.watch(dashboardServiceProvider);
-    
+
     return FutureBuilder(
-      future: Future.wait([
-        dashboardService.getTotalSubscribers(),
-        dashboardService.getTotalCabinets(),
-        dashboardService.getCompletedCabinets(),
-        dashboardService.getTodayCollectedAmount(),
-        dashboardService.getWeeklyCollectedAmount(),
-        dashboardService.getMonthlyCollectedAmount(),
-        dashboardService.getActiveSubscribers(),
-        dashboardService.getNonPayingSubscribers(),
-        dashboardService.getRecentActivities(),
-        dashboardService.getPaymentTrends(),
-        dashboardService.getDailyCollections(),
-        dashboardService.getPaymentStatusDistribution(),
-        dashboardService.getCabinetsWithProgress(),
-        dashboardService.getAlerts(),
-        dashboardService.getCabinetCompletionRate(),
-        dashboardService.getWorkerPerformance(),
-      ]),
+      future: _dashboardFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
-          return _buildErrorWidget(snapshot.error, isDarkMode, context);
+          return _buildErrorWidget(snapshot.error, isDarkMode);
         }
-        
+
         final data = snapshot.data as List<dynamic>;
-        
+
         // Extract all data
         final totalSubscribers = data[0] as int;
         final totalCabinets = data[1] as int;
@@ -79,7 +102,7 @@ class DashboardScreen extends ConsumerWidget {
         final alerts = data[13] as List<Map<String, dynamic>>;
         final cabinetCompletionRate = data[14] as double;
         final workerPerformance = data[15] as double;
-        
+
         return _buildDashboard(
           context: context,
           isDarkMode: isDarkMode,
@@ -104,7 +127,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorWidget(Object? error, bool isDarkMode, BuildContext context) {
+  Widget _buildErrorWidget(Object? error, bool isDarkMode) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -114,7 +137,8 @@ class DashboardScreen extends ConsumerWidget {
           Text(
             'حدث خطأ أثناء تحميل البيانات',
             style: AppTypography.h3.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           const Gap(8),
@@ -126,11 +150,12 @@ class DashboardScreen extends ConsumerWidget {
           ),
           const Gap(16),
           ElevatedButton(
-            onPressed: () => (context as Element).markNeedsBuild(),
+            onPressed: _retry,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.textOnPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('إعادة المحاولة'),
           ),
@@ -168,7 +193,7 @@ class DashboardScreen extends ConsumerWidget {
           // Modern Header with Gradient
           DashboardHeader(isDarkMode: isDarkMode),
           const Gap(AppDimens.cardGap),
-          
+
           // Quick Actions Panel
           QuickActionsPanel(
             isDarkMode: isDarkMode,
@@ -180,7 +205,7 @@ class DashboardScreen extends ConsumerWidget {
             onNavigateToReports: () => _navigateToReports(context),
           ),
           const Gap(AppDimens.cardGap),
-          
+
           // Stats Cards Section
           _buildSectionTitle('الإحصائيات', isDarkMode),
           const Gap(AppDimens.s16),
@@ -196,7 +221,7 @@ class DashboardScreen extends ConsumerWidget {
             isDarkMode: isDarkMode,
           ),
           const Gap(AppDimens.cardGap),
-          
+
           // Charts Row
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,11 +244,12 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
           const Gap(AppDimens.cardGap),
-          
+
           // Line Chart - Payment Trends
-          _buildLineChartCard(paymentTrends: paymentTrends, isDarkMode: isDarkMode),
+          _buildLineChartCard(
+              paymentTrends: paymentTrends, isDarkMode: isDarkMode),
           const Gap(AppDimens.cardGap),
-          
+
           // Bottom Row: Alerts + Cabinet Progress
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,7 +269,7 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
           const Gap(AppDimens.cardGap),
-          
+
           // Recent Activities
           _buildRecentActivitiesCard(
             recentActivities: recentActivities,
@@ -254,8 +280,6 @@ class DashboardScreen extends ConsumerWidget {
       ),
     );
   }
-
-
 
   Widget _buildSectionTitle(String title, bool isDarkMode) {
     return Text(
@@ -278,22 +302,84 @@ class DashboardScreen extends ConsumerWidget {
     required bool isDarkMode,
   }) {
     final stats = [
-      {'title': 'المحصّل اليوم', 'value': _formatAmount(todayCollected), 'unit': 'IQD', 'icon': Icons.today, 'color': AppColors.primary, 'gradient': [AppColors.primary, AppColors.primary.withGreen(200)]},
-      {'title': 'المحصّل الأسبوع', 'value': _formatAmount(weeklyCollected), 'unit': 'IQD', 'icon': Icons.date_range, 'color': AppColors.statusInfo, 'gradient': [AppColors.statusInfo, AppColors.statusInfo.withBlue(200)]},
-      {'title': 'المحصّل الشهر', 'value': _formatAmount(monthlyCollected), 'unit': 'IQD', 'icon': Icons.calendar_month, 'color': AppColors.statusActive, 'gradient': [AppColors.statusActive, AppColors.statusActive.withGreen(200)]},
-      {'title': 'المشتركون', 'value': totalSubscribers.toString(), 'unit': 'مشترك', 'icon': Icons.people, 'color': AppColors.gold, 'gradient': [AppColors.gold, AppColors.gold.withRed(200)]},
-      {'title': 'النشطون', 'value': activeSubscribers.toString(), 'unit': 'مشترك', 'icon': Icons.check_circle, 'color': AppColors.statusActive, 'gradient': [AppColors.statusActive, const Color(0xFF4CAF50)]},
-      {'title': 'المتأخرون', 'value': nonPayingSubscribers.toString(), 'unit': 'مشترك', 'icon': Icons.warning, 'color': AppColors.statusWarning, 'gradient': [AppColors.statusWarning, AppColors.statusWarning.withRed(200)]},
-      {'title': 'الكabenات', 'value': '${cabinetCompletionRate.toStringAsFixed(0)}%', 'unit': 'مكتملة', 'icon': Icons.apps, 'color': AppColors.primary, 'gradient': [AppColors.primary, AppColors.primary.withBlue(200)]},
-      {'title': 'أداء العمال', 'value': '${workerPerformance.toStringAsFixed(0)}%', 'unit': 'كفاءة', 'icon': Icons.engineering, 'color': AppColors.statusInfo, 'gradient': [AppColors.statusInfo, AppColors.statusInfo.withGreen(200)]},
+      {
+        'title': 'المحصّل اليوم',
+        'value': _formatAmount(todayCollected),
+        'unit': 'IQD',
+        'icon': Icons.today,
+        'color': AppColors.primary,
+        'gradient': [AppColors.primary, AppColors.primary.withGreen(200)]
+      },
+      {
+        'title': 'المحصّل الأسبوع',
+        'value': _formatAmount(weeklyCollected),
+        'unit': 'IQD',
+        'icon': Icons.date_range,
+        'color': AppColors.statusInfo,
+        'gradient': [AppColors.statusInfo, AppColors.statusInfo.withBlue(200)]
+      },
+      {
+        'title': 'المحصّل الشهر',
+        'value': _formatAmount(monthlyCollected),
+        'unit': 'IQD',
+        'icon': Icons.calendar_month,
+        'color': AppColors.statusActive,
+        'gradient': [
+          AppColors.statusActive,
+          AppColors.statusActive.withGreen(200)
+        ]
+      },
+      {
+        'title': 'المشتركون',
+        'value': totalSubscribers.toString(),
+        'unit': 'مشترك',
+        'icon': Icons.people,
+        'color': AppColors.gold,
+        'gradient': [AppColors.gold, AppColors.gold.withRed(200)]
+      },
+      {
+        'title': 'النشطون',
+        'value': activeSubscribers.toString(),
+        'unit': 'مشترك',
+        'icon': Icons.check_circle,
+        'color': AppColors.statusActive,
+        'gradient': [AppColors.statusActive, const Color(0xFF4CAF50)]
+      },
+      {
+        'title': 'المتأخرون',
+        'value': nonPayingSubscribers.toString(),
+        'unit': 'مشترك',
+        'icon': Icons.warning,
+        'color': AppColors.statusWarning,
+        'gradient': [
+          AppColors.statusWarning,
+          AppColors.statusWarning.withRed(200)
+        ]
+      },
+      {
+        'title': 'الكabenات',
+        'value': '${cabinetCompletionRate.toStringAsFixed(0)}%',
+        'unit': 'مكتملة',
+        'icon': Icons.apps,
+        'color': AppColors.primary,
+        'gradient': [AppColors.primary, AppColors.primary.withBlue(200)]
+      },
+      {
+        'title': 'أداء العمال',
+        'value': '${workerPerformance.toStringAsFixed(0)}%',
+        'unit': 'كفاءة',
+        'icon': Icons.engineering,
+        'color': AppColors.statusInfo,
+        'gradient': [AppColors.statusInfo, AppColors.statusInfo.withGreen(200)]
+      },
     ];
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         // Responsive grid for stats - adjust based on screen width
         int crossAxisCount;
         double childAspectRatio;
-        
+
         if (constraints.maxWidth > 1400) {
           // Large screens - 4 columns
           crossAxisCount = 4;
@@ -311,7 +397,7 @@ class DashboardScreen extends ConsumerWidget {
           crossAxisCount = 1;
           childAspectRatio = 2.2;
         }
-        
+
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -425,13 +511,14 @@ class DashboardScreen extends ConsumerWidget {
     final unpaid = paymentDistribution['unpaid'] ?? 0;
     final total = paid + partial + unpaid;
     final sections = <PieChartSectionData>[];
-    
+
     if (total > 0) {
       if (paid > 0) {
         sections.add(PieChartSectionData(
           value: paid.toDouble(),
           title: '$paid',
-          titleStyle: AppTypography.labelSm.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+          titleStyle: AppTypography.labelSm
+              .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
           color: AppColors.statusActive,
           radius: 60,
           titlePositionPercentageOffset: 0.5,
@@ -441,7 +528,8 @@ class DashboardScreen extends ConsumerWidget {
         sections.add(PieChartSectionData(
           value: partial.toDouble(),
           title: '$partial',
-          titleStyle: AppTypography.labelSm.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+          titleStyle: AppTypography.labelSm
+              .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
           color: AppColors.statusWarning,
           radius: 60,
           titlePositionPercentageOffset: 0.5,
@@ -451,14 +539,15 @@ class DashboardScreen extends ConsumerWidget {
         sections.add(PieChartSectionData(
           value: unpaid.toDouble(),
           title: '$unpaid',
-          titleStyle: AppTypography.labelSm.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+          titleStyle: AppTypography.labelSm
+              .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
           color: AppColors.statusDanger,
           radius: 60,
           titlePositionPercentageOffset: 0.5,
         ));
       }
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(AppDimens.cardPadding),
       decoration: BoxDecoration(
@@ -472,13 +561,14 @@ class DashboardScreen extends ConsumerWidget {
           Text(
             'حالة الدفع',
             style: AppTypography.h3.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           const Gap(AppDimens.s16),
           SizedBox(
             height: 180,
-            child: total > 0 
+            child: total > 0
                 ? PieChart(
                     PieChartData(
                       sections: sections,
@@ -490,7 +580,9 @@ class DashboardScreen extends ConsumerWidget {
                     child: Text(
                       'لا توجد بيانات',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ),
@@ -531,10 +623,11 @@ class DashboardScreen extends ConsumerWidget {
         ),
       );
     }
-    final amounts = dailyCollections.map((e) => (e['amount'] as num?)?.toDouble() ?? 0.0);
+    final amounts =
+        dailyCollections.map((e) => (e['amount'] as num?)?.toDouble() ?? 0.0);
     final maxAmount = amounts.reduce((a, b) => a > b ? a : b);
     final maxY = maxAmount > 0 ? maxAmount * 1.2 : 1000000.0;
-    
+
     return Container(
       padding: const EdgeInsets.all(AppDimens.cardPadding),
       decoration: BoxDecoration(
@@ -548,7 +641,8 @@ class DashboardScreen extends ConsumerWidget {
           Text(
             'التحصيل اليومي',
             style: AppTypography.h3.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           const Gap(AppDimens.s16),
@@ -561,7 +655,10 @@ class DashboardScreen extends ConsumerWidget {
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final amount = (dailyCollections[groupIndex]['amount'] as num?)?.toDouble() ?? 0.0;
+                      final amount =
+                          (dailyCollections[groupIndex]['amount'] as num?)
+                                  ?.toDouble() ??
+                              0.0;
                       return BarTooltipItem(
                         _formatAmount(amount),
                         AppTypography.labelSm.copyWith(color: Colors.white),
@@ -582,7 +679,9 @@ class DashboardScreen extends ConsumerWidget {
                             child: Text(
                               dailyCollections[index]['day'] as String,
                               style: AppTypography.labelSm.copyWith(
-                                color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                                color: isDarkMode
+                                    ? AppColors.darkTextMuted
+                                    : AppColors.textMuted,
                               ),
                             ),
                           );
@@ -592,9 +691,12 @@ class DashboardScreen extends ConsumerWidget {
                       reservedSize: 30,
                     ),
                   ),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 gridData: const FlGridData(show: false),
@@ -606,7 +708,8 @@ class DashboardScreen extends ConsumerWidget {
                         toY: (entry.value['amount'] as num?)?.toDouble() ?? 0.0,
                         color: AppColors.primary,
                         width: 20,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6)),
                       ),
                     ],
                   );
@@ -636,7 +739,8 @@ class DashboardScreen extends ConsumerWidget {
           Text(
             '趋势 التحويلات',
             style: AppTypography.h3.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           const Gap(AppDimens.s16),
@@ -647,7 +751,8 @@ class DashboardScreen extends ConsumerWidget {
                 lineBarsData: [
                   LineChartBarData(
                     spots: paymentTrends.asMap().entries.map((entry) {
-                      return FlSpot(entry.key.toDouble(), ((entry.value['payments'] as num?) ?? 0).toDouble());
+                      return FlSpot(entry.key.toDouble(),
+                          ((entry.value['payments'] as num?) ?? 0).toDouble());
                     }).toList(),
                     isCurved: true,
                     color: AppColors.primary,
@@ -661,7 +766,10 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   LineChartBarData(
                     spots: paymentTrends.asMap().entries.map((entry) {
-                      return FlSpot(entry.key.toDouble(), ((entry.value['commissions'] as num?) ?? 0).toDouble());
+                      return FlSpot(
+                          entry.key.toDouble(),
+                          ((entry.value['commissions'] as num?) ?? 0)
+                              .toDouble());
                     }).toList(),
                     isCurved: true,
                     color: AppColors.gold,
@@ -686,7 +794,9 @@ class DashboardScreen extends ConsumerWidget {
                           return Text(
                             paymentTrends[index]['day'] as String,
                             style: AppTypography.bodySm.copyWith(
-                              color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                              color: isDarkMode
+                                  ? AppColors.darkTextMuted
+                                  : AppColors.textMuted,
                             ),
                           );
                         }
@@ -694,16 +804,21 @@ class DashboardScreen extends ConsumerWidget {
                       },
                     ),
                   ),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: 1,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                    color: isDarkMode
+                        ? AppColors.darkBorder
+                        : AppColors.borderLight,
                     strokeWidth: 0.5,
                   ),
                 ),
@@ -746,19 +861,23 @@ class DashboardScreen extends ConsumerWidget {
                   color: AppColors.statusDanger.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppDimens.rMd),
                 ),
-                child: Icon(Icons.warning, color: AppColors.statusDanger, size: AppDimens.iconMd),
+                child: Icon(Icons.warning,
+                    color: AppColors.statusDanger, size: AppDimens.iconMd),
               ),
               const Gap(AppDimens.s12),
               Text(
                 'التنبيهات',
                 style: AppTypography.h3.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                 ),
               ),
               const Spacer(),
               if (alerts.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.s10, vertical: AppDimens.s4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.s10, vertical: AppDimens.s4),
                   decoration: BoxDecoration(
                     color: AppColors.statusDanger,
                     borderRadius: BorderRadius.circular(AppDimens.rMd),
@@ -777,12 +896,15 @@ class DashboardScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(AppDimens.cardPadding),
                 child: Column(
                   children: [
-                    Icon(Icons.check_circle, size: 48, color: AppColors.statusActive),
+                    Icon(Icons.check_circle,
+                        size: 48, color: AppColors.statusActive),
                     const Gap(AppDimens.s12),
                     Text(
                       'لا توجد تنبيهات',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                        color: isDarkMode
+                            ? AppColors.darkTextBody
+                            : AppColors.textBody,
                       ),
                     ),
                   ],
@@ -793,8 +915,10 @@ class DashboardScreen extends ConsumerWidget {
             ...alerts.asMap().entries.map((entry) {
               final alert = entry.value;
               final severity = alert['severity'] as String;
-              final color = severity == 'danger' ? AppColors.statusDanger : AppColors.statusWarning;
-              
+              final color = severity == 'danger'
+                  ? AppColors.statusDanger
+                  : AppColors.statusWarning;
+
               return Container(
                 margin: const EdgeInsets.only(bottom: AppDimens.s12),
                 padding: const EdgeInsets.all(AppDimens.s12),
@@ -808,7 +932,8 @@ class DashboardScreen extends ConsumerWidget {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                      decoration:
+                          BoxDecoration(color: color, shape: BoxShape.circle),
                     ),
                     const Gap(AppDimens.s12),
                     Expanded(
@@ -818,13 +943,17 @@ class DashboardScreen extends ConsumerWidget {
                           Text(
                             alert['title'] as String,
                             style: AppTypography.labelMd.copyWith(
-                              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                              color: isDarkMode
+                                  ? AppColors.darkTextHead
+                                  : AppColors.textHeading,
                             ),
                           ),
                           Text(
                             alert['message'] as String,
                             style: AppTypography.bodySm.copyWith(
-                              color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                              color: isDarkMode
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textBody,
                             ),
                           ),
                         ],
@@ -861,13 +990,16 @@ class DashboardScreen extends ConsumerWidget {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppDimens.rMd),
                 ),
-                child: Icon(Icons.apps, color: AppColors.primary, size: AppDimens.iconMd),
+                child: Icon(Icons.apps,
+                    color: AppColors.primary, size: AppDimens.iconMd),
               ),
               const Gap(AppDimens.s12),
               Text(
                 'تقدم الكabenات',
                 style: AppTypography.h3.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                 ),
               ),
             ],
@@ -879,12 +1011,18 @@ class DashboardScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(AppDimens.cardPadding),
                 child: Column(
                   children: [
-                    Icon(Icons.folder_open, size: 48, color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted),
+                    Icon(Icons.folder_open,
+                        size: 48,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted),
                     const Gap(AppDimens.s12),
                     Text(
                       'لا توجد كabenات',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                        color: isDarkMode
+                            ? AppColors.darkTextBody
+                            : AppColors.textBody,
                       ),
                     ),
                   ],
@@ -895,7 +1033,7 @@ class DashboardScreen extends ConsumerWidget {
             ...cabinetsProgress.asMap().entries.map((entry) {
               final cabinet = entry.value;
               final progress = cabinet['progress'] as double;
-              
+
               return Container(
                 margin: const EdgeInsets.only(bottom: AppDimens.s16),
                 child: Column(
@@ -907,13 +1045,17 @@ class DashboardScreen extends ConsumerWidget {
                         Text(
                           (cabinet['name'] ?? '') as String,
                           style: AppTypography.labelMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                            color: isDarkMode
+                                ? AppColors.darkTextHead
+                                : AppColors.textHeading,
                           ),
                         ),
                         Text(
                           '${cabinet['current']}/${cabinet['total']}',
                           style: AppTypography.labelSm.copyWith(
-                            color: isDarkMode ? AppColors.darkTextBody : AppColors.textSecondary,
+                            color: isDarkMode
+                                ? AppColors.darkTextBody
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -924,7 +1066,9 @@ class DashboardScreen extends ConsumerWidget {
                         Container(
                           height: 8,
                           decoration: BoxDecoration(
-                            color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                            color: isDarkMode
+                                ? AppColors.darkBorder
+                                : AppColors.borderLight,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -934,9 +1078,15 @@ class DashboardScreen extends ConsumerWidget {
                             height: 8,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: progress >= 1.0 
-                                    ? [AppColors.statusActive, AppColors.statusActive.withGreen(150)]
-                                    : [AppColors.primary, AppColors.primary.withBlue(200)],
+                                colors: progress >= 1.0
+                                    ? [
+                                        AppColors.statusActive,
+                                        AppColors.statusActive.withGreen(150)
+                                      ]
+                                    : [
+                                        AppColors.primary,
+                                        AppColors.primary.withBlue(200)
+                                      ],
                               ),
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -973,14 +1123,17 @@ class DashboardScreen extends ConsumerWidget {
               Text(
                 'الأنشطة الأخيرة',
                 style: AppTypography.h3.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                 ),
               ),
               TextButton(
                 onPressed: () {},
                 child: Text(
                   'عرض الكل ←',
-                  style: AppTypography.labelMd.copyWith(color: AppColors.primary),
+                  style:
+                      AppTypography.labelMd.copyWith(color: AppColors.primary),
                 ),
               ),
             ],
@@ -992,12 +1145,18 @@ class DashboardScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(AppDimens.cardPadding),
                 child: Column(
                   children: [
-                    Icon(Icons.history, size: 48, color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted),
+                    Icon(Icons.history,
+                        size: 48,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted),
                     const Gap(AppDimens.s12),
                     Text(
                       'لا توجد أنشطة حديثة',
                       style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                        color: isDarkMode
+                            ? AppColors.darkTextBody
+                            : AppColors.textBody,
                       ),
                     ),
                   ],
@@ -1007,13 +1166,16 @@ class DashboardScreen extends ConsumerWidget {
           else
             ...recentActivities.take(5).toList().asMap().entries.map((entry) {
               final activity = entry.value;
-              final color = _getColorFromName((activity['color'] as String?) ?? 'statusInfo');
-              
+              final color = _getColorFromName(
+                  (activity['color'] as String?) ?? 'statusInfo');
+
               return Container(
                 margin: const EdgeInsets.only(bottom: AppDimens.s12),
                 padding: const EdgeInsets.all(AppDimens.s12),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+                  color: isDarkMode
+                      ? AppColors.darkBgSurfaceAlt
+                      : AppColors.bgSurfaceAlt,
                   borderRadius: BorderRadius.circular(AppDimens.rMd),
                 ),
                 child: Row(
@@ -1028,7 +1190,8 @@ class DashboardScreen extends ConsumerWidget {
                       child: Center(
                         child: Text(
                           (activity['userCode'] as String?) ?? '-',
-                          style: AppTypography.labelSm.copyWith(color: color, fontWeight: FontWeight.w600),
+                          style: AppTypography.labelSm.copyWith(
+                              color: color, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -1040,13 +1203,17 @@ class DashboardScreen extends ConsumerWidget {
                           Text(
                             (activity['userName'] as String?) ?? '-',
                             style: AppTypography.labelMd.copyWith(
-                              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                              color: isDarkMode
+                                  ? AppColors.darkTextHead
+                                  : AppColors.textHeading,
                             ),
                           ),
                           Text(
                             (activity['activity'] as String?) ?? '-',
                             style: AppTypography.bodySm.copyWith(
-                              color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                              color: isDarkMode
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textBody,
                             ),
                           ),
                         ],
@@ -1055,12 +1222,17 @@ class DashboardScreen extends ConsumerWidget {
                     Text(
                       (activity['date'] as String?) ?? '-',
                       style: AppTypography.labelSm.copyWith(
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
                 ),
-              ).animate(delay: (900 + entry.key * 100).ms).fadeIn().slideX(begin: 0.05);
+              )
+                  .animate(delay: (900 + entry.key * 100).ms)
+                  .fadeIn()
+                  .slideX(begin: 0.05);
             }),
         ],
       ),
@@ -1088,11 +1260,16 @@ class DashboardScreen extends ConsumerWidget {
 
   Color _getColorFromName(String colorName) {
     switch (colorName) {
-      case 'statusActive': return AppColors.statusActive;
-      case 'statusInfo': return AppColors.statusInfo;
-      case 'statusDanger': return AppColors.statusDanger;
-      case 'statusWarning': return AppColors.statusWarning;
-      default: return AppColors.statusActive;
+      case 'statusActive':
+        return AppColors.statusActive;
+      case 'statusInfo':
+        return AppColors.statusInfo;
+      case 'statusDanger':
+        return AppColors.statusDanger;
+      case 'statusWarning':
+        return AppColors.statusWarning;
+      default:
+        return AppColors.statusActive;
     }
   }
 
@@ -1106,7 +1283,21 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   String _getMonthName(int month) {
-    const months = ['', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const months = [
+      '',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر'
+    ];
     return months[month];
   }
 

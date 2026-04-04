@@ -8,6 +8,9 @@ import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/dialogs/subscriber_dialog.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/screen_header.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/error_state_widget.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/empty_state_widget.dart';
 
 class SubscribersScreen extends ConsumerStatefulWidget {
   const SubscribersScreen({super.key});
@@ -26,31 +29,61 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
     final subscribersState = ref.watch(subscribersProvider);
     final selectedCabinet = ref.watch(selectedCabinetFilterProvider);
 
-    // Apply cabinet filter when screen loads or when cabinet changes
-    if (selectedCabinet != null && !_filterApplied && !subscribersState.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(subscribersProvider.notifier).filterByCabinet(selectedCabinet);
-        setState(() {
-          _filterApplied = true;
-        });
-      });
-    }
-
-    // Reset filter applied flag when no cabinet is selected
-    if (selectedCabinet == null && _filterApplied) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          _filterApplied = false;
-        });
-      });
-    }
+    // React to cabinet filter changes
+    ref.listen<String?>(selectedCabinetFilterProvider, (previous, next) {
+      if (next != null && next != previous) {
+        ref.read(subscribersProvider.notifier).filterByCabinet(next);
+        _filterApplied = true;
+      } else if (next == null && _filterApplied) {
+        _filterApplied = false;
+      }
+    });
 
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(context, isDarkMode, ref),
+          ScreenHeader(
+            title: selectedCabinet != null
+                ? 'مشتركي $selectedCabinet'
+                : 'المشتركين',
+            actionLabel: 'إضافة مشترك',
+            onActionPressed: () async {
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (context) => const SubscriberDialog(),
+              );
+              if (result == true) {
+                ref.read(subscribersProvider.notifier).loadSubscribers();
+              }
+            },
+            leading: selectedCabinet != null
+                ? GestureDetector(
+                    onTap: () {
+                      ref.read(subscribersProvider.notifier).clearFilters();
+                      ref.read(selectedCabinetFilterProvider.notifier).state =
+                          null;
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? AppColors.darkBgSurfaceAlt
+                            : AppColors.bgSurfaceAlt,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: isDarkMode
+                            ? AppColors.darkTextBody
+                            : AppColors.textBody,
+                        size: 20,
+                      ),
+                    ),
+                  )
+                : null,
+          ).animate().fadeIn(duration: 300.ms),
           const SizedBox(height: 24),
           _buildFiltersAndSearch(isDarkMode, ref),
           const SizedBox(height: 16),
@@ -66,56 +99,12 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
           // Error state
           if (subscribersState.error != null && !subscribersState.isLoading)
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error,
-                      size: 64,
-                      color: AppColors.statusDanger,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'حدث خطأ أثناء تحميل المشتركين',
-                      style: AppTypography.h3.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextHead
-                            : AppColors.textHeading,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      subscribersState.error!,
-                      style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextBody
-                            : AppColors.textBody,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref
-                            .read(subscribersProvider.notifier)
-                            .loadSubscribers();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textOnPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'إعادة المحاولة',
-                        style: AppTypography.labelLg.copyWith(
-                          color: AppColors.textOnPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: ErrorStateWidget(
+                message: 'حدث خطأ أثناء تحميل المشتركين',
+                errorDetail: subscribersState.error,
+                onRetry: () {
+                  ref.read(subscribersProvider.notifier).loadSubscribers();
+                },
               ),
             ),
 
@@ -123,38 +112,11 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
           if (!subscribersState.isLoading &&
               subscribersState.error == null &&
               subscribersState.subscribers.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.people,
-                      size: 64,
-                      color: isDarkMode
-                          ? AppColors.darkTextBody
-                          : AppColors.textSecondary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'لا توجد مشتركين',
-                      style: AppTypography.h3.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextHead
-                            : AppColors.textHeading,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'اضغط على زر "إضافة مشترك" لإنشاء مشترك جديد',
-                      style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextBody
-                            : AppColors.textBody,
-                      ),
-                    ),
-                  ],
-                ),
+            const Expanded(
+              child: EmptyStateWidget(
+                icon: Icons.people,
+                title: 'لا توجد مشتركين',
+                subtitle: 'اضغط على زر "إضافة مشترك" لإنشاء مشترك جديد',
               ),
             ),
 
@@ -298,7 +260,8 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
                     ),
                   ],
                 ),
-              ).animate(delay: 400.ms).fadeIn(duration: 500.ms).slideY(begin: 0.08, curve: Curves.easeOutBack, duration: 600.ms),
+              ).animate(delay: 400.ms).fadeIn(duration: 500.ms).slideY(
+                  begin: 0.08, curve: Curves.easeOutBack, duration: 600.ms),
             ),
         ],
       ),
@@ -307,7 +270,7 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
 
   Widget _buildHeader(BuildContext context, bool isDarkMode, WidgetRef ref) {
     final selectedCabinet = ref.watch(selectedCabinetFilterProvider);
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -322,12 +285,16 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+                    color: isDarkMode
+                        ? AppColors.darkBgSurfaceAlt
+                        : AppColors.bgSurfaceAlt,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.arrow_back,
-                    color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                    color: isDarkMode
+                        ? AppColors.darkTextBody
+                        : AppColors.textBody,
                     size: 20,
                   ),
                 ),
@@ -335,11 +302,10 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
               const SizedBox(width: 12),
             ],
             Text(
-              selectedCabinet != null 
-                  ? 'مشتركي $selectedCabinet' 
-                  : 'المشتركين',
+              selectedCabinet != null ? 'مشتركي $selectedCabinet' : 'المشتركين',
               style: AppTypography.h2.copyWith(
-                color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                color:
+                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
               ),
             ).animate().fadeIn(duration: 300.ms),
           ],
@@ -448,7 +414,7 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
             ),
           ],
         ),
-        
+
         // Show cabinet filter badge if active
         if (subscribersState.cabinetFilter != null) ...[
           const SizedBox(height: 12),
@@ -480,7 +446,8 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
                 GestureDetector(
                   onTap: () {
                     ref.read(subscribersProvider.notifier).clearFilters();
-                    ref.read(selectedCabinetFilterProvider.notifier).state = null;
+                    ref.read(selectedCabinetFilterProvider.notifier).state =
+                        null;
                   },
                   child: Icon(
                     Icons.close,
@@ -492,7 +459,7 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
             ),
           ),
         ],
-        
+
         const SizedBox(height: 16),
 
         // Search bar
@@ -616,7 +583,8 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
         : 'لا يوجد';
 
     // Format the last payment date
-    final lastPaymentDisplay = '${subscriber.startDate.day}/${subscriber.startDate.month}/${subscriber.startDate.year}';
+    final lastPaymentDisplay =
+        '${subscriber.startDate.day}/${subscriber.startDate.month}/${subscriber.startDate.year}';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -740,13 +708,15 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, WidgetRef ref, Subscriber subscriber) {
+  void _showDeleteConfirmation(
+      BuildContext context, WidgetRef ref, Subscriber subscriber) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+        backgroundColor:
+            isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
         title: Text(
           'حذف مشترك',
           style: AppTypography.h3.copyWith(
@@ -772,7 +742,9 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              await ref.read(subscribersProvider.notifier).deleteSubscriber(subscriber.id);
+              await ref
+                  .read(subscribersProvider.notifier)
+                  .deleteSubscriber(subscriber.id);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

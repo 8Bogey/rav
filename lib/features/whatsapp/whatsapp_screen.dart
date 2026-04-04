@@ -6,25 +6,48 @@ import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/services/service_providers.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/screen_header.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/error_state_widget.dart';
 
-
-
-class WhatsappScreen extends ConsumerWidget {
+class WhatsappScreen extends ConsumerStatefulWidget {
   const WhatsappScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WhatsappScreen> createState() => _WhatsappScreenState();
+}
+
+class _WhatsappScreenState extends ConsumerState<WhatsappScreen> {
+  late Future<List<dynamic>> _whatsappFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _whatsappFuture = _loadWhatsappData();
+  }
+
+  Future<List<dynamic>> _loadWhatsappData() async {
+    final whatsappService = ref.read(whatsappServiceProvider);
+    final ownerId = ref.read(currentUserIdProvider) ?? '';
+    return Future.wait([
+      whatsappService.getAllTemplates(ownerId: ownerId),
+      whatsappService.getSubscribersCount(ownerId: ownerId),
+      whatsappService.getMessagesLog(),
+    ]);
+  }
+
+  void _retry() {
+    setState(() {
+      _whatsappFuture = _loadWhatsappData();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
-    final whatsappService = ref.watch(whatsappServiceProvider);
-    final ownerId = ref.watch(currentUserIdProvider) ?? '';
-    
+
     return FutureBuilder(
-      future: Future.wait([
-        whatsappService.getAllTemplates(ownerId: ownerId),
-        whatsappService.getSubscribersCount(ownerId: ownerId),
-        whatsappService.getMessagesLog(),
-      ]),
+      future: _whatsappFuture,
       builder: (context, snapshot) {
         // Handle loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -44,7 +67,7 @@ class WhatsappScreen extends ConsumerWidget {
             ),
           );
         }
-        
+
         // Handle error state
         if (snapshot.hasError) {
           return Padding(
@@ -52,113 +75,36 @@ class WhatsappScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(isDarkMode),
+                const ScreenHeader(title: 'واتساب'),
                 const SizedBox(height: 24),
                 Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error,
-                          size: 64,
-                          color: AppColors.statusDanger,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'حدث خطأ أثناء تحميل بيانات واتساب',
-                          style: AppTypography.h3.copyWith(
-                            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          snapshot.error.toString(),
-                          style: AppTypography.bodyMd.copyWith(
-                            color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            // Retry loading
-                            (context as Element).markNeedsBuild();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.textOnPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            'إعادة المحاولة',
-                            style: AppTypography.labelLg.copyWith(
-                              color: AppColors.textOnPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: ErrorStateWidget(
+                    message: 'حدث خطأ أثناء تحميل بيانات واتساب',
+                    errorDetail: snapshot.error.toString(),
+                    onRetry: _retry,
                   ),
                 ),
               ],
             ),
           );
         }
-        
+
         // Extract data from snapshot
         final data = snapshot.data as List<dynamic>;
         final templates = data[0] as List<dynamic>;
         final subscribersCount = data[1] as int;
         final messagesLog = data[2] as List<Map<String, dynamic>>;
-        
+
         return Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with title and actions - matching Bitepoint style
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'واتساب',
-                    style: AppTypography.h2.copyWith(
-                      color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-                    ),
-                  ).animate().fadeIn(duration: 300.ms),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.gold,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.gold.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.send,
-                          color: AppColors.textOnGold,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'إرسال رسالة',
-                          style: AppTypography.labelLg.copyWith(
-                            color: AppColors.textOnGold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate(delay: 100.ms).scaleXY(begin: 0.95, end: 1.0, duration: 400.ms),
-                ],
+              // Header with title and actions
+              ScreenHeader(
+                title: 'واتساب',
+                actionLabel: 'إرسال رسالة',
+                actionIcon: Icons.send,
               ).animate().fadeIn(duration: 300.ms),
               const SizedBox(height: 24),
 
@@ -171,7 +117,8 @@ class WhatsappScreen extends ConsumerWidget {
                     _buildTemplatesColumn(templates, isDarkMode: isDarkMode),
                     const SizedBox(width: 16),
                     // Message editor column
-                    _buildEditorColumn(context, subscribersCount, isDarkMode: isDarkMode),
+                    _buildEditorColumn(context, subscribersCount,
+                        isDarkMode: isDarkMode),
                     const SizedBox(width: 16),
                     // Send log column
                     _buildLogColumn(messagesLog, isDarkMode: isDarkMode),
@@ -184,7 +131,7 @@ class WhatsappScreen extends ConsumerWidget {
       },
     );
   }
-  
+
   Widget _buildHeader(bool isDarkMode) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -224,12 +171,15 @@ class WhatsappScreen extends ConsumerWidget {
               ),
             ],
           ),
-        ).animate(delay: 100.ms).scaleXY(begin: 0.95, end: 1.0, duration: 400.ms),
+        )
+            .animate(delay: 100.ms)
+            .scaleXY(begin: 0.95, end: 1.0, duration: 400.ms),
       ],
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  Widget _buildTemplatesColumn(List<dynamic> templates, {required bool isDarkMode}) {
+  Widget _buildTemplatesColumn(List<dynamic> templates,
+      {required bool isDarkMode}) {
     return Expanded(
       flex: 1,
       child: Container(
@@ -243,8 +193,11 @@ class WhatsappScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                color: isDarkMode
+                    ? AppColors.darkBgSurfaceAlt
+                    : AppColors.bgSurfaceAlt,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -252,7 +205,9 @@ class WhatsappScreen extends ConsumerWidget {
                   Text(
                     'القوالب',
                     style: AppTypography.h3.copyWith(
-                      color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                      color: isDarkMode
+                          ? AppColors.darkTextHead
+                          : AppColors.textHeading,
                     ),
                   ),
                   IconButton(
@@ -275,14 +230,18 @@ class WhatsappScreen extends ConsumerWidget {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: template.isActive 
-                          ? AppColors.primary.withOpacity(0.1) 
-                          : (isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt),
+                      color: template.isActive
+                          ? AppColors.primary.withOpacity(0.1)
+                          : (isDarkMode
+                              ? AppColors.darkBgSurfaceAlt
+                              : AppColors.bgSurfaceAlt),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: template.isActive 
-                            ? AppColors.primary 
-                            : (isDarkMode ? AppColors.darkBorder : AppColors.borderLight),
+                        color: template.isActive
+                            ? AppColors.primary
+                            : (isDarkMode
+                                ? AppColors.darkBorder
+                                : AppColors.borderLight),
                       ),
                     ),
                     child: Column(
@@ -291,17 +250,23 @@ class WhatsappScreen extends ConsumerWidget {
                         Text(
                           template.title,
                           style: AppTypography.bodyMd.copyWith(
-                            color: template.isActive 
-                                ? AppColors.primary 
-                                : (isDarkMode ? AppColors.darkTextHead : AppColors.textHeading),
-                            fontWeight: template.isActive ? FontWeight.w600 : FontWeight.normal,
+                            color: template.isActive
+                                ? AppColors.primary
+                                : (isDarkMode
+                                    ? AppColors.darkTextHead
+                                    : AppColors.textHeading),
+                            fontWeight: template.isActive
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           template.content,
                           style: AppTypography.bodySm.copyWith(
-                            color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                            color: isDarkMode
+                                ? AppColors.darkTextBody
+                                : AppColors.textBody,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -318,7 +283,8 @@ class WhatsappScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEditorColumn(BuildContext context, int subscribersCount, {required bool isDarkMode}) {
+  Widget _buildEditorColumn(BuildContext context, int subscribersCount,
+      {required bool isDarkMode}) {
     return Expanded(
       flex: 2,
       child: Container(
@@ -332,13 +298,18 @@ class WhatsappScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                color: isDarkMode
+                    ? AppColors.darkBgSurfaceAlt
+                    : AppColors.bgSurfaceAlt,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Text(
                 'محرر الرسالة',
                 style: AppTypography.h3.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                 ),
               ),
             ),
@@ -353,10 +324,14 @@ class WhatsappScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+                          color: isDarkMode
+                              ? AppColors.darkBgSurfaceAlt
+                              : AppColors.bgSurfaceAlt,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                            color: isDarkMode
+                                ? AppColors.darkBorder
+                                : AppColors.borderLight,
                           ),
                         ),
                         child: const TextField(
@@ -375,10 +350,14 @@ class WhatsappScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
+                        color: isDarkMode
+                            ? AppColors.darkBgSurfaceAlt
+                            : AppColors.bgSurfaceAlt,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                          color: isDarkMode
+                              ? AppColors.darkBorder
+                              : AppColors.borderLight,
                         ),
                       ),
                       child: Row(
@@ -388,12 +367,15 @@ class WhatsappScreen extends ConsumerWidget {
                           Text(
                             'اختر المجموعة ▼',
                             style: AppTypography.bodyMd.copyWith(
-                              color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                              color: isDarkMode
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textBody,
                             ),
                           ),
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
@@ -443,7 +425,9 @@ class WhatsappScreen extends ConsumerWidget {
                             },
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: isDarkMode ? AppColors.darkBorder : AppColors.borderLight,
+                                color: isDarkMode
+                                    ? AppColors.darkBorder
+                                    : AppColors.borderLight,
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
@@ -453,7 +437,9 @@ class WhatsappScreen extends ConsumerWidget {
                             child: Text(
                               'إرسال للمختارين',
                               style: AppTypography.labelLg.copyWith(
-                                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                                color: isDarkMode
+                                    ? AppColors.darkTextBody
+                                    : AppColors.textBody,
                               ),
                             ),
                           ),
@@ -470,7 +456,8 @@ class WhatsappScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLogColumn(List<Map<String, dynamic>> messagesLog, {required bool isDarkMode}) {
+  Widget _buildLogColumn(List<Map<String, dynamic>> messagesLog,
+      {required bool isDarkMode}) {
     return Expanded(
       flex: 1,
       child: Container(
@@ -484,13 +471,18 @@ class WhatsappScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDarkMode ? AppColors.darkBgSurfaceAlt : AppColors.bgSurfaceAlt,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                color: isDarkMode
+                    ? AppColors.darkBgSurfaceAlt
+                    : AppColors.bgSurfaceAlt,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Text(
                 'سجل الإرسال',
                 style: AppTypography.h3.copyWith(
-                  color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                  color: isDarkMode
+                      ? AppColors.darkTextHead
+                      : AppColors.textHeading,
                 ),
               ),
             ),
@@ -506,8 +498,8 @@ class WhatsappScreen extends ConsumerWidget {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isSuccess 
-                          ? AppColors.statusActiveS 
+                      color: isSuccess
+                          ? AppColors.statusActiveS
                           : AppColors.statusDangerS,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -515,7 +507,9 @@ class WhatsappScreen extends ConsumerWidget {
                       children: [
                         Icon(
                           isSuccess ? Icons.check_circle : Icons.error,
-                          color: isSuccess ? AppColors.statusActive : AppColors.statusDanger,
+                          color: isSuccess
+                              ? AppColors.statusActive
+                              : AppColors.statusDanger,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -526,8 +520,8 @@ class WhatsappScreen extends ConsumerWidget {
                               Text(
                                 logEntry['subscriberName'] as String,
                                 style: AppTypography.bodyMd.copyWith(
-                                  color: isSuccess 
-                                      ? AppColors.statusActive 
+                                  color: isSuccess
+                                      ? AppColors.statusActive
                                       : AppColors.statusDanger,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -535,7 +529,9 @@ class WhatsappScreen extends ConsumerWidget {
                               Text(
                                 logEntry['message'] as String,
                                 style: AppTypography.bodySm.copyWith(
-                                  color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                                  color: isDarkMode
+                                      ? AppColors.darkTextBody
+                                      : AppColors.textBody,
                                 ),
                               ),
                             ],
@@ -544,7 +540,9 @@ class WhatsappScreen extends ConsumerWidget {
                         Text(
                           logEntry['time'] as String,
                           style: AppTypography.bodySm.copyWith(
-                            color: isDarkMode ? AppColors.darkTextMuted : AppColors.textSecondary,
+                            color: isDarkMode
+                                ? AppColors.darkTextMuted
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -558,13 +556,13 @@ class WhatsappScreen extends ConsumerWidget {
       ).animate().fadeIn(duration: 400.ms),
     );
   }
-  
+
   void _sendToAll(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('جاري الإرسال للجميع...')),
     );
   }
-  
+
   void _sendToSelected(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('جاري الإرسال للمختارين...')),

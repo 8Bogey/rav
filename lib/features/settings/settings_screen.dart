@@ -245,9 +245,11 @@ class SettingsScreen extends ConsumerWidget {
         return _buildBackupSection(
             isDarkMode: isDarkMode, context: context, ref: ref);
       case 'الترخيص':
-        return _buildLicenseSection(isDarkMode: isDarkMode, ref: ref, context: context);
+        return _buildLicenseSection(
+            isDarkMode: isDarkMode, ref: ref, context: context);
       case 'سلة المحذوفات':
-        return _buildTrashSection(isDarkMode: isDarkMode, ref: ref, context: context);
+        return _buildTrashSection(
+            isDarkMode: isDarkMode, ref: ref, context: context);
       default:
         return _buildGeneratorInfoSection(
             isDarkMode: isDarkMode, context: context, ref: ref);
@@ -1271,7 +1273,9 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Widget _buildLicenseSection(
-      {required bool isDarkMode, required WidgetRef ref, required BuildContext context}) {
+      {required bool isDarkMode,
+      required WidgetRef ref,
+      required BuildContext context}) {
     final isSubscribed = ref.watch(subscriptionStatusProvider);
     final subscriptionEndDate = ref.watch(subscriptionEndDateProvider);
     final isLoading = ref.watch(subscriptionLoadingProvider);
@@ -1317,9 +1321,7 @@ class SettingsScreen extends ConsumerWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isSubscribed
-                          ? Icons.verified_user
-                          : Icons.warning_amber,
+                      isSubscribed ? Icons.verified_user : Icons.warning_amber,
                       color: isSubscribed
                           ? AppColors.statusActive
                           : AppColors.statusWarning,
@@ -1422,9 +1424,8 @@ class SettingsScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: isLoading
-                      ? null
-                      : () => _handleAuth0Login(context, ref),
+                  onPressed:
+                      isLoading ? null : () => _handleAuth0Login(context, ref),
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
                         isSubscribed ? AppColors.primary : AppColors.gold,
@@ -1508,8 +1509,9 @@ class SettingsScreen extends ConsumerWidget {
               Text(
                 '© 2026 جميع الحقوق محفوظة',
                 style: AppTypography.bodySm.copyWith(
-                  color:
-                      isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                  color: isDarkMode
+                      ? AppColors.darkTextMuted
+                      : AppColors.textMuted,
                 ),
               ),
             ],
@@ -1519,7 +1521,8 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFeatureRow(IconData icon, String text, bool isActive, bool isDarkMode) {
+  Widget _buildFeatureRow(
+      IconData icon, String text, bool isActive, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -1727,7 +1730,6 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         TextField(
-          controller: TextEditingController(text: value),
           obscureText: obscure,
           textDirection: TextDirection.rtl,
           onChanged: onChanged,
@@ -1884,7 +1886,9 @@ class SettingsScreen extends ConsumerWidget {
                       onPressed: syncState.isSyncing
                           ? null
                           : () {
-                              ref.read(networkStatusProvider.notifier).syncToCloud();
+                              ref
+                                  .read(networkStatusProvider.notifier)
+                                  .syncToCloud();
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -1908,7 +1912,9 @@ class SettingsScreen extends ConsumerWidget {
                       onPressed: syncState.isSyncing
                           ? null
                           : () {
-                              ref.read(networkStatusProvider.notifier).syncFromCloud();
+                              ref
+                                  .read(networkStatusProvider.notifier)
+                                  .syncFromCloud();
                             },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(
@@ -1939,7 +1945,9 @@ class SettingsScreen extends ConsumerWidget {
                   onPressed: syncState.isSyncing
                       ? null
                       : () {
-                          ref.read(networkStatusProvider.notifier).syncBothDirections();
+                          ref
+                              .read(networkStatusProvider.notifier)
+                              .syncBothDirections();
                         },
                   child: Text(
                     'مزامنة ثنائي الاتجاه',
@@ -2149,12 +2157,14 @@ class SettingsScreen extends ConsumerWidget {
             Text(
               'سلة المحذوفات',
               style: AppTypography.h2.copyWith(
-                color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                color:
+                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
               ),
             ),
             OutlinedButton.icon(
               onPressed: () => _showEmptyTrashConfirm(context, trashService),
-              icon: const Icon(Icons.delete_sweep, color: AppColors.statusDanger),
+              icon:
+                  const Icon(Icons.delete_sweep, color: AppColors.statusDanger),
               label: const Text('إفراغ السلة'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.statusDanger,
@@ -2191,13 +2201,18 @@ class SettingsScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.delete_outline, size: 64,
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted),
+                    Icon(Icons.delete_outline,
+                        size: 64,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted),
                     const SizedBox(height: 16),
                     Text(
                       'سلة المحذوفات فارغة',
                       style: AppTypography.h3.copyWith(
-                        color: isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDarkMode
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -2239,14 +2254,18 @@ class SettingsScreen extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.restore, color: AppColors.statusActive),
+                          icon: const Icon(Icons.restore,
+                              color: AppColors.statusActive),
                           tooltip: 'استعادة',
-                          onPressed: () => _restoreItem(context, trashService, item.id),
+                          onPressed: () =>
+                              _restoreItem(context, trashService, item.id),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_forever, color: AppColors.statusDanger),
+                          icon: const Icon(Icons.delete_forever,
+                              color: AppColors.statusDanger),
                           tooltip: 'حذف نهائي',
-                          onPressed: () => _showPermanentDeleteConfirm(context, trashService, item.id),
+                          onPressed: () => _showPermanentDeleteConfirm(
+                              context, trashService, item.id),
                         ),
                       ],
                     ),
@@ -2305,7 +2324,8 @@ class SettingsScreen extends ConsumerWidget {
     return diff.inDays.clamp(0, 999);
   }
 
-  Future<void> _restoreItem(BuildContext context, TrashService trashService, String id) async {
+  Future<void> _restoreItem(
+      BuildContext context, TrashService trashService, String id) async {
     try {
       await trashService.restoreFromTrash(id);
       if (context.mounted) {
@@ -2328,12 +2348,14 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _showPermanentDeleteConfirm(BuildContext context, TrashService trashService, String id) async {
+  Future<void> _showPermanentDeleteConfirm(
+      BuildContext context, TrashService trashService, String id) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('تأكيد الحذف النهائي'),
-        content: const Text('هل أنت متأكد من حذف هذا العنصر نهائياً؟ لا يمكن التراجع عن هذا الإجراء.'),
+        content: const Text(
+            'هل أنت متأكد من حذف هذا العنصر نهائياً؟ لا يمكن التراجع عن هذا الإجراء.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -2341,7 +2363,8 @@ class SettingsScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.statusDanger),
+            style:
+                TextButton.styleFrom(foregroundColor: AppColors.statusDanger),
             child: const Text('حذف نهائي'),
           ),
         ],
@@ -2371,12 +2394,14 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _showEmptyTrashConfirm(BuildContext context, TrashService trashService) async {
+  Future<void> _showEmptyTrashConfirm(
+      BuildContext context, TrashService trashService) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('تأكيد إفراغ السلة'),
-        content: const Text('هل أنت متأكد من إفراغ سلة المحذوفات؟ سيتم حذف جميع العناصر نهائياً.'),
+        content: const Text(
+            'هل أنت متأكد من إفراغ سلة المحذوفات؟ سيتم حذف جميع العناصر نهائياً.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -2384,7 +2409,8 @@ class SettingsScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.statusDanger),
+            style:
+                TextButton.styleFrom(foregroundColor: AppColors.statusDanger),
             child: const Text('إفراغ السلة'),
           ),
         ],

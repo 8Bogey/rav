@@ -9,6 +9,9 @@ import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/features/workers/providers/workers_provider.dart'
     show WorkerPermissions, workersProvider;
+import 'package:mawlid_al_dhaki/shared/widgets/common/screen_header.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/error_state_widget.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/empty_state_widget.dart';
 
 class WorkersScreen extends ConsumerWidget {
   const WorkersScreen({super.key});
@@ -24,7 +27,12 @@ class WorkersScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(context, isDarkMode, ref),
+          ScreenHeader(
+            title: 'العمال',
+            actionLabel: 'إضافة عامل',
+            onActionPressed: () =>
+                _showAddWorkerDialog(context, ref, isDarkMode),
+          ).animate().fadeIn(duration: 300.ms),
           const SizedBox(height: 24),
 
           // Loading state
@@ -38,54 +46,12 @@ class WorkersScreen extends ConsumerWidget {
           // Error state
           if (workersState.error != null && !workersState.isLoading)
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error,
-                      size: 64,
-                      color: AppColors.statusDanger,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'حدث خطأ أثناء تحميل العمال',
-                      style: AppTypography.h3.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextHead
-                            : AppColors.textHeading,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      workersState.error!,
-                      style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextBody
-                            : AppColors.textBody,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.read(workersProvider.notifier).loadWorkers();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textOnPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'إعادة المحاولة',
-                        style: AppTypography.labelLg.copyWith(
-                          color: AppColors.textOnPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: ErrorStateWidget(
+                message: 'حدث خطأ أثناء تحميل العمال',
+                errorDetail: workersState.error,
+                onRetry: () {
+                  ref.read(workersProvider.notifier).loadWorkers();
+                },
               ),
             ),
 
@@ -93,38 +59,11 @@ class WorkersScreen extends ConsumerWidget {
           if (!workersState.isLoading &&
               workersState.error == null &&
               workersState.workers.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.people_outline,
-                      size: 64,
-                      color: isDarkMode
-                          ? AppColors.darkTextBody
-                          : AppColors.textSecondary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'لا يوجد عمال',
-                      style: AppTypography.h3.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextHead
-                            : AppColors.textHeading,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'اضغط على زر "إضافة عامل" لإنشاء عامل جديد',
-                      style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextBody
-                            : AppColors.textBody,
-                      ),
-                    ),
-                  ],
-                ),
+            const Expanded(
+              child: EmptyStateWidget(
+                icon: Icons.people_outline,
+                title: 'لا يوجد عمال',
+                subtitle: 'اضغط على زر "إضافة عامل" لإنشاء عامل جديد',
               ),
             ),
 
@@ -153,63 +92,16 @@ class WorkersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDarkMode, WidgetRef ref) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'العمال',
-          style: AppTypography.h2.copyWith(
-            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-          ),
-        ).animate().fadeIn(duration: 300.ms),
-        GestureDetector(
-          onTap: () => _showAddWorkerDialog(context, ref, isDarkMode),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.gold,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.gold.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.add,
-                  color: AppColors.textOnGold,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'إضافة عامل',
-                  style: AppTypography.labelLg.copyWith(
-                    color: AppColors.textOnGold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        )
-            .animate(delay: 100.ms)
-            .scaleXY(begin: 0.95, end: 1.0, duration: 400.ms),
-      ],
-    ).animate().fadeIn(duration: 300.ms);
-  }
-  
-  void _showAddWorkerDialog(BuildContext context, WidgetRef ref, bool isDarkMode) {
+  void _showAddWorkerDialog(
+      BuildContext context, WidgetRef ref, bool isDarkMode) {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+        backgroundColor:
+            isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
         title: Text(
           'إضافة عامل جديد',
           style: AppTypography.h3.copyWith(
@@ -224,11 +116,13 @@ class WorkersScreen extends ConsumerWidget {
               decoration: InputDecoration(
                 labelText: 'اسم العامل',
                 labelStyle: AppTypography.bodyMd.copyWith(
-                  color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                  color:
+                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
                 ),
               ),
               style: AppTypography.bodyMd.copyWith(
-                color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                color:
+                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
               ),
             ),
             const SizedBox(height: 16),
@@ -238,11 +132,13 @@ class WorkersScreen extends ConsumerWidget {
               decoration: InputDecoration(
                 labelText: 'رقم الهاتف',
                 labelStyle: AppTypography.bodyMd.copyWith(
-                  color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                  color:
+                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
                 ),
               ),
               style: AppTypography.bodyMd.copyWith(
-                color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+                color:
+                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
               ),
             ),
           ],
@@ -259,12 +155,13 @@ class WorkersScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.isNotEmpty && phoneController.text.isNotEmpty) {
+              if (nameController.text.isNotEmpty &&
+                  phoneController.text.isNotEmpty) {
                 await ref.read(workersProvider.notifier).addWorker(
-                  name: nameController.text,
-                  phone: phoneController.text,
-                );
-                
+                      name: nameController.text,
+                      phone: phoneController.text,
+                    );
+
                 if (context.mounted) {
                   Navigator.pop(context);
                 }
@@ -288,7 +185,7 @@ class WorkersScreen extends ConsumerWidget {
   /// Parse permissions JSON and return Arabic labels for enabled permissions
   List<String> _parsePermissionsToArabic(String permissionsJson) {
     if (permissionsJson.isEmpty) return ['تحصيل'];
-    
+
     // Map English permission keys to Arabic labels
     const Map<String, String> permissionMap = {
       'canCollect': 'تحصيل',
@@ -304,7 +201,7 @@ class WorkersScreen extends ConsumerWidget {
       'canSettings': 'الإعدادات',
       'settings': 'الإعدادات',
     };
-    
+
     try {
       // Use dart:convert for proper JSON parsing
       final decoded = jsonDecode(permissionsJson);
@@ -321,7 +218,7 @@ class WorkersScreen extends ConsumerWidget {
     } catch (e) {
       // Fallback
     }
-    
+
     return ['تحصيل'];
   }
 
@@ -454,7 +351,8 @@ class WorkersScreen extends ConsumerWidget {
                   child: OutlinedButton(
                     onPressed: () {
                       // Show edit permissions dialog
-                      _showEditPermissionsDialog(context, ref, isDarkMode, worker);
+                      _showEditPermissionsDialog(
+                          context, ref, isDarkMode, worker);
                     },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
@@ -501,14 +399,16 @@ class WorkersScreen extends ConsumerWidget {
       ),
     ).animate(delay: (index * 100).ms).fadeIn(duration: 400.ms);
   }
-  
-  void _showEditPermissionsDialog(BuildContext context, WidgetRef ref, bool isDarkMode, Worker worker) {
+
+  void _showEditPermissionsDialog(
+      BuildContext context, WidgetRef ref, bool isDarkMode, Worker worker) {
     // Parse existing permissions
     WorkerPermissions currentPermissions = const WorkerPermissions();
     try {
       final decoded = jsonDecode(worker.permissions);
       if (decoded is Map) {
-        currentPermissions = WorkerPermissions.fromJson(Map<String, dynamic>.from(decoded));
+        currentPermissions =
+            WorkerPermissions.fromJson(Map<String, dynamic>.from(decoded));
       }
     } catch (e) {
       // Use default permissions if parsing fails
@@ -526,11 +426,13 @@ class WorkersScreen extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
+          backgroundColor:
+              isDarkMode ? AppColors.darkBgSurface : AppColors.bgSurface,
           title: Text(
             'تعديل صلاحيات ${worker.name}',
             style: AppTypography.h3.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
           content: SingleChildScrollView(
@@ -583,7 +485,8 @@ class WorkersScreen extends ConsumerWidget {
               child: Text(
                 'إلغاء',
                 style: AppTypography.labelLg.copyWith(
-                  color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                  color:
+                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
                 ),
               ),
             ),
@@ -597,12 +500,12 @@ class WorkersScreen extends ConsumerWidget {
                   manageWorkers: canManageWorkers,
                   settings: canSettings,
                 );
-                
+
                 await ref.read(workersProvider.notifier).updatePermissions(
-                  worker.id,
-                  newPermissions,
-                );
-                
+                      worker.id,
+                      newPermissions,
+                    );
+
                 if (dialogContext.mounted) {
                   Navigator.pop(dialogContext);
                 }
@@ -645,15 +548,17 @@ class WorkersScreen extends ConsumerWidget {
           Text(
             label,
             style: AppTypography.bodyMd.copyWith(
-              color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
+              color:
+                  isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
             ),
           ),
         ],
       ),
     );
   }
-  
-  void _showDeleteConfirmation(BuildContext context, WidgetRef ref, Worker worker) {
+
+  void _showDeleteConfirmation(
+      BuildContext context, WidgetRef ref, Worker worker) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

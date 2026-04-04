@@ -8,10 +8,13 @@ import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/core/utils/format.dart';
 import 'package:mawlid_al_dhaki/features/collection/payment_registration_dialog.dart';
 import 'package:mawlid_al_dhaki/features/payments/providers/payments_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
 import 'package:mawlid_al_dhaki/features/cabinets/providers/cabinets_provider.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/screen_header.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/error_state_widget.dart';
 
 /// Collection status enum
 enum CollectionStatus { notPaid, partial, completed }
@@ -195,7 +198,37 @@ class CollectionScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(context, isDarkMode, ref),
+          ScreenHeader(
+            title: 'التحصيل',
+            subtitle:
+                '${getArabicMonth(DateTime.now().month)} ${DateTime.now().year}',
+            actionLabel: 'تعديل',
+            actionIcon: Icons.edit,
+            onActionPressed: () {
+              _showEditPriceDialog(context, isDarkMode, ref);
+            },
+            trailing: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? AppColors.darkBgSurfaceAlt
+                      : AppColors.bgSurfaceAlt,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'سعر الأمبير: ${formatIQD(ref.watch(amperePriceProvider))} IQD',
+                  style: AppTypography.labelMd.copyWith(
+                    color: isDarkMode
+                        ? AppColors.darkTextBody
+                        : AppColors.textBody,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+          ).animate().fadeIn(duration: 300.ms),
           const SizedBox(height: 16),
 
           // Loading state
@@ -209,54 +242,12 @@ class CollectionScreen extends ConsumerWidget {
           // Error state
           if (collectionState.error != null && !collectionState.isLoading)
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error,
-                      size: 64,
-                      color: AppColors.statusDanger,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'حدث خطأ أثناء تحميل التحصيلات',
-                      style: AppTypography.h3.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextHead
-                            : AppColors.textHeading,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      collectionState.error!,
-                      style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextBody
-                            : AppColors.textBody,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.read(collectionProvider.notifier).loadCollection();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textOnPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'إعادة المحاولة',
-                        style: AppTypography.labelLg.copyWith(
-                          color: AppColors.textOnPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: ErrorStateWidget(
+                message: 'حدث خطأ أثناء تحميل التحصيلات',
+                errorDetail: collectionState.error,
+                onRetry: () {
+                  ref.read(collectionProvider.notifier).loadCollection();
+                },
               ),
             ),
 
@@ -307,113 +298,6 @@ class CollectionScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Widget _buildHeader(BuildContext context, bool isDarkMode, WidgetRef ref) {
-    final now = DateTime.now();
-    final monthYear = '${_getArabicMonth(now.month)} ${now.year}';
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'التحصيل',
-              style: AppTypography.h2.copyWith(
-                color:
-                    isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              monthYear,
-              style: AppTypography.bodyMd.copyWith(
-                color: isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-              ),
-            ),
-          ],
-        ).animate().fadeIn(duration: 300.ms),
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDarkMode
-                    ? AppColors.darkBgSurfaceAlt
-                    : AppColors.bgSurfaceAlt,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'سعر الأمبير: ${_formatIQD(ref.watch(amperePriceProvider))} IQD',
-                style: AppTypography.labelMd.copyWith(
-                  color:
-                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            GestureDetector(
-              onTap: () {
-                _showEditPriceDialog(context, isDarkMode, ref);
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.gold,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.gold.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.edit,
-                      color: AppColors.textOnGold,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'تعديل',
-                      style: AppTypography.labelLg.copyWith(
-                        color: AppColors.textOnGold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-                .animate(delay: 100.ms)
-                .scaleXY(begin: 0.95, end: 1.0, duration: 400.ms),
-          ],
-        ),
-      ],
-    ).animate().fadeIn(duration: 300.ms);
-  }
-
-  String _getArabicMonth(int month) {
-    const months = [
-      'يناير',
-      'فبراير',
-      'مارس',
-      'أبريل',
-      'مايو',
-      'يونيو',
-      'يوليو',
-      'أغسطس',
-      'سبتمبر',
-      'أكتوبر',
-      'نوفمبر',
-      'ديسمبر'
-    ];
-    return months[month - 1];
   }
 
   Widget _buildProgressIndicator(CollectionState state, bool isDarkMode) {
@@ -470,7 +354,7 @@ class CollectionScreen extends ConsumerWidget {
                 ),
               ),
               Text(
-                'جُمع: ${_formatIQD(state.totalCollected)}',
+                '${formatIQD(state.totalCollected)}',
                 style: AppTypography.bodyMd.copyWith(
                   color: isDarkMode
                       ? AppColors.darkTextHead
@@ -478,7 +362,7 @@ class CollectionScreen extends ConsumerWidget {
                 ),
               ),
               Text(
-                'متبقي: ${_formatIQD(state.totalRemaining)}',
+                'متبقي: ${formatIQD(state.totalRemaining)}',
                 style: AppTypography.bodyMd.copyWith(
                   color:
                       isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
@@ -664,7 +548,7 @@ class CollectionScreen extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      '${_formatIQD(subscriber.accumulatedDebt)} IQD',
+                      '${formatIQD(subscriber.accumulatedDebt)} IQD',
                       style: AppTypography.h4.copyWith(
                         color: subscriber.accumulatedDebt > 0
                             ? AppColors.statusDanger
@@ -719,13 +603,6 @@ class CollectionScreen extends ConsumerWidget {
         ),
       ).animate(delay: (index * 50).ms).fadeIn(duration: 300.ms),
     );
-  }
-
-  String _formatIQD(double amount) {
-    return amount.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-        );
   }
 
   void _showEditPriceDialog(

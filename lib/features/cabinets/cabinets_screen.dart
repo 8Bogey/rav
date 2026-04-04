@@ -5,10 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
+import 'package:mawlid_al_dhaki/core/utils/format.dart';
 import 'package:mawlid_al_dhaki/features/cabinets/providers/cabinets_provider.dart';
 import 'package:mawlid_al_dhaki/features/subscribers/providers/subscribers_provider.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/router/route_names.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/screen_header.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/error_state_widget.dart';
+import 'package:mawlid_al_dhaki/shared/widgets/common/empty_state_widget.dart';
 
 class CabinetsScreen extends ConsumerStatefulWidget {
   const CabinetsScreen({super.key});
@@ -32,7 +36,19 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(context, isDarkMode, ref),
+          ScreenHeader(
+            title: 'الكابينات',
+            actionLabel: 'إضافة كابينة',
+            onActionPressed: () async {
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (context) => const AddCabinetDialog(),
+              );
+              if (result == true) {
+                ref.read(cabinetsProvider.notifier).loadCabinets();
+              }
+            },
+          ).animate().fadeIn(duration: 300.ms),
           const SizedBox(height: 24),
 
           // Loading state
@@ -46,54 +62,12 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
           // Error state
           if (cabinetsState.error != null && !cabinetsState.isLoading)
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error,
-                      size: 64,
-                      color: AppColors.statusDanger,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'حدث خطأ أثناء تحميل الكابينات',
-                      style: AppTypography.h3.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextHead
-                            : AppColors.textHeading,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      cabinetsState.error!,
-                      style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextBody
-                            : AppColors.textBody,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.read(cabinetsProvider.notifier).loadCabinets();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textOnPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'إعادة المحاولة',
-                        style: AppTypography.labelLg.copyWith(
-                          color: AppColors.textOnPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: ErrorStateWidget(
+                message: 'حدث خطأ أثناء تحميل الكابينات',
+                errorDetail: cabinetsState.error,
+                onRetry: () {
+                  ref.read(cabinetsProvider.notifier).loadCabinets();
+                },
               ),
             ),
 
@@ -101,38 +75,11 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
           if (!cabinetsState.isLoading &&
               cabinetsState.error == null &&
               cabinetsState.cabinets.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.apps_outlined,
-                      size: 64,
-                      color: isDarkMode
-                          ? AppColors.darkTextBody
-                          : AppColors.textSecondary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'لا توجد كابينات',
-                      style: AppTypography.h3.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextHead
-                            : AppColors.textHeading,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'اضغط على زر "إضافة كابينة" لإنشاء كابينة جديدة',
-                      style: AppTypography.bodyMd.copyWith(
-                        color: isDarkMode
-                            ? AppColors.darkTextBody
-                            : AppColors.textBody,
-                      ),
-                    ),
-                  ],
-                ),
+            const Expanded(
+              child: EmptyStateWidget(
+                icon: Icons.apps_outlined,
+                title: 'لا توجد كابينات',
+                subtitle: 'اضغط على زر "إضافة كابينة" لإنشاء كابينة جديدة',
               ),
             ),
 
@@ -161,61 +108,6 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDarkMode, WidgetRef ref) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'الكابينات',
-          style: AppTypography.h2.copyWith(
-            color: isDarkMode ? AppColors.darkTextHead : AppColors.textHeading,
-          ),
-        ),
-        GestureDetector(
-          onTap: () async {
-            final result = await showDialog<bool>(
-              context: context,
-              builder: (context) => const AddCabinetDialog(),
-            );
-            if (result == true) {
-              ref.read(cabinetsProvider.notifier).loadCabinets();
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.gold,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.gold.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.add,
-                  color: AppColors.textOnGold,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'إضافة كابينة',
-                  style: AppTypography.labelLg.copyWith(
-                    color: AppColors.textOnGold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildCabinetCard(BuildContext context, Cabinet cabinet, int index,
       {required bool isDarkMode, required WidgetRef ref}) {
     // Calculate progress based on currentSubscribers and totalSubscribers
@@ -237,7 +129,7 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
         '${cabinet.currentSubscribers} / ${cabinet.totalSubscribers}';
 
     // Format collected amount with IQD formatting
-    final collectedText = _formatIQD(cabinet.collectedAmount);
+    final collectedText = formatIQD(cabinet.collectedAmount);
 
     // Format delayed subscribers
     final delayedText = '${cabinet.delayedSubscribers} مشترك';
@@ -650,13 +542,6 @@ class _CabinetsScreenState extends ConsumerState<CabinetsScreen> {
 
     // Navigate to subscribers screen
     context.go(AppRoutes.subscribers);
-  }
-
-  String _formatIQD(double amount) {
-    return amount.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-        );
   }
 }
 

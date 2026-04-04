@@ -50,7 +50,7 @@ class _SubscriberDialogState extends ConsumerState<SubscriberDialog> {
       _startDate = widget.subscriber!.startDate;
       _accumulatedDebt = widget.subscriber!.accumulatedDebt;
     }
-    
+
     // Set up listeners for auto-sync between code and cabinet
     _codeController.addListener(_onCodeChanged);
     _cabinetController.addListener(_onCabinetChanged);
@@ -70,7 +70,7 @@ class _SubscriberDialogState extends ConsumerState<SubscriberDialog> {
   void _onCodeChanged() {
     final code = _codeController.text.trim().toUpperCase();
     if (code.isEmpty) return;
-    
+
     // Extract the letter (first character that is a letter)
     final letterMatch = RegExp(r'^([A-Za-z]+)').firstMatch(code);
     if (letterMatch != null) {
@@ -86,15 +86,16 @@ class _SubscriberDialogState extends ConsumerState<SubscriberDialog> {
   void _onCabinetChanged() {
     final cabinet = _cabinetController.text.trim().toUpperCase();
     final code = _codeController.text.trim();
-    
+
     if (cabinet.isEmpty) return;
-    
+
     // If code is empty or doesn't start with the cabinet letter, update it
     if (code.isEmpty) {
       _codeController.text = '$cabinet';
     } else {
       // Check if first character is a letter
-      final letterMatch = RegExp(r'^([A-Za-z]+)').firstMatch(code.toUpperCase());
+      final letterMatch =
+          RegExp(r'^([A-Za-z]+)').firstMatch(code.toUpperCase());
       if (letterMatch != null) {
         // Replace the letter prefix with the cabinet letter
         final numberPart = code.substring(letterMatch.group(1)!.length);
@@ -129,7 +130,7 @@ class _SubscriberDialogState extends ConsumerState<SubscriberDialog> {
         );
 
         await ref
-            .read(subscribersDaoProvider)
+            .read(subscribersProvider.notifier)
             .updateSubscriber(updatedSubscriber);
 
         // Log audit
@@ -299,10 +300,15 @@ class _SubscriberDialogState extends ConsumerState<SubscriberDialog> {
                                   }
                                   // Check that the letter matches the cabinet
                                   final code = value.trim().toUpperCase();
-                                  final cabinet = _cabinetController.text.trim().toUpperCase();
-                                  final letterMatch = RegExp(r'^([A-Za-z]+)').firstMatch(code);
-                                  if (letterMatch != null && cabinet.isNotEmpty) {
-                                    final codeLetter = letterMatch.group(1)!.toUpperCase();
+                                  final cabinet = _cabinetController.text
+                                      .trim()
+                                      .toUpperCase();
+                                  final letterMatch =
+                                      RegExp(r'^([A-Za-z]+)').firstMatch(code);
+                                  if (letterMatch != null &&
+                                      cabinet.isNotEmpty) {
+                                    final codeLetter =
+                                        letterMatch.group(1)!.toUpperCase();
                                     if (codeLetter != cabinet) {
                                       return 'حرف الجوزة يجب أن يكون نفس حرف الكابينة ($cabinet)';
                                     }
