@@ -17,6 +17,36 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
+/// Retry helper with exponential backoff
+class _RetryHelper {
+  static Future<T> withRetry<T>({
+    required Future<T> Function() operation,
+    int maxRetries = 3,
+    Duration initialDelay = const Duration(seconds: 1),
+    required bool Function(T result) isSuccess,
+  }) async {
+    var delay = initialDelay;
+    Object? lastError;
+
+    for (int attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        final result = await operation();
+        if (isSuccess(result)) return result;
+      } catch (e) {
+        lastError = e;
+        if (attempt < maxRetries) {
+          debugPrint(
+              '[Retry] Attempt ${attempt + 1} failed: $e, retrying in ${delay.inSeconds}s');
+          await Future.delayed(delay);
+          delay *= 2; // Exponential backoff
+        }
+      }
+    }
+    throw Exception(
+        'Operation failed after ${maxRetries + 1} attempts: $lastError');
+  }
+}
+
 /// App's Convex configuration - unified client for all cloud operations.
 ///
 /// Provides:
@@ -66,7 +96,7 @@ class AppConvexConfig {
     debugPrint('AppConvexConfig: Auth cleared');
   }
 
-  /// Make a mutation request to Convex
+  /// Make a mutation request to Convex with retry and exponential backoff
   static Future<Map<String, dynamic>> mutation(
     String mutationName,
     Map<String, dynamic> args,
@@ -75,6 +105,19 @@ class AppConvexConfig {
       throw Exception('Convex not initialized');
     }
 
+    return _RetryHelper.withRetry<Map<String, dynamic>>(
+      operation: () => _executeMutation(mutationName, args),
+      maxRetries: 3,
+      initialDelay: const Duration(seconds: 1),
+      isSuccess: (result) => true,
+    );
+  }
+
+  /// Internal mutation execution (called by retry helper)
+  static Future<Map<String, dynamic>> _executeMutation(
+    String mutationName,
+    Map<String, dynamic> args,
+  ) async {
     // Convex HTTP API format: POST /api/mutation with JSON body containing path and args
     final url = Uri.parse('$_deploymentUrl/api/mutation');
 
@@ -99,11 +142,8 @@ class AppConvexConfig {
       'format': 'json',
     };
 
-    // Only send auth header if we have a REAL JWT (not a demo placeholder)
-    // Demo tokens like "session-demo-user-001" are not valid JWTs
-    final hasValidJwt = _authToken != null &&
-        _authToken!.contains('.') &&
-        !_authToken!.startsWith('session-');
+    // Send auth header whenever we have a non-empty token (real JWT from Auth0)
+    final hasValidJwt = _authToken != null && _authToken!.isNotEmpty;
 
     final response = await http.post(
       url,
@@ -141,7 +181,7 @@ class AppConvexConfig {
     }
   }
 
-  /// Make a query request to Convex
+  /// Make a query request to Convex with retry and exponential backoff
   static Future<dynamic> query(
     String queryName,
     Map<String, dynamic> args,
@@ -150,6 +190,19 @@ class AppConvexConfig {
       throw Exception('Convex not initialized');
     }
 
+    return _RetryHelper.withRetry<dynamic>(
+      operation: () => _executeQuery(queryName, args),
+      maxRetries: 3,
+      initialDelay: const Duration(seconds: 1),
+      isSuccess: (result) => true,
+    );
+  }
+
+  /// Internal query execution (called by retry helper)
+  static Future<dynamic> _executeQuery(
+    String queryName,
+    Map<String, dynamic> args,
+  ) async {
     // Convex HTTP API format: POST /api/query with JSON body containing path and args
     final url = Uri.parse('$_deploymentUrl/api/query');
 
@@ -167,12 +220,8 @@ class AppConvexConfig {
       'format': 'json',
     };
 
-    // For queries: Only send auth if it's a VALID JWT (not session token)
-    // Demo mode uses session tokens which don't work with query API
-    // We'll skip auth header entirely - Convex queries can work without it in dev mode
-    final hasValidJwt = _authToken != null &&
-        _authToken!.contains('.') &&
-        !_authToken!.startsWith('session-');
+    // Send auth header whenever we have a non-empty token (real JWT from Auth0)
+    final hasValidJwt = _authToken != null && _authToken!.isNotEmpty;
 
     debugPrint(
         '[ConvexQuery] Auth: validJWT=$hasValidJwt, token=${_authToken?.substring(0, _authToken != null && _authToken!.length > 10 ? 10 : 0)}');

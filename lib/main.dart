@@ -8,8 +8,7 @@ import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
-import 'package:mawlid_al_dhaki/core/sync/convex_sync_processor.dart';
-import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth_gate.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 
 Future<void> main() async {
@@ -48,7 +47,7 @@ Future<void> main() async {
   // Initialize Convex client with deployment URL
   // Using the correct deployment URL from .env configuration
   const convexUrl = 'https://hearty-meadowlark-390.convex.cloud';
-  
+
   try {
     await AppConvexConfig.initialize(convexUrl);
     debugPrint('Convex initialized with: $convexUrl');
@@ -56,49 +55,21 @@ Future<void> main() async {
     debugPrint('Failed to initialize Convex: $e');
   }
 
-  // Initialize Auth0 service and restore session if exists
-  try {
-    await Auth0Service.instance.initialize();
-    
-    // Check for existing session before starting
-    final hasSession = await Auth0Service.instance.checkExistingSession();
-    if (hasSession) {
-      debugPrint('Auth0Service: Restored existing session');
-      // Set the auth token in Convex config
-      final token = Auth0Service.instance.accessToken;
-      if (token != null) {
-        await AppConvexConfig.setAuth(token);
-        debugPrint('Convex: Auth token restored from session');
-      }
-    } else {
-      debugPrint('Auth0Service: No existing session found');
-    }
-  } catch (e) {
-    debugPrint('Failed to initialize Auth0: $e');
-  }
-
   runApp(
     ProviderScope(
       overrides: [
-        // Override database provider to ensure it's initialized before we start sync
+        // Override database provider — sync is started by AuthGate when auth is ready
         databaseProvider.overrideWith((ref) {
           final database = AppDatabase();
-          
-          // Start Convex sync processor - it will wait until authenticated
-          // The processor checks isAuthenticated before syncing, so it's safe to start always
-          final syncProcessor = ConvexSyncProcessor(database);
-          syncProcessor.start();
-          debugPrint('ConvexSyncProcessor: Started with database');
-          
+
           ref.onDispose(() {
-            syncProcessor.stop();
             database.close();
           });
-          
+
           return database;
         }),
       ],
-      child: const AppRoot(),
+      child: const AuthGate(child: AppRoot()),
     ),
   );
 }

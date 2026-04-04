@@ -1,138 +1,141 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 
-/// Simple password for daily access (settable in settings)
-const String kDefaultDailyPassword = ' ';
-
-/// Demo user ID - constant for persistence across restarts
-/// In production, this would come from Auth0
-const String kDemoUserId = 'demo-user-001';
-
-/// User role enum for RBAC
-enum UserRole {
-  admin,
-  worker,
-}
+enum UserRole { admin, worker }
 
 class AuthState {
   final bool isAuthenticated;
-  final String? userId; // Added for tenant isolation (ownerId)
-  final String? errorMessage;
+  final String? userId;
+  final String? accessToken;
   final UserRole role;
   final List<String> permissions;
+  final bool isLoading;
+  final String? errorMessage;
 
-  AuthState({
-    required this.isAuthenticated,
+  const AuthState({
+    this.isAuthenticated = false,
     this.userId,
-    this.errorMessage,
+    this.accessToken,
     this.role = UserRole.admin,
     this.permissions = const [],
+    this.isLoading = false,
+    this.errorMessage,
   });
 
   AuthState copyWith({
     bool? isAuthenticated,
     String? userId,
-    String? errorMessage,
+    String? accessToken,
     UserRole? role,
     List<String>? permissions,
+    bool? isLoading,
+    String? errorMessage,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       userId: userId ?? this.userId,
-      errorMessage: errorMessage ?? this.errorMessage,
+      accessToken: accessToken ?? this.accessToken,
       role: role ?? this.role,
       permissions: permissions ?? this.permissions,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
     );
   }
 
-  /// Check if user has a specific permission
   bool hasPermission(String permission) {
-    // Admin has all permissions
-    if (role == UserRole.admin || permissions.contains('*')) {
-      return true;
-    }
+    if (role == UserRole.admin || permissions.contains('*')) return true;
     return permissions.contains(permission);
   }
 
-  /// Check if user has any of the specified permissions
-  bool hasAnyPermission(List<String> requiredPermissions) {
-    return requiredPermissions.any(hasPermission);
+  bool hasAnyPermission(List<String> required) {
+    return required.any(hasPermission);
   }
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final Ref _ref;
+  final Auth0Service _auth0;
 
-  AuthNotifier(this._ref)
-      : super(AuthState(isAuthenticated: false, userId: null));
+  AuthNotifier(this._auth0) : super(const AuthState());
 
-  /// Set the daily password (called from Settings when user changes it)
-  static String _dailyPassword = kDefaultDailyPassword;
-
-  static void setDailyPassword(String password) {
-    _dailyPassword = password;
-  }
-
-  /// Verify subscription status (called from Settings after Auth0 login)
-  static bool _isSubscriptionActive = false;
-
-  static void setSubscriptionStatus(bool active) {
-    _isSubscriptionActive = active;
-  }
-
-  /// Check if user has an active subscription
-  bool get hasActiveSubscription => _isSubscriptionActive;
-
-  Future<void> login(String password) async {
-    // Simple daily password check
-    if (password.isEmpty) {
-      state = state.copyWith(
-        isAuthenticated: false,
-        errorMessage: 'يرجى إدخال كلمة المرور',
-      );
-      return;
-    }
-
-    // Verify password
-    if (password != _dailyPassword) {
-      state = state.copyWith(
-        isAuthenticated: false,
-        errorMessage: 'كلمة المرور غير صحيحة',
-      );
-      return;
-    }
-
-    // Successful authentication - use constant demo user ID for persistence
-    final userId = kDemoUserId;
-
+  /// Initialize auth state from existing session
+  Future<void> initialize() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      if (AppConvexConfig.isInitialized) {
-        await AppConvexConfig.setAuth('session-$userId');
-        debugPrint('[AuthNotifier] Convex auth set for: $userId');
+      final hasSession = await _auth0.checkExistingSession();
+      if (hasSession) {
+        final token = _auth0.accessToken;
+        final userId = _auth0.userId;
+        if (token != null && userId != null) {
+          await AppConvexConfig.setAuth(token);
+          state = AuthState(
+            isAuthenticated: true,
+            userId: userId,
+            accessToken: token,
+            role: UserRole.admin,
+            isLoading: false,
+          );
+          debugPrint('[AuthNotifier] Session restored: $userId');
+          return;
+        }
       }
-    } catch (e) {
-      debugPrint('[AuthNotifier] setAuth error (non-fatal): $e');
+      state = const AuthState(isLoading: false);
+    } catch (e, st) {
+      debugPrint('[AuthNotifier] Initialize error: $e\n$st');
+      state = AuthState(
+        isLoading: false,
+        errorMessage: 'Failed to restore session',
+      );
     }
-
-    state = AuthState(
-      isAuthenticated: true,
-      userId: userId,
-      errorMessage: null,
-    );
-
-    debugPrint('[AuthNotifier] Login successful');
   }
 
-  void logout() async {
-    await AppConvexConfig.clearAuth();
+  /// Login via Auth0
+  Future<bool> loginWithAuth0() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      await _auth0.login();
+      final token = _auth0.accessToken;
+      final userId = _auth0.userId;
 
-    debugPrint('[AuthNotifier] Logout, clearing userId');
-    state = AuthState(
-      isAuthenticated: false,
-      userId: null,
-      errorMessage: null,
-    );
+      if (token != null && userId != null) {
+        await AppConvexConfig.setAuth(token);
+        state = AuthState(
+          isAuthenticated: true,
+          userId: userId,
+          accessToken: token,
+          role: UserRole.admin,
+          isLoading: false,
+        );
+        debugPrint('[AuthNotifier] Auth0 login successful: $userId');
+        return true;
+      }
+
+      state = const AuthState(
+        isLoading: false,
+        errorMessage: 'Login failed: no token received',
+      );
+      return false;
+    } catch (e, st) {
+      debugPrint('[AuthNotifier] Auth0 login error: $e\n$st');
+      state = AuthState(
+        isLoading: false,
+        errorMessage: 'Login failed: ${e.toString()}',
+      );
+      return false;
+    }
+  }
+
+  /// Logout
+  Future<void> logout() async {
+    try {
+      await _auth0.logout();
+    } catch (e) {
+      debugPrint('[AuthNotifier] Auth0 logout error: $e');
+    }
+    await AppConvexConfig.clearAuth();
+    state = const AuthState();
+    debugPrint('[AuthNotifier] Logged out');
   }
 
   void clearError() {
@@ -142,6 +145,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
-  (ref) => AuthNotifier(ref),
-);
+final authServiceProvider =
+    Provider<Auth0Service>((ref) => Auth0Service.instance);
+
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  final auth0 = ref.watch(authServiceProvider);
+  return AuthNotifier(auth0);
+});
+
+final currentUserIdProvider = Provider<String?>((ref) {
+  return ref.watch(authProvider).userId;
+});
