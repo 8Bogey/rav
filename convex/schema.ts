@@ -33,7 +33,7 @@ export default defineSchema({
     notes: v.nullable(v.string()), // Allow null for notes
     
     // Entity identification
-    cloudId: v.string(), // Client-side UUID for entity mapping
+    cloudId: v.optional(v.string()), // Client-side UUID for entity mapping
     
     // Trash state machine
     inTrash: v.optional(v.boolean()),
@@ -69,7 +69,7 @@ export default defineSchema({
     completionDate: v.nullable(v.number()), // Unix timestamp - allow null
     
     // Entity identification
-    cloudId: v.string(),
+    cloudId: v.optional(v.string()),
     
     // Trash state machine
     inTrash: v.optional(v.boolean()),
@@ -102,7 +102,7 @@ export default defineSchema({
     cabinet: v.string(),
     
     // Entity identification
-    cloudId: v.string(),
+    cloudId: v.optional(v.string()),
     
     // Trash state machine
     inTrash: v.optional(v.boolean()),
@@ -137,7 +137,7 @@ export default defineSchema({
     monthTotal: v.number(),
     
     // Entity identification
-    cloudId: v.string(),
+    cloudId: v.optional(v.string()),
     
     // Trash state machine
     inTrash: v.optional(v.boolean()),
@@ -171,7 +171,7 @@ export default defineSchema({
     timestamp: v.number(), // Unix timestamp
     
     // Entity identification
-    cloudId: v.string(),
+    cloudId: v.optional(v.string()),
     
     // Trash state machine
     inTrash: v.optional(v.boolean()),
@@ -229,7 +229,7 @@ export default defineSchema({
     isActive: v.number(), // 0 or 1
     
     // Entity identification
-    cloudId: v.string(),
+    cloudId: v.optional(v.string()),
     
     // Trash state machine
     inTrash: v.optional(v.boolean()),

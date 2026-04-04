@@ -3,6 +3,9 @@
  * 
  * Implements event-sourced architecture for data synchronization.
  * Events are immutable and append-only, providing a complete audit trail.
+ * 
+ * Multi-tenancy: ALL queries use by_ownerId_cloudId composite index to ensure
+ * strict tenant isolation. No query can access another owner's data.
  */
 
 import { mutation } from "../_generated/server";
@@ -69,15 +72,17 @@ async function applyEvent(ctx: any, event: any) {
 /**
  * Handle ENTITY_CREATED events.
  * Creates a new document in the appropriate entity table.
+ * 
+ * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
 async function handleCreateEvent(ctx: any, event: any) {
   const { entityType, entityId, payload, ownerId, version } = event;
   const data = JSON.parse(payload);
   
-  // Check if document already exists (by cloudId)
+  // Check if document already exists (scoped to owner)
   const existing = await ctx.db
     .query(entityType)
-    .withIndex("by_cloudId", (q: any) => q.eq("cloudId", entityId))
+    .withIndex("by_ownerId_cloudId", (q: any) => q.eq("ownerId", ownerId).eq("cloudId", entityId))
     .first();
   
   if (existing) {
@@ -105,15 +110,17 @@ async function handleCreateEvent(ctx: any, event: any) {
 /**
  * Handle ENTITY_UPDATED events.
  * Updates an existing document in the appropriate entity table.
+ * 
+ * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
 async function handleUpdateEvent(ctx: any, event: any) {
-  const { entityType, entityId, payload, version } = event;
+  const { entityType, entityId, payload, ownerId, version } = event;
   const data = JSON.parse(payload);
   
-  // Find the document by cloudId
+  // Find the document scoped to owner
   const existing = await ctx.db
     .query(entityType)
-    .withIndex("by_cloudId", (q: any) => q.eq("cloudId", entityId))
+    .withIndex("by_ownerId_cloudId", (q: any) => q.eq("ownerId", ownerId).eq("cloudId", entityId))
     .first();
   
   if (!existing) {
@@ -136,14 +143,16 @@ async function handleUpdateEvent(ctx: any, event: any) {
 /**
  * Handle ENTITY_MOVED_TO_TRASH events.
  * Marks an entity as being in trash (soft delete with trash semantics).
+ * 
+ * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
 async function handleTrashEvent(ctx: any, event: any) {
-  const { entityType, entityId, version } = event;
+  const { entityType, entityId, ownerId, version } = event;
   
-  // Find the document by cloudId
+  // Find the document scoped to owner
   const existing = await ctx.db
     .query(entityType)
-    .withIndex("by_cloudId", (q: any) => q.eq("cloudId", entityId))
+    .withIndex("by_ownerId_cloudId", (q: any) => q.eq("ownerId", ownerId).eq("cloudId", entityId))
     .first();
   
   if (!existing) {
@@ -156,11 +165,10 @@ async function handleTrashEvent(ctx: any, event: any) {
     return;
   }
   
-  // Mark as in trash
+  // Mark as in trash (state machine: active → inTrash)
   await ctx.db.patch(existing._id, {
     inTrash: true,
     trashMovedAt: event.occurredAt,
-    isDeleted: true, // Also set isDeleted for backward compatibility
     version,
   });
 }
@@ -168,14 +176,16 @@ async function handleTrashEvent(ctx: any, event: any) {
 /**
  * Handle ENTITY_RESTORED_FROM_TRASH events.
  * Restores an entity from trash back to active state.
+ * 
+ * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
 async function handleRestoreEvent(ctx: any, event: any) {
-  const { entityType, entityId, version } = event;
+  const { entityType, entityId, ownerId, version } = event;
   
-  // Find the document by cloudId
+  // Find the document scoped to owner
   const existing = await ctx.db
     .query(entityType)
-    .withIndex("by_cloudId", (q: any) => q.eq("cloudId", entityId))
+    .withIndex("by_ownerId_cloudId", (q: any) => q.eq("ownerId", ownerId).eq("cloudId", entityId))
     .first();
   
   if (!existing) {
@@ -188,11 +198,10 @@ async function handleRestoreEvent(ctx: any, event: any) {
     return;
   }
   
-  // Restore from trash
+  // Restore from trash (state machine: inTrash → active)
   await ctx.db.patch(existing._id, {
     inTrash: false,
     trashMovedAt: undefined,
-    isDeleted: false,
     version,
   });
 }
@@ -200,14 +209,16 @@ async function handleRestoreEvent(ctx: any, event: any) {
 /**
  * Handle ENTITY_PERMANENTLY_DELETED events.
  * Actually removes the document from the database (hard delete).
+ * 
+ * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
 async function handlePermanentDeleteEvent(ctx: any, event: any) {
-  const { entityType, entityId } = event;
+  const { entityType, entityId, ownerId } = event;
   
-  // Find the document by cloudId
+  // Find the document scoped to owner
   const existing = await ctx.db
     .query(entityType)
-    .withIndex("by_cloudId", (q: any) => q.eq("cloudId", entityId))
+    .withIndex("by_ownerId_cloudId", (q: any) => q.eq("ownerId", ownerId).eq("cloudId", entityId))
     .first();
   
   if (existing) {
