@@ -8,23 +8,21 @@ class GeneratorSettingsDao extends DatabaseAccessor<AppDatabase>
     with _$GeneratorSettingsDaoMixin {
   GeneratorSettingsDao(super.db);
 
-  /// Get generator settings for a specific owner
+  /// Get generator settings - uses unique owner index (unique_ownerId)
   Future<GeneratorSettingsData?> getSettings({required String ownerId}) async {
     if (ownerId.isEmpty) return null;
 
-    return await (select(generatorSettingsTable)
-          ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.isDeleted.equals(false)))
+    return (select(generatorSettingsTable)
+          ..where((t) => t.ownerId.equals(ownerId)))
         .getSingleOrNull();
   }
 
-  /// Watch generator settings - REQUIRES ownerId
+  /// Watch generator settings - uses unique owner index (unique_ownerId)
   Stream<GeneratorSettingsData?> watchSettings({required String ownerId}) {
     if (ownerId.isEmpty) return Stream.value(null);
 
     return (select(generatorSettingsTable)
-          ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.isDeleted.equals(false)))
+          ..where((t) => t.ownerId.equals(ownerId)))
         .watchSingleOrNull();
   }
 
@@ -34,8 +32,7 @@ class GeneratorSettingsDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Update existing settings
-  Future<bool> updateSettings(
-      GeneratorSettingsTableCompanion settings) async {
+  Future<bool> updateSettings(GeneratorSettingsTableCompanion settings) async {
     final comp = settings;
     return (update(generatorSettingsTable)
           ..where((tbl) => tbl.id.equals(comp.id.value)))
@@ -43,13 +40,24 @@ class GeneratorSettingsDao extends DatabaseAccessor<AppDatabase>
         .then((rows) => rows > 0);
   }
 
-  /// Soft delete settings
+  /// Soft delete settings - uses inTrash instead of isDeleted
   Future<bool> softDeleteSettings(String id) {
     return (update(generatorSettingsTable)..where((tbl) => tbl.id.equals(id)))
         .write(GeneratorSettingsTableCompanion(
-      isDeleted: const Value(true),
-      updatedAt: Value(DateTime.now()),
-    ))
+          inTrash: const Value(true),
+          updatedAt: Value(DateTime.now()),
+        ))
         .then((rows) => rows > 0);
+  }
+
+  /// Get all generator settings for owner (singleton pattern - returns max 1)
+  Future<List<GeneratorSettingsData>> getAllGeneratorSettings(
+      {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+
+    return (select(generatorSettingsTable)
+          ..where((t) => t.ownerId.equals(ownerId))
+          ..limit(1))
+        .get();
   }
 }

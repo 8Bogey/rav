@@ -5,30 +5,39 @@ import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
-import 'package:mawlid_al_dhaki/core/services/event_service.dart' show EventService, EventTypes;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mawlid_al_dhaki/core/services/event_service.dart'
+    show EventService, EventTypes;
 
 /// Service for pulling changes from Convex Cloud to local Drift database.
 /// Implements cloud-to-local sync (down-sync) for Local-First architecture.
 class ConvexDownSyncService {
   final AppDatabase database;
   late final EventService _eventService;
-  static const String _lastSyncKey = 'convex_last_sync_timestamp';
 
   ConvexDownSyncService(this.database) {
     _eventService = EventService(database);
   }
 
-  /// Get last sync timestamp from SharedPreferences
-  Future<int> _getLastSyncTimestamp() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_lastSyncKey) ?? 0;
+  /// Get last sync timestamp from SyncMetadataTable (database).
+  Future<int> _getLastSyncTimestamp(String tableName) async {
+    final entry = await (database.select(database.syncMetadataTable)
+          ..where((t) => t.entityTableName.equals(tableName)))
+        .getSingleOrNull();
+    return entry?.lastSyncTimestamp ?? 0;
   }
 
-  /// Save last sync timestamp
-  Future<void> _setLastSyncTimestamp(int timestamp) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_lastSyncKey, timestamp);
+  /// Save last sync timestamp to SyncMetadataTable (database).
+  Future<void> _setLastSyncTimestamp(
+    String tableName,
+    int timestamp,
+  ) async {
+    await database.into(database.syncMetadataTable).insertOnConflictUpdate(
+          SyncMetadataTableCompanion(
+            entityTableName: Value(tableName),
+            lastSyncTimestamp: Value(timestamp),
+            lastSyncAt: Value(DateTime.now()),
+          ),
+        );
   }
 
   /// Check if sync can proceed
@@ -46,22 +55,29 @@ class ConvexDownSyncService {
     }
 
     try {
-      final lastSync = await _getLastSyncTimestamp();
       final now = DateTime.now().millisecondsSinceEpoch;
 
-      debugPrint('ConvexDownSyncService: Starting down-sync from $lastSync');
+      // Sync events from Convex (event-sourced approach)
+      // Events use a global timestamp since they track all entity changes
+      final eventsLastSync = await _getLastSyncTimestamp('events');
+      debugPrint('ConvexDownSyncService: Starting down-sync');
+      await _syncEventsFromCloud(eventsLastSync);
 
-      // First: Sync events from Convex (event-sourced approach)
-      await _syncEventsFromCloud(lastSync);
+      // Sync each table with its own per-table timestamp
+      final tableConfigs = [
+        ('subscribers', _applySubscriberChanges),
+        ('cabinets', _applyCabinetChanges),
+        ('payments', _applyPaymentChanges),
+        ('workers', _applyWorkerChanges),
+      ];
 
-      // Second: Sync each table type using legacy query names (backward compatibility)
-      await _syncTable('subscribers', lastSync, _applySubscriberChanges);
-      await _syncTable('cabinets', lastSync, _applyCabinetChanges);
-      await _syncTable('payments', lastSync, _applyPaymentChanges);
-      await _syncTable('workers', lastSync, _applyWorkerChanges);
+      for (final (tableName, applyFn) in tableConfigs) {
+        final lastSync = await _getLastSyncTimestamp(tableName);
+        await _syncTable(tableName, lastSync, applyFn);
+        await _setLastSyncTimestamp(tableName, now);
+      }
 
       // Detect hard-deletions from Convex dashboard
-      // Items that exist locally but not in cloud should be marked deleted
       await _detectHardDeletions(
           'subscribers', _getLocalSubscriberIds, _markSubscriberDeleted);
       await _detectHardDeletions(
@@ -77,8 +93,6 @@ class ConvexDownSyncService {
       await _detectHardDeletions('generatorSettings',
           _getLocalGeneratorSettingsIds, _markGeneratorSettingsDeleted);
 
-      // Update last sync timestamp
-      await _setLastSyncTimestamp(now);
       debugPrint('ConvexDownSyncService: Down-sync completed');
     } catch (e) {
       debugPrint('ConvexDownSyncService Error: $e');
@@ -90,8 +104,9 @@ class ConvexDownSyncService {
   Future<void> _syncEventsFromCloud(int sinceTimestamp) async {
     try {
       debugPrint('[EventDownSync] Fetching events since $sinceTimestamp');
-      
-      final result = await AppConvexConfig.query('queries/events:getEventsSince', {
+
+      final result =
+          await AppConvexConfig.query('queries/events:getEventsSince', {
         'ownerId': _getCurrentOwnerId(),
         'since': sinceTimestamp,
       });
@@ -102,7 +117,8 @@ class ConvexDownSyncService {
       }
 
       final events = result.cast<Map<String, dynamic>>();
-      debugPrint('[EventDownSync] Processing ${events.length} events from cloud');
+      debugPrint(
+          '[EventDownSync] Processing ${events.length} events from cloud');
 
       for (final eventData in events) {
         try {
@@ -110,7 +126,8 @@ class ConvexDownSyncService {
           final entityType = eventData['entityType'] as String;
           final entityId = eventData['entityId'] as String;
           final version = eventData['version'] as int;
-          final occurredAt = DateTime.fromMillisecondsSinceEpoch(eventData['occurredAt'] as int);
+          final occurredAt = DateTime.fromMillisecondsSinceEpoch(
+              eventData['occurredAt'] as int);
 
           // Parse payload - handle both string and already-decoded map
           Map<String, dynamic> payload;
@@ -125,21 +142,24 @@ class ConvexDownSyncService {
           } else if (payloadRaw is Map) {
             payload = Map<String, dynamic>.from(payloadRaw);
           } else {
-            debugPrint('[EventDownSync] Unexpected payload type: ${payloadRaw.runtimeType}');
+            debugPrint(
+                '[EventDownSync] Unexpected payload type: ${payloadRaw.runtimeType}');
             payload = {};
           }
 
           // Check if we already have this event locally
-          final existingEvents = await _eventService.getEventsForEntity(entityType, entityId);
-          final alreadyHas = existingEvents.any((e) =>
-            e.eventType == eventType && e.version == version);
-          
+          final existingEvents =
+              await _eventService.getEventsForEntity(entityType, entityId);
+          final alreadyHas = existingEvents
+              .any((e) => e.eventType == eventType && e.version == version);
+
           if (alreadyHas) {
             continue; // Skip duplicate events
           }
 
           // Apply the event to local state
-          await _applyEventLocally(eventType, entityType, entityId, payload, version);
+          await _applyEventLocally(
+              eventType, entityType, entityId, payload, version);
 
           // Record the event locally as synced
           await _eventService.appendEvent(
@@ -200,7 +220,8 @@ class ConvexDownSyncService {
   ) async {
     // This is a simplified implementation - in production, you'd map
     // entityType to the correct table and update accordingly
-    debugPrint('[EventDownSync] Would update $entityType/$entityId with v$version');
+    debugPrint(
+        '[EventDownSync] Would update $entityType/$entityId with v$version');
   }
 
   /// Mark a local entity as deleted.
@@ -259,7 +280,7 @@ class ConvexDownSyncService {
             '[DownSync] Processing ${changes.length} changes for $tableName');
         for (final change in changes) {
           debugPrint(
-              '[DownSync]   - ${change['id']}: isDeleted=${change['isDeleted']}');
+              '[DownSync]   - ${change['id']}: inTrash=${change['inTrash']}');
         }
         await applyChanges(changes);
         debugPrint('[DownSync] Synced ${changes.length} $tableName');
@@ -308,19 +329,19 @@ class ConvexDownSyncService {
       final existingVersion = existing?.version ?? 0;
 
       if (incomingVersion > existingVersion) {
-        final isDeleted = change['isDeleted'] as bool? ?? false;
+        final inTrash = change['inTrash'] as bool? ?? false;
 
-        // If incoming is deleted, mark local as deleted instead of full update
-        if (isDeleted) {
+        // If incoming is trashed, mark local as trashed instead of full update
+        if (inTrash) {
           if (existing != null) {
             await (database.update(database.subscribersTable)
                   ..where((t) => t.id.equals(localId)))
                 .write(SubscribersTableCompanion(
-              isDeleted: const Value(true),
+              inTrash: const Value(true),
               version: Value(incomingVersion),
               updatedAt: Value(now),
             ));
-            debugPrint('[DownSync] Soft deleted subscriber: $localId');
+            debugPrint('[DownSync] Trashed subscriber: $localId');
           }
           continue;
         }
@@ -332,15 +353,16 @@ class ConvexDownSyncService {
           code: Value(change['code'] as String? ?? ''),
           cabinet: Value(change['cabinet'] as String? ?? ''),
           phone: Value(change['phone'] as String? ?? ''),
-          status: Value(change['status'] as int? ?? 1),
+          status: Value(change['status'] as String? ?? 'active'),
           startDate: Value(change['startDate'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['startDate'] as int)
               : now),
           accumulatedDebt: Value(change['accumulatedDebt'] as double? ?? 0),
-          tags: Value(change['tags'] as String?),
+          tags:
+              Value(change['tags'] != null ? jsonEncode(change['tags']) : null),
           notes: Value(change['notes'] as String?),
           version: Value(incomingVersion),
-          isDeleted: Value(isDeleted),
+          inTrash: Value(inTrash),
           updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
               : now),
@@ -372,7 +394,7 @@ class ConvexDownSyncService {
         continue;
       }
 
-      final isDeleted = change['isDeleted'] as bool? ?? false;
+      final inTrash = change['inTrash'] as bool? ?? false;
       final incomingVersion = change['version'] as int? ?? 0;
 
       var existing = await (database.select(database.cabinetsTable)
@@ -382,17 +404,17 @@ class ConvexDownSyncService {
       final existingVersion = existing?.version ?? 0;
 
       if (incomingVersion > existingVersion) {
-        // If incoming is deleted, mark local as deleted instead of full update
-        if (isDeleted) {
+        // If incoming is trashed, mark local as trashed instead of full update
+        if (inTrash) {
           if (existing != null) {
             await (database.update(database.cabinetsTable)
                   ..where((t) => t.id.equals(localId)))
                 .write(CabinetsTableCompanion(
-              isDeleted: const Value(true),
+              inTrash: const Value(true),
               version: Value(incomingVersion),
               updatedAt: Value(now),
             ));
-            debugPrint('[DownSync] Soft deleted cabinet: $localId');
+            debugPrint('[DownSync] Trashed cabinet: $localId');
           }
           continue;
         }
@@ -411,7 +433,7 @@ class ConvexDownSyncService {
                   change['completionDate'] as int)
               : null),
           version: Value(incomingVersion),
-          isDeleted: Value(isDeleted),
+          inTrash: Value(inTrash),
           updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
               : now),
@@ -451,19 +473,19 @@ class ConvexDownSyncService {
       final existingVersion = existing?.version ?? 0;
 
       if (incomingVersion > existingVersion) {
-        final isDeleted = change['isDeleted'] as bool? ?? false;
+        final inTrash = change['inTrash'] as bool? ?? false;
 
-        // If incoming is deleted, mark local as deleted instead of full update
-        if (isDeleted) {
+        // If incoming is trashed, mark local as trashed instead of full update
+        if (inTrash) {
           if (existing != null) {
             await (database.update(database.paymentsTable)
                   ..where((t) => t.id.equals(localId)))
                 .write(PaymentsTableCompanion(
-              isDeleted: const Value(true),
+              inTrash: const Value(true),
               version: Value(incomingVersion),
               updatedAt: Value(now),
             ));
-            debugPrint('[DownSync] Soft deleted payment: $localId');
+            debugPrint('[DownSync] Trashed payment: $localId');
           }
           continue;
         }
@@ -479,7 +501,7 @@ class ConvexDownSyncService {
               : now),
           cabinet: Value(change['cabinet'] as String? ?? ''),
           version: Value(incomingVersion),
-          isDeleted: Value(isDeleted),
+          inTrash: Value(inTrash),
           updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
               : now),
@@ -519,19 +541,18 @@ class ConvexDownSyncService {
       final existingVersion = existing?.version ?? 0;
 
       if (incomingVersion > existingVersion) {
-        final isDeleted = change['isDeleted'] as bool? ?? false;
-
-        // If incoming is deleted, mark local as deleted instead of full update
-        if (isDeleted) {
+        final inTrash = change['inTrash'] as bool? ?? false;
+        // If incoming is trashed, mark local as trashed instead of full update
+        if (inTrash) {
           if (existing != null) {
             await (database.update(database.workersTable)
                   ..where((t) => t.id.equals(localId)))
                 .write(WorkersTableCompanion(
-              isDeleted: const Value(true),
+              inTrash: const Value(true),
               version: Value(incomingVersion),
               updatedAt: Value(now),
             ));
-            debugPrint('[DownSync] Soft deleted worker: $localId');
+            debugPrint('[DownSync] Trashed worker: $localId');
           }
           continue;
         }
@@ -545,7 +566,7 @@ class ConvexDownSyncService {
           todayCollected: Value(change['todayCollected'] as double? ?? 0),
           monthTotal: Value(change['monthTotal'] as double? ?? 0),
           version: Value(incomingVersion),
-          isDeleted: Value(isDeleted),
+          inTrash: Value(inTrash),
           updatedAt: Value(change['updatedAt'] != null
               ? DateTime.fromMillisecondsSinceEpoch(change['updatedAt'] as int)
               : now),
@@ -649,28 +670,28 @@ class ConvexDownSyncService {
 
   Future<Set<String>> _getLocalSubscriberIds() async {
     final rows = await (database.select(database.subscribersTable)
-          ..where((t) => t.isDeleted.equals(false)))
+          ..where((t) => t.inTrash.equals(false)))
         .get();
     return rows.map((r) => r.id).toSet();
   }
 
   Future<Set<String>> _getLocalCabinetIds() async {
     final rows = await (database.select(database.cabinetsTable)
-          ..where((t) => t.isDeleted.equals(false)))
+          ..where((t) => t.inTrash.equals(false)))
         .get();
     return rows.map((r) => r.id).toSet();
   }
 
   Future<Set<String>> _getLocalPaymentIds() async {
     final rows = await (database.select(database.paymentsTable)
-          ..where((t) => t.isDeleted.equals(false)))
+          ..where((t) => t.inTrash.equals(false)))
         .get();
     return rows.map((r) => r.id).toSet();
   }
 
   Future<Set<String>> _getLocalWorkerIds() async {
     final rows = await (database.select(database.workersTable)
-          ..where((t) => t.isDeleted.equals(false)))
+          ..where((t) => t.inTrash.equals(false)))
         .get();
     return rows.map((r) => r.id).toSet();
   }
@@ -683,11 +704,11 @@ class ConvexDownSyncService {
           ..where((t) => t.id.equals(id)))
         .write(
       SubscribersTableCompanion(
-        isDeleted: const Value(true),
+        inTrash: const Value(true),
         updatedAt: Value(now),
       ),
     );
-    debugPrint('[DownSync] Marked subscriber $id as deleted');
+    debugPrint('[DownSync] Marked subscriber $id as trashed');
   }
 
   Future<void> _markCabinetDeleted(String id) async {
@@ -696,11 +717,11 @@ class ConvexDownSyncService {
           ..where((t) => t.id.equals(id)))
         .write(
       CabinetsTableCompanion(
-        isDeleted: const Value(true),
+        inTrash: const Value(true),
         updatedAt: Value(now),
       ),
     );
-    debugPrint('[DownSync] Marked cabinet $id as deleted');
+    debugPrint('[DownSync] Marked cabinet $id as trashed');
   }
 
   Future<void> _markPaymentDeleted(String id) async {
@@ -709,11 +730,11 @@ class ConvexDownSyncService {
           ..where((t) => t.id.equals(id)))
         .write(
       PaymentsTableCompanion(
-        isDeleted: const Value(true),
+        inTrash: const Value(true),
         updatedAt: Value(now),
       ),
     );
-    debugPrint('[DownSync] Marked payment $id as deleted');
+    debugPrint('[DownSync] Marked payment $id as trashed');
   }
 
   Future<void> _markWorkerDeleted(String id) async {
@@ -722,30 +743,30 @@ class ConvexDownSyncService {
           ..where((t) => t.id.equals(id)))
         .write(
       WorkersTableCompanion(
-        isDeleted: const Value(true),
+        inTrash: const Value(true),
         updatedAt: Value(now),
       ),
     );
-    debugPrint('[DownSync] Marked worker $id as deleted');
+    debugPrint('[DownSync] Marked worker $id as trashed');
   }
 
   Future<Set<String>> _getLocalAuditLogIds() async {
     final rows = await (database.select(database.auditLogTable)
-          ..where((t) => t.isDeleted.equals(false)))
+          ..where((t) => t.inTrash.equals(false)))
         .get();
     return rows.map((r) => r.id).toSet();
   }
 
   Future<Set<String>> _getLocalWhatsappTemplateIds() async {
     final rows = await (database.select(database.whatsappTemplatesTable)
-          ..where((t) => t.isDeleted.equals(false)))
+          ..where((t) => t.inTrash.equals(false)))
         .get();
     return rows.map((r) => r.id).toSet();
   }
 
   Future<Set<String>> _getLocalGeneratorSettingsIds() async {
     final rows = await (database.select(database.generatorSettingsTable)
-          ..where((t) => t.isDeleted.equals(false)))
+          ..where((t) => t.inTrash.equals(false)))
         .get();
     return rows.map((r) => r.id).toSet();
   }
@@ -756,11 +777,11 @@ class ConvexDownSyncService {
           ..where((t) => t.id.equals(id)))
         .write(
       AuditLogTableCompanion(
-        isDeleted: const Value(true),
+        inTrash: const Value(true),
         updatedAt: Value(now),
       ),
     );
-    debugPrint('[DownSync] Marked audit log $id as deleted');
+    debugPrint('[DownSync] Marked audit log $id as trashed');
   }
 
   Future<void> _markWhatsappTemplateDeleted(String id) async {
@@ -769,11 +790,11 @@ class ConvexDownSyncService {
           ..where((t) => t.id.equals(id)))
         .write(
       WhatsappTemplatesTableCompanion(
-        isDeleted: const Value(true),
+        inTrash: const Value(true),
         updatedAt: Value(now),
       ),
     );
-    debugPrint('[DownSync] Marked whatsapp template $id as deleted');
+    debugPrint('[DownSync] Marked whatsapp template $id as trashed');
   }
 
   Future<void> _markGeneratorSettingsDeleted(String id) async {
@@ -782,10 +803,10 @@ class ConvexDownSyncService {
           ..where((t) => t.id.equals(id)))
         .write(
       GeneratorSettingsTableCompanion(
-        isDeleted: const Value(true),
+        inTrash: const Value(true),
         updatedAt: Value(now),
       ),
     );
-    debugPrint('[DownSync] Marked generator settings $id as deleted');
+    debugPrint('[DownSync] Marked generator settings $id as trashed');
   }
 }

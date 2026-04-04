@@ -8,27 +8,22 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
     with _$SubscribersDaoMixin {
   SubscribersDao(super.db);
 
-  /// Get active subscribers - REQUIRES ownerId for tenant isolation
-  /// Returns empty list if ownerId is null (no data leak)
+  /// Get active subscribers - uses composite index (by_ownerId_inTrash)
   Future<List<Subscriber>> getAllSubscribers({required String ownerId}) {
     if (ownerId.isEmpty) return Future.value([]);
 
-    final query = select(subscribersTable)
-      ..where((tbl) => tbl.ownerId.equals(ownerId))
-      ..where((tbl) => tbl.isDeleted.equals(false));
-
-    return query.get();
+    return (select(subscribersTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.inTrash.equals(false)))
+        .get();
   }
 
-  /// Watch active subscribers - REQUIRES ownerId for tenant isolation
+  /// Watch active subscribers - uses composite index (by_ownerId_inTrash)
   Stream<List<Subscriber>> watchAllSubscribers({required String ownerId}) {
     if (ownerId.isEmpty) return Stream.value([]);
 
-    final query = select(subscribersTable)
-      ..where((tbl) => tbl.ownerId.equals(ownerId))
-      ..where((tbl) => tbl.isDeleted.equals(false));
-
-    return query.watch();
+    return (select(subscribersTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.inTrash.equals(false)))
+        .watch();
   }
 
   // Get subscriber by ID (UUID) - REQUIRES ownerId
@@ -85,7 +80,7 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteSubscriber(String id) {
     return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
         .write(const SubscribersTableCompanion(
-      isDeleted: Value(true),
+      inTrash: Value(true),
       updatedAt: Value(null), // Will be set by copyWith in service
     ));
   }
@@ -95,74 +90,60 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
     return (delete(subscribersTable)..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  // Search subscribers by name or code - REQUIRES ownerId
+  // Search subscribers by name or code - uses composite index prefix
   Future<List<Subscriber>> searchSubscribers(String query,
       {required String ownerId}) {
     if (ownerId.isEmpty) return Future.value([]);
 
     return (select(subscribersTable)
-          ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.isDeleted.equals(false))
-          ..where(
-              (tbl) => tbl.name.like('%$query%') | tbl.code.like('%$query%')))
+          ..where((t) =>
+              t.ownerId.equals(ownerId) &
+              t.inTrash.equals(false) &
+              (t.name.like('%$query%') | t.code.like('%$query%'))))
         .get();
   }
 
-  // Watch search results - REQUIRES ownerId
+  // Watch search results - uses composite index prefix
   Stream<List<Subscriber>> watchSearchSubscribers(String query,
       {required String ownerId}) {
     if (ownerId.isEmpty) return Stream.value([]);
 
     return (select(subscribersTable)
-          ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.isDeleted.equals(false))
-          ..where(
-              (tbl) => tbl.name.like('%$query%') | tbl.code.like('%$query%')))
+          ..where((t) =>
+              t.ownerId.equals(ownerId) &
+              t.inTrash.equals(false) &
+              (t.name.like('%$query%') | t.code.like('%$query%'))))
         .watch();
   }
 
-  // Get dirty subscribers - REQUIRES ownerId
-  Future<List<Subscriber>> getDirtySubscribers({required String ownerId}) {
-    if (ownerId.isEmpty) return Future.value([]);
+  // NOTE: dirtyFlag, lastSyncedAt, syncStatus, cloudId, deletedLocally,
+  // permissionsMask, lastModified fields removed from schema.
+  // Sync-related DAO methods (getDirtySubscribers, markRecordAsDirty,
+  // clearDirtyFlag, updateLastSyncedAt) have been removed.
 
-    return (select(subscribersTable)
-          ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.dirtyFlag.equals(true)))
-        .get();
-  }
-
-  // Mark a subscriber record as dirty (needing sync)
-  Future<int> markRecordAsDirty(String id) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-      dirtyFlag: const Value(true),
-      updatedAt: Value(DateTime.now()),
-    ));
-  }
-
-  // Clear dirty flag for a subscriber record
-  Future<int> clearDirtyFlag(String id) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const SubscribersTableCompanion(dirtyFlag: Value(false)));
-  }
-
-  // Update last synced timestamp
-  Future<int> updateLastSyncedAt(String id) {
-    return (update(subscribersTable)..where((tbl) => tbl.id.equals(id)))
-        .write(SubscribersTableCompanion(
-      lastSyncedAt: Value(DateTime.now()),
-    ));
-  }
-
-  // Get subscribers by cabinet - REQUIRES ownerId
+  // Get subscribers by cabinet - uses composite index (by_ownerId_cabinet_inTrash)
   Future<List<Subscriber>> getSubscribersByCabinet(String cabinet,
       {required String ownerId}) {
     if (ownerId.isEmpty) return Future.value([]);
 
     return (select(subscribersTable)
-          ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.cabinet.equals(cabinet))
-          ..where((tbl) => tbl.isDeleted.equals(false)))
+          ..where((t) =>
+              t.ownerId.equals(ownerId) &
+              t.cabinet.equals(cabinet) &
+              t.inTrash.equals(false)))
+        .get();
+  }
+
+  // Get subscribers by status - uses composite index (by_ownerId_status_inTrash)
+  Future<List<Subscriber>> getSubscribersByStatus(String status,
+      {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value([]);
+
+    return (select(subscribersTable)
+          ..where((t) =>
+              t.ownerId.equals(ownerId) &
+              t.status.equals(status) &
+              t.inTrash.equals(false)))
         .get();
   }
 
@@ -173,8 +154,8 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
     final query = selectOnly(subscribersTable)
       ..addColumns([subscribersTable.id.count()])
       ..where(subscribersTable.ownerId.equals(ownerId))
-      ..where(subscribersTable.status.equals(1)) // 1 = active
-      ..where(subscribersTable.isDeleted.equals(false));
+      ..where(subscribersTable.status.equals('active'))
+      ..where(subscribersTable.inTrash.equals(false));
 
     final result = await query.getSingle();
     return result.read(subscribersTable.id.count()) ?? 0;
@@ -187,7 +168,7 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
     final query = selectOnly(subscribersTable)
       ..addColumns([subscribersTable.accumulatedDebt.sum()])
       ..where(subscribersTable.ownerId.equals(ownerId))
-      ..where(subscribersTable.isDeleted.equals(false));
+      ..where(subscribersTable.inTrash.equals(false));
 
     final result = await query.getSingle();
     return result.read(subscribersTable.accumulatedDebt.sum()) ?? 0.0;

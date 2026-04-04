@@ -30,6 +30,17 @@ class CabinetsService extends BaseService {
 
   // Add a new cabinet
   Future<String> addCabinet(Cabinet cabinet, {required String ownerId}) {
+    if (cabinet.name.trim().isEmpty)
+      throw ArgumentError('Name cannot be empty');
+    if (cabinet.totalSubscribers < 0)
+      throw ArgumentError('Total subscribers cannot be negative');
+    if (cabinet.currentSubscribers < 0)
+      throw ArgumentError('Current subscribers cannot be negative');
+    if (cabinet.collectedAmount < 0)
+      throw ArgumentError('Collected amount cannot be negative');
+    if (cabinet.delayedSubscribers < 0)
+      throw ArgumentError('Delayed subscribers cannot be negative');
+
     // Generate a UUID for the new cabinet
     final id = const Uuid().v4();
     final now = DateTime.now();
@@ -47,7 +58,7 @@ class CabinetsService extends BaseService {
       createdAt: Value(now),
       updatedAt: Value(now),
       version: const Value(1),
-      isDeleted: const Value(false),
+      inTrash: const Value(false),
     );
 
     // Add to outbox for Convex sync
@@ -67,7 +78,7 @@ class CabinetsService extends BaseService {
         'delayedSubscribers': cabinet.delayedSubscribers,
         'completionDate': cabinet.completionDate?.millisecondsSinceEpoch,
         'version': 1,
-        'isDeleted': false,
+        'inTrash': false,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': now.millisecondsSinceEpoch,
       },
@@ -102,7 +113,7 @@ class CabinetsService extends BaseService {
         'delayedSubscribers': cabinet.delayedSubscribers,
         'completionDate': cabinet.completionDate?.millisecondsSinceEpoch,
         'version': newVersion,
-        'isDeleted': cabinet.isDeleted,
+        'inTrash': cabinet.inTrash,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': cabinet.createdAt?.millisecondsSinceEpoch ??
             now.millisecondsSinceEpoch,
@@ -113,17 +124,18 @@ class CabinetsService extends BaseService {
   }
 
   // Delete a cabinet (soft delete + move to trash)
-  Future<bool> deleteCabinet(String id, {required String ownerId}) async {
+  Future<bool> deleteCabinet(String id, {required String ownerId}) {
     debugPrint(
         '[CabinetsService] deleteCabinet called: id=$id, ownerId=$ownerId');
-    final now = DateTime.now();
-    final existing = await _dao.getCabinetById(id, ownerId: ownerId);
-    debugPrint('[CabinetsService] existing cabinet: $existing');
-    final newVersion = (existing?.version ?? 0) + 1;
-    debugPrint('[CabinetsService] newVersion: $newVersion');
+    return database.transaction(() async {
+      final now = DateTime.now();
+      final existing = await _dao.getCabinetById(id, ownerId: ownerId);
+      debugPrint('[CabinetsService] existing cabinet: $existing');
+      if (existing == null) return false;
+      final newVersion = (existing.version ?? 0) + 1;
+      debugPrint('[CabinetsService] newVersion: $newVersion');
 
-    // Move to trash before soft deleting
-    if (existing != null) {
+      // Move to trash before soft deleting
       try {
         final trashService = TrashService(database);
         await trashService.moveToTrash(
@@ -146,26 +158,26 @@ class CabinetsService extends BaseService {
       } catch (e) {
         debugPrint('[CabinetsService] Failed to move cabinet to trash: $e');
       }
-    }
 
-    // Use soft delete which only updates isDeleted and updatedAt
-    final result = await _dao.softDeleteCabinet(id);
-    debugPrint('[CabinetsService] softDeleteCabinet result: $result');
+      // Use soft delete which only updates isDeleted and updatedAt
+      final result = await _dao.softDeleteCabinet(id);
+      debugPrint('[CabinetsService] softDeleteCabinet result: $result');
 
-    // Add to outbox for Convex sync
-    // Use cloudId for delete lookup (local UUID)
-    _outbox.addEntry(
-      targetTable: 'cabinets',
-      operationType: 'delete',
-      documentId: id,
-      payload: {
-        'cloudId': id, // Send cloudId for lookup instead of Convex id
-        'ownerId': ownerId,
-        'version': newVersion,
-      },
-    );
-    debugPrint('[CabinetsService] outbox entry added');
+      // Add to outbox for Convex sync
+      // Use cloudId for delete lookup (local UUID)
+      _outbox.addEntry(
+        targetTable: 'cabinets',
+        operationType: 'delete',
+        documentId: id,
+        payload: {
+          'cloudId': id, // Send cloudId for lookup instead of Convex id
+          'ownerId': ownerId,
+          'version': newVersion,
+        },
+      );
+      debugPrint('[CabinetsService] outbox entry added');
 
-    return result;
+      return result;
+    });
   }
 }

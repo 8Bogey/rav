@@ -76,7 +76,7 @@ export default defineSchema({
     // Trash state machine
     inTrash: v.optional(v.boolean()),
     trashMovedAt: v.optional(v.number()),
-    isDeleted: v.optional(v.boolean()), // Legacy field - migrate to inTrash
+    isDeleted: v.optional(v.boolean()), // Legacy field - kept for existing data migration
     
     // Convex sync metadata
     version: v.number(),

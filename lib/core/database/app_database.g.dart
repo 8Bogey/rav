@@ -37,9 +37,11 @@ class $SubscribersTableTable extends SubscribersTable
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
-  late final GeneratedColumn<int> status = GeneratedColumn<int>(
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
       'status', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('active'));
   static const VerificationMeta _startDateMeta =
       const VerificationMeta('startDate');
   @override
@@ -64,58 +66,6 @@ class $SubscribersTableTable extends SubscribersTable
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
       'notes', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _lastModifiedMeta =
-      const VerificationMeta('lastModified');
-  @override
-  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
-      'last_modified', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncedAtMeta =
-      const VerificationMeta('lastSyncedAt');
-  @override
-  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
-      'last_synced_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _syncStatusMeta =
-      const VerificationMeta('syncStatus');
-  @override
-  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
-      'sync_status', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('local_only'));
-  static const VerificationMeta _dirtyFlagMeta =
-      const VerificationMeta('dirtyFlag');
-  @override
-  late final GeneratedColumn<bool> dirtyFlag = GeneratedColumn<bool>(
-      'dirty_flag', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("dirty_flag" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _cloudIdMeta =
-      const VerificationMeta('cloudId');
-  @override
-  late final GeneratedColumn<String> cloudId = GeneratedColumn<String>(
-      'cloud_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _deletedLocallyMeta =
-      const VerificationMeta('deletedLocally');
-  @override
-  late final GeneratedColumn<bool> deletedLocally = GeneratedColumn<bool>(
-      'deleted_locally', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("deleted_locally" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _permissionsMaskMeta =
-      const VerificationMeta('permissionsMask');
-  @override
-  late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
-      'permissions_mask', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _ownerIdMeta =
       const VerificationMeta('ownerId');
   @override
@@ -130,16 +80,22 @@ class $SubscribersTableTable extends SubscribersTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+  static const VerificationMeta _inTrashMeta =
+      const VerificationMeta('inTrash');
   @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
+  late final GeneratedColumn<bool> inTrash = GeneratedColumn<bool>(
+      'in_trash', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+          GeneratedColumn.constraintIsAlways('CHECK ("in_trash" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _trashMovedAtMeta =
+      const VerificationMeta('trashMovedAt');
+  @override
+  late final GeneratedColumn<DateTime> trashMovedAt = GeneratedColumn<DateTime>(
+      'trash_moved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
@@ -164,16 +120,10 @@ class $SubscribersTableTable extends SubscribersTable
         accumulatedDebt,
         tags,
         notes,
-        lastModified,
-        lastSyncedAt,
-        syncStatus,
-        dirtyFlag,
-        cloudId,
-        deletedLocally,
-        permissionsMask,
         ownerId,
         version,
-        isDeleted,
+        inTrash,
+        trashMovedAt,
         updatedAt,
         createdAt
       ];
@@ -219,8 +169,6 @@ class $SubscribersTableTable extends SubscribersTable
     if (data.containsKey('status')) {
       context.handle(_statusMeta,
           status.isAcceptableOrUnknown(data['status']!, _statusMeta));
-    } else if (isInserting) {
-      context.missing(_statusMeta);
     }
     if (data.containsKey('start_date')) {
       context.handle(_startDateMeta,
@@ -242,44 +190,6 @@ class $SubscribersTableTable extends SubscribersTable
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
     }
-    if (data.containsKey('last_modified')) {
-      context.handle(
-          _lastModifiedMeta,
-          lastModified.isAcceptableOrUnknown(
-              data['last_modified']!, _lastModifiedMeta));
-    }
-    if (data.containsKey('last_synced_at')) {
-      context.handle(
-          _lastSyncedAtMeta,
-          lastSyncedAt.isAcceptableOrUnknown(
-              data['last_synced_at']!, _lastSyncedAtMeta));
-    }
-    if (data.containsKey('sync_status')) {
-      context.handle(
-          _syncStatusMeta,
-          syncStatus.isAcceptableOrUnknown(
-              data['sync_status']!, _syncStatusMeta));
-    }
-    if (data.containsKey('dirty_flag')) {
-      context.handle(_dirtyFlagMeta,
-          dirtyFlag.isAcceptableOrUnknown(data['dirty_flag']!, _dirtyFlagMeta));
-    }
-    if (data.containsKey('cloud_id')) {
-      context.handle(_cloudIdMeta,
-          cloudId.isAcceptableOrUnknown(data['cloud_id']!, _cloudIdMeta));
-    }
-    if (data.containsKey('deleted_locally')) {
-      context.handle(
-          _deletedLocallyMeta,
-          deletedLocally.isAcceptableOrUnknown(
-              data['deleted_locally']!, _deletedLocallyMeta));
-    }
-    if (data.containsKey('permissions_mask')) {
-      context.handle(
-          _permissionsMaskMeta,
-          permissionsMask.isAcceptableOrUnknown(
-              data['permissions_mask']!, _permissionsMaskMeta));
-    }
     if (data.containsKey('owner_id')) {
       context.handle(_ownerIdMeta,
           ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
@@ -288,9 +198,15 @@ class $SubscribersTableTable extends SubscribersTable
       context.handle(_versionMeta,
           version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+    if (data.containsKey('in_trash')) {
+      context.handle(_inTrashMeta,
+          inTrash.isAcceptableOrUnknown(data['in_trash']!, _inTrashMeta));
+    }
+    if (data.containsKey('trash_moved_at')) {
+      context.handle(
+          _trashMovedAtMeta,
+          trashMovedAt.isAcceptableOrUnknown(
+              data['trash_moved_at']!, _trashMovedAtMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
@@ -320,7 +236,7 @@ class $SubscribersTableTable extends SubscribersTable
       phone: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}phone'])!,
       status: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}status'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
       startDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}start_date'])!,
       accumulatedDebt: attachedDatabase.typeMapping.read(
@@ -329,26 +245,14 @@ class $SubscribersTableTable extends SubscribersTable
           .read(DriftSqlType.string, data['${effectivePrefix}tags']),
       notes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
-      lastModified: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_modified']),
-      lastSyncedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}last_synced_at']),
-      syncStatus: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_status']),
-      dirtyFlag: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}dirty_flag']),
-      cloudId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}cloud_id']),
-      deletedLocally: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
-      permissionsMask: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
       ownerId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
       version: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      inTrash: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}in_trash'])!,
+      trashMovedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}trash_moved_at']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
       createdAt: attachedDatabase.typeMapping
@@ -368,21 +272,15 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
   final String code;
   final String cabinet;
   final String phone;
-  final int status;
+  final String status;
   final DateTime startDate;
   final double accumulatedDebt;
   final String? tags;
   final String? notes;
-  final DateTime? lastModified;
-  final DateTime? lastSyncedAt;
-  final String? syncStatus;
-  final bool? dirtyFlag;
-  final String? cloudId;
-  final bool? deletedLocally;
-  final String? permissionsMask;
   final String? ownerId;
   final int version;
-  final bool isDeleted;
+  final bool inTrash;
+  final DateTime? trashMovedAt;
   final DateTime? updatedAt;
   final DateTime? createdAt;
   const Subscriber(
@@ -396,16 +294,10 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       required this.accumulatedDebt,
       this.tags,
       this.notes,
-      this.lastModified,
-      this.lastSyncedAt,
-      this.syncStatus,
-      this.dirtyFlag,
-      this.cloudId,
-      this.deletedLocally,
-      this.permissionsMask,
       this.ownerId,
       required this.version,
-      required this.isDeleted,
+      required this.inTrash,
+      this.trashMovedAt,
       this.updatedAt,
       this.createdAt});
   @override
@@ -416,7 +308,7 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
     map['code'] = Variable<String>(code);
     map['cabinet'] = Variable<String>(cabinet);
     map['phone'] = Variable<String>(phone);
-    map['status'] = Variable<int>(status);
+    map['status'] = Variable<String>(status);
     map['start_date'] = Variable<DateTime>(startDate);
     map['accumulated_debt'] = Variable<double>(accumulatedDebt);
     if (!nullToAbsent || tags != null) {
@@ -425,32 +317,14 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
-    if (!nullToAbsent || lastModified != null) {
-      map['last_modified'] = Variable<DateTime>(lastModified);
-    }
-    if (!nullToAbsent || lastSyncedAt != null) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
-    }
-    if (!nullToAbsent || syncStatus != null) {
-      map['sync_status'] = Variable<String>(syncStatus);
-    }
-    if (!nullToAbsent || dirtyFlag != null) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag);
-    }
-    if (!nullToAbsent || cloudId != null) {
-      map['cloud_id'] = Variable<String>(cloudId);
-    }
-    if (!nullToAbsent || deletedLocally != null) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally);
-    }
-    if (!nullToAbsent || permissionsMask != null) {
-      map['permissions_mask'] = Variable<String>(permissionsMask);
-    }
     if (!nullToAbsent || ownerId != null) {
       map['owner_id'] = Variable<String>(ownerId);
     }
     map['version'] = Variable<int>(version);
-    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['in_trash'] = Variable<bool>(inTrash);
+    if (!nullToAbsent || trashMovedAt != null) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt);
+    }
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
@@ -473,32 +347,14 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       tags: tags == null && nullToAbsent ? const Value.absent() : Value(tags),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
-      lastModified: lastModified == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastModified),
-      lastSyncedAt: lastSyncedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncedAt),
-      syncStatus: syncStatus == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncStatus),
-      dirtyFlag: dirtyFlag == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dirtyFlag),
-      cloudId: cloudId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(cloudId),
-      deletedLocally: deletedLocally == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedLocally),
-      permissionsMask: permissionsMask == null && nullToAbsent
-          ? const Value.absent()
-          : Value(permissionsMask),
       ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
           : Value(ownerId),
       version: Value(version),
-      isDeleted: Value(isDeleted),
+      inTrash: Value(inTrash),
+      trashMovedAt: trashMovedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashMovedAt),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
@@ -517,21 +373,15 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       code: serializer.fromJson<String>(json['code']),
       cabinet: serializer.fromJson<String>(json['cabinet']),
       phone: serializer.fromJson<String>(json['phone']),
-      status: serializer.fromJson<int>(json['status']),
+      status: serializer.fromJson<String>(json['status']),
       startDate: serializer.fromJson<DateTime>(json['startDate']),
       accumulatedDebt: serializer.fromJson<double>(json['accumulatedDebt']),
       tags: serializer.fromJson<String?>(json['tags']),
       notes: serializer.fromJson<String?>(json['notes']),
-      lastModified: serializer.fromJson<DateTime?>(json['lastModified']),
-      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
-      syncStatus: serializer.fromJson<String?>(json['syncStatus']),
-      dirtyFlag: serializer.fromJson<bool?>(json['dirtyFlag']),
-      cloudId: serializer.fromJson<String?>(json['cloudId']),
-      deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
-      permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       version: serializer.fromJson<int>(json['version']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      inTrash: serializer.fromJson<bool>(json['inTrash']),
+      trashMovedAt: serializer.fromJson<DateTime?>(json['trashMovedAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
@@ -545,21 +395,15 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
       'code': serializer.toJson<String>(code),
       'cabinet': serializer.toJson<String>(cabinet),
       'phone': serializer.toJson<String>(phone),
-      'status': serializer.toJson<int>(status),
+      'status': serializer.toJson<String>(status),
       'startDate': serializer.toJson<DateTime>(startDate),
       'accumulatedDebt': serializer.toJson<double>(accumulatedDebt),
       'tags': serializer.toJson<String?>(tags),
       'notes': serializer.toJson<String?>(notes),
-      'lastModified': serializer.toJson<DateTime?>(lastModified),
-      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
-      'syncStatus': serializer.toJson<String?>(syncStatus),
-      'dirtyFlag': serializer.toJson<bool?>(dirtyFlag),
-      'cloudId': serializer.toJson<String?>(cloudId),
-      'deletedLocally': serializer.toJson<bool?>(deletedLocally),
-      'permissionsMask': serializer.toJson<String?>(permissionsMask),
       'ownerId': serializer.toJson<String?>(ownerId),
       'version': serializer.toJson<int>(version),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'inTrash': serializer.toJson<bool>(inTrash),
+      'trashMovedAt': serializer.toJson<DateTime?>(trashMovedAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
@@ -571,21 +415,15 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
           String? code,
           String? cabinet,
           String? phone,
-          int? status,
+          String? status,
           DateTime? startDate,
           double? accumulatedDebt,
           Value<String?> tags = const Value.absent(),
           Value<String?> notes = const Value.absent(),
-          Value<DateTime?> lastModified = const Value.absent(),
-          Value<DateTime?> lastSyncedAt = const Value.absent(),
-          Value<String?> syncStatus = const Value.absent(),
-          Value<bool?> dirtyFlag = const Value.absent(),
-          Value<String?> cloudId = const Value.absent(),
-          Value<bool?> deletedLocally = const Value.absent(),
-          Value<String?> permissionsMask = const Value.absent(),
           Value<String?> ownerId = const Value.absent(),
           int? version,
-          bool? isDeleted,
+          bool? inTrash,
+          Value<DateTime?> trashMovedAt = const Value.absent(),
           Value<DateTime?> updatedAt = const Value.absent(),
           Value<DateTime?> createdAt = const Value.absent()}) =>
       Subscriber(
@@ -599,21 +437,11 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
         accumulatedDebt: accumulatedDebt ?? this.accumulatedDebt,
         tags: tags.present ? tags.value : this.tags,
         notes: notes.present ? notes.value : this.notes,
-        lastModified:
-            lastModified.present ? lastModified.value : this.lastModified,
-        lastSyncedAt:
-            lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
-        syncStatus: syncStatus.present ? syncStatus.value : this.syncStatus,
-        dirtyFlag: dirtyFlag.present ? dirtyFlag.value : this.dirtyFlag,
-        cloudId: cloudId.present ? cloudId.value : this.cloudId,
-        deletedLocally:
-            deletedLocally.present ? deletedLocally.value : this.deletedLocally,
-        permissionsMask: permissionsMask.present
-            ? permissionsMask.value
-            : this.permissionsMask,
         ownerId: ownerId.present ? ownerId.value : this.ownerId,
         version: version ?? this.version,
-        isDeleted: isDeleted ?? this.isDeleted,
+        inTrash: inTrash ?? this.inTrash,
+        trashMovedAt:
+            trashMovedAt.present ? trashMovedAt.value : this.trashMovedAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
@@ -631,25 +459,12 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
           : this.accumulatedDebt,
       tags: data.tags.present ? data.tags.value : this.tags,
       notes: data.notes.present ? data.notes.value : this.notes,
-      lastModified: data.lastModified.present
-          ? data.lastModified.value
-          : this.lastModified,
-      lastSyncedAt: data.lastSyncedAt.present
-          ? data.lastSyncedAt.value
-          : this.lastSyncedAt,
-      syncStatus:
-          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
-      dirtyFlag: data.dirtyFlag.present ? data.dirtyFlag.value : this.dirtyFlag,
-      cloudId: data.cloudId.present ? data.cloudId.value : this.cloudId,
-      deletedLocally: data.deletedLocally.present
-          ? data.deletedLocally.value
-          : this.deletedLocally,
-      permissionsMask: data.permissionsMask.present
-          ? data.permissionsMask.value
-          : this.permissionsMask,
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       version: data.version.present ? data.version.value : this.version,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      inTrash: data.inTrash.present ? data.inTrash.value : this.inTrash,
+      trashMovedAt: data.trashMovedAt.present
+          ? data.trashMovedAt.value
+          : this.trashMovedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -668,16 +483,10 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
           ..write('accumulatedDebt: $accumulatedDebt, ')
           ..write('tags: $tags, ')
           ..write('notes: $notes, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -685,30 +494,23 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
   }
 
   @override
-  int get hashCode => Object.hashAll([
-        id,
-        name,
-        code,
-        cabinet,
-        phone,
-        status,
-        startDate,
-        accumulatedDebt,
-        tags,
-        notes,
-        lastModified,
-        lastSyncedAt,
-        syncStatus,
-        dirtyFlag,
-        cloudId,
-        deletedLocally,
-        permissionsMask,
-        ownerId,
-        version,
-        isDeleted,
-        updatedAt,
-        createdAt
-      ]);
+  int get hashCode => Object.hash(
+      id,
+      name,
+      code,
+      cabinet,
+      phone,
+      status,
+      startDate,
+      accumulatedDebt,
+      tags,
+      notes,
+      ownerId,
+      version,
+      inTrash,
+      trashMovedAt,
+      updatedAt,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -723,16 +525,10 @@ class Subscriber extends DataClass implements Insertable<Subscriber> {
           other.accumulatedDebt == this.accumulatedDebt &&
           other.tags == this.tags &&
           other.notes == this.notes &&
-          other.lastModified == this.lastModified &&
-          other.lastSyncedAt == this.lastSyncedAt &&
-          other.syncStatus == this.syncStatus &&
-          other.dirtyFlag == this.dirtyFlag &&
-          other.cloudId == this.cloudId &&
-          other.deletedLocally == this.deletedLocally &&
-          other.permissionsMask == this.permissionsMask &&
           other.ownerId == this.ownerId &&
           other.version == this.version &&
-          other.isDeleted == this.isDeleted &&
+          other.inTrash == this.inTrash &&
+          other.trashMovedAt == this.trashMovedAt &&
           other.updatedAt == this.updatedAt &&
           other.createdAt == this.createdAt);
 }
@@ -743,21 +539,15 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
   final Value<String> code;
   final Value<String> cabinet;
   final Value<String> phone;
-  final Value<int> status;
+  final Value<String> status;
   final Value<DateTime> startDate;
   final Value<double> accumulatedDebt;
   final Value<String?> tags;
   final Value<String?> notes;
-  final Value<DateTime?> lastModified;
-  final Value<DateTime?> lastSyncedAt;
-  final Value<String?> syncStatus;
-  final Value<bool?> dirtyFlag;
-  final Value<String?> cloudId;
-  final Value<bool?> deletedLocally;
-  final Value<String?> permissionsMask;
   final Value<String?> ownerId;
   final Value<int> version;
-  final Value<bool> isDeleted;
+  final Value<bool> inTrash;
+  final Value<DateTime?> trashMovedAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> createdAt;
   final Value<int> rowid;
@@ -772,16 +562,10 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
     this.accumulatedDebt = const Value.absent(),
     this.tags = const Value.absent(),
     this.notes = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -792,21 +576,15 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
     required String code,
     required String cabinet,
     required String phone,
-    required int status,
+    this.status = const Value.absent(),
     required DateTime startDate,
     this.accumulatedDebt = const Value.absent(),
     this.tags = const Value.absent(),
     this.notes = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -815,7 +593,6 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
         code = Value(code),
         cabinet = Value(cabinet),
         phone = Value(phone),
-        status = Value(status),
         startDate = Value(startDate);
   static Insertable<Subscriber> custom({
     Expression<String>? id,
@@ -823,21 +600,15 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
     Expression<String>? code,
     Expression<String>? cabinet,
     Expression<String>? phone,
-    Expression<int>? status,
+    Expression<String>? status,
     Expression<DateTime>? startDate,
     Expression<double>? accumulatedDebt,
     Expression<String>? tags,
     Expression<String>? notes,
-    Expression<DateTime>? lastModified,
-    Expression<DateTime>? lastSyncedAt,
-    Expression<String>? syncStatus,
-    Expression<bool>? dirtyFlag,
-    Expression<String>? cloudId,
-    Expression<bool>? deletedLocally,
-    Expression<String>? permissionsMask,
     Expression<String>? ownerId,
     Expression<int>? version,
-    Expression<bool>? isDeleted,
+    Expression<bool>? inTrash,
+    Expression<DateTime>? trashMovedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -853,16 +624,10 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
       if (accumulatedDebt != null) 'accumulated_debt': accumulatedDebt,
       if (tags != null) 'tags': tags,
       if (notes != null) 'notes': notes,
-      if (lastModified != null) 'last_modified': lastModified,
-      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
-      if (syncStatus != null) 'sync_status': syncStatus,
-      if (dirtyFlag != null) 'dirty_flag': dirtyFlag,
-      if (cloudId != null) 'cloud_id': cloudId,
-      if (deletedLocally != null) 'deleted_locally': deletedLocally,
-      if (permissionsMask != null) 'permissions_mask': permissionsMask,
       if (ownerId != null) 'owner_id': ownerId,
       if (version != null) 'version': version,
-      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (inTrash != null) 'in_trash': inTrash,
+      if (trashMovedAt != null) 'trash_moved_at': trashMovedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -875,21 +640,15 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
       Value<String>? code,
       Value<String>? cabinet,
       Value<String>? phone,
-      Value<int>? status,
+      Value<String>? status,
       Value<DateTime>? startDate,
       Value<double>? accumulatedDebt,
       Value<String?>? tags,
       Value<String?>? notes,
-      Value<DateTime?>? lastModified,
-      Value<DateTime?>? lastSyncedAt,
-      Value<String?>? syncStatus,
-      Value<bool?>? dirtyFlag,
-      Value<String?>? cloudId,
-      Value<bool?>? deletedLocally,
-      Value<String?>? permissionsMask,
       Value<String?>? ownerId,
       Value<int>? version,
-      Value<bool>? isDeleted,
+      Value<bool>? inTrash,
+      Value<DateTime?>? trashMovedAt,
       Value<DateTime?>? updatedAt,
       Value<DateTime?>? createdAt,
       Value<int>? rowid}) {
@@ -904,16 +663,10 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
       accumulatedDebt: accumulatedDebt ?? this.accumulatedDebt,
       tags: tags ?? this.tags,
       notes: notes ?? this.notes,
-      lastModified: lastModified ?? this.lastModified,
-      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-      syncStatus: syncStatus ?? this.syncStatus,
-      dirtyFlag: dirtyFlag ?? this.dirtyFlag,
-      cloudId: cloudId ?? this.cloudId,
-      deletedLocally: deletedLocally ?? this.deletedLocally,
-      permissionsMask: permissionsMask ?? this.permissionsMask,
       ownerId: ownerId ?? this.ownerId,
       version: version ?? this.version,
-      isDeleted: isDeleted ?? this.isDeleted,
+      inTrash: inTrash ?? this.inTrash,
+      trashMovedAt: trashMovedAt ?? this.trashMovedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -939,7 +692,7 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
       map['phone'] = Variable<String>(phone.value);
     }
     if (status.present) {
-      map['status'] = Variable<int>(status.value);
+      map['status'] = Variable<String>(status.value);
     }
     if (startDate.present) {
       map['start_date'] = Variable<DateTime>(startDate.value);
@@ -953,35 +706,17 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
-    if (lastModified.present) {
-      map['last_modified'] = Variable<DateTime>(lastModified.value);
-    }
-    if (lastSyncedAt.present) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
-    }
-    if (syncStatus.present) {
-      map['sync_status'] = Variable<String>(syncStatus.value);
-    }
-    if (dirtyFlag.present) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag.value);
-    }
-    if (cloudId.present) {
-      map['cloud_id'] = Variable<String>(cloudId.value);
-    }
-    if (deletedLocally.present) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally.value);
-    }
-    if (permissionsMask.present) {
-      map['permissions_mask'] = Variable<String>(permissionsMask.value);
-    }
     if (ownerId.present) {
       map['owner_id'] = Variable<String>(ownerId.value);
     }
     if (version.present) {
       map['version'] = Variable<int>(version.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    if (inTrash.present) {
+      map['in_trash'] = Variable<bool>(inTrash.value);
+    }
+    if (trashMovedAt.present) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -1008,16 +743,10 @@ class SubscribersTableCompanion extends UpdateCompanion<Subscriber> {
           ..write('accumulatedDebt: $accumulatedDebt, ')
           ..write('tags: $tags, ')
           ..write('notes: $notes, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -1081,58 +810,6 @@ class $CabinetsTableTable extends CabinetsTable
   late final GeneratedColumn<DateTime> completionDate =
       GeneratedColumn<DateTime>('completion_date', aliasedName, true,
           type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _lastModifiedMeta =
-      const VerificationMeta('lastModified');
-  @override
-  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
-      'last_modified', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncedAtMeta =
-      const VerificationMeta('lastSyncedAt');
-  @override
-  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
-      'last_synced_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _syncStatusMeta =
-      const VerificationMeta('syncStatus');
-  @override
-  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
-      'sync_status', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('local_only'));
-  static const VerificationMeta _dirtyFlagMeta =
-      const VerificationMeta('dirtyFlag');
-  @override
-  late final GeneratedColumn<bool> dirtyFlag = GeneratedColumn<bool>(
-      'dirty_flag', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("dirty_flag" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _cloudIdMeta =
-      const VerificationMeta('cloudId');
-  @override
-  late final GeneratedColumn<String> cloudId = GeneratedColumn<String>(
-      'cloud_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _deletedLocallyMeta =
-      const VerificationMeta('deletedLocally');
-  @override
-  late final GeneratedColumn<bool> deletedLocally = GeneratedColumn<bool>(
-      'deleted_locally', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("deleted_locally" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _permissionsMaskMeta =
-      const VerificationMeta('permissionsMask');
-  @override
-  late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
-      'permissions_mask', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _ownerIdMeta =
       const VerificationMeta('ownerId');
   @override
@@ -1147,16 +824,22 @@ class $CabinetsTableTable extends CabinetsTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+  static const VerificationMeta _inTrashMeta =
+      const VerificationMeta('inTrash');
   @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
+  late final GeneratedColumn<bool> inTrash = GeneratedColumn<bool>(
+      'in_trash', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+          GeneratedColumn.constraintIsAlways('CHECK ("in_trash" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _trashMovedAtMeta =
+      const VerificationMeta('trashMovedAt');
+  @override
+  late final GeneratedColumn<DateTime> trashMovedAt = GeneratedColumn<DateTime>(
+      'trash_moved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
@@ -1179,16 +862,10 @@ class $CabinetsTableTable extends CabinetsTable
         collectedAmount,
         delayedSubscribers,
         completionDate,
-        lastModified,
-        lastSyncedAt,
-        syncStatus,
-        dirtyFlag,
-        cloudId,
-        deletedLocally,
-        permissionsMask,
         ownerId,
         version,
-        isDeleted,
+        inTrash,
+        trashMovedAt,
         updatedAt,
         createdAt
       ];
@@ -1253,44 +930,6 @@ class $CabinetsTableTable extends CabinetsTable
           completionDate.isAcceptableOrUnknown(
               data['completion_date']!, _completionDateMeta));
     }
-    if (data.containsKey('last_modified')) {
-      context.handle(
-          _lastModifiedMeta,
-          lastModified.isAcceptableOrUnknown(
-              data['last_modified']!, _lastModifiedMeta));
-    }
-    if (data.containsKey('last_synced_at')) {
-      context.handle(
-          _lastSyncedAtMeta,
-          lastSyncedAt.isAcceptableOrUnknown(
-              data['last_synced_at']!, _lastSyncedAtMeta));
-    }
-    if (data.containsKey('sync_status')) {
-      context.handle(
-          _syncStatusMeta,
-          syncStatus.isAcceptableOrUnknown(
-              data['sync_status']!, _syncStatusMeta));
-    }
-    if (data.containsKey('dirty_flag')) {
-      context.handle(_dirtyFlagMeta,
-          dirtyFlag.isAcceptableOrUnknown(data['dirty_flag']!, _dirtyFlagMeta));
-    }
-    if (data.containsKey('cloud_id')) {
-      context.handle(_cloudIdMeta,
-          cloudId.isAcceptableOrUnknown(data['cloud_id']!, _cloudIdMeta));
-    }
-    if (data.containsKey('deleted_locally')) {
-      context.handle(
-          _deletedLocallyMeta,
-          deletedLocally.isAcceptableOrUnknown(
-              data['deleted_locally']!, _deletedLocallyMeta));
-    }
-    if (data.containsKey('permissions_mask')) {
-      context.handle(
-          _permissionsMaskMeta,
-          permissionsMask.isAcceptableOrUnknown(
-              data['permissions_mask']!, _permissionsMaskMeta));
-    }
     if (data.containsKey('owner_id')) {
       context.handle(_ownerIdMeta,
           ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
@@ -1299,9 +938,15 @@ class $CabinetsTableTable extends CabinetsTable
       context.handle(_versionMeta,
           version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+    if (data.containsKey('in_trash')) {
+      context.handle(_inTrashMeta,
+          inTrash.isAcceptableOrUnknown(data['in_trash']!, _inTrashMeta));
+    }
+    if (data.containsKey('trash_moved_at')) {
+      context.handle(
+          _trashMovedAtMeta,
+          trashMovedAt.isAcceptableOrUnknown(
+              data['trash_moved_at']!, _trashMovedAtMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
@@ -1336,26 +981,14 @@ class $CabinetsTableTable extends CabinetsTable
           DriftSqlType.int, data['${effectivePrefix}delayed_subscribers'])!,
       completionDate: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}completion_date']),
-      lastModified: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_modified']),
-      lastSyncedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}last_synced_at']),
-      syncStatus: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_status']),
-      dirtyFlag: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}dirty_flag']),
-      cloudId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}cloud_id']),
-      deletedLocally: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
-      permissionsMask: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
       ownerId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
       version: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      inTrash: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}in_trash'])!,
+      trashMovedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}trash_moved_at']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
       createdAt: attachedDatabase.typeMapping
@@ -1378,16 +1011,10 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
   final double collectedAmount;
   final int delayedSubscribers;
   final DateTime? completionDate;
-  final DateTime? lastModified;
-  final DateTime? lastSyncedAt;
-  final String? syncStatus;
-  final bool? dirtyFlag;
-  final String? cloudId;
-  final bool? deletedLocally;
-  final String? permissionsMask;
   final String? ownerId;
   final int version;
-  final bool isDeleted;
+  final bool inTrash;
+  final DateTime? trashMovedAt;
   final DateTime? updatedAt;
   final DateTime? createdAt;
   const Cabinet(
@@ -1399,16 +1026,10 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       required this.collectedAmount,
       required this.delayedSubscribers,
       this.completionDate,
-      this.lastModified,
-      this.lastSyncedAt,
-      this.syncStatus,
-      this.dirtyFlag,
-      this.cloudId,
-      this.deletedLocally,
-      this.permissionsMask,
       this.ownerId,
       required this.version,
-      required this.isDeleted,
+      required this.inTrash,
+      this.trashMovedAt,
       this.updatedAt,
       this.createdAt});
   @override
@@ -1424,32 +1045,14 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
     if (!nullToAbsent || completionDate != null) {
       map['completion_date'] = Variable<DateTime>(completionDate);
     }
-    if (!nullToAbsent || lastModified != null) {
-      map['last_modified'] = Variable<DateTime>(lastModified);
-    }
-    if (!nullToAbsent || lastSyncedAt != null) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
-    }
-    if (!nullToAbsent || syncStatus != null) {
-      map['sync_status'] = Variable<String>(syncStatus);
-    }
-    if (!nullToAbsent || dirtyFlag != null) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag);
-    }
-    if (!nullToAbsent || cloudId != null) {
-      map['cloud_id'] = Variable<String>(cloudId);
-    }
-    if (!nullToAbsent || deletedLocally != null) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally);
-    }
-    if (!nullToAbsent || permissionsMask != null) {
-      map['permissions_mask'] = Variable<String>(permissionsMask);
-    }
     if (!nullToAbsent || ownerId != null) {
       map['owner_id'] = Variable<String>(ownerId);
     }
     map['version'] = Variable<int>(version);
-    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['in_trash'] = Variable<bool>(inTrash);
+    if (!nullToAbsent || trashMovedAt != null) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt);
+    }
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
@@ -1471,32 +1074,14 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       completionDate: completionDate == null && nullToAbsent
           ? const Value.absent()
           : Value(completionDate),
-      lastModified: lastModified == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastModified),
-      lastSyncedAt: lastSyncedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncedAt),
-      syncStatus: syncStatus == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncStatus),
-      dirtyFlag: dirtyFlag == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dirtyFlag),
-      cloudId: cloudId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(cloudId),
-      deletedLocally: deletedLocally == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedLocally),
-      permissionsMask: permissionsMask == null && nullToAbsent
-          ? const Value.absent()
-          : Value(permissionsMask),
       ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
           : Value(ownerId),
       version: Value(version),
-      isDeleted: Value(isDeleted),
+      inTrash: Value(inTrash),
+      trashMovedAt: trashMovedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashMovedAt),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
@@ -1518,16 +1103,10 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       collectedAmount: serializer.fromJson<double>(json['collectedAmount']),
       delayedSubscribers: serializer.fromJson<int>(json['delayedSubscribers']),
       completionDate: serializer.fromJson<DateTime?>(json['completionDate']),
-      lastModified: serializer.fromJson<DateTime?>(json['lastModified']),
-      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
-      syncStatus: serializer.fromJson<String?>(json['syncStatus']),
-      dirtyFlag: serializer.fromJson<bool?>(json['dirtyFlag']),
-      cloudId: serializer.fromJson<String?>(json['cloudId']),
-      deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
-      permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       version: serializer.fromJson<int>(json['version']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      inTrash: serializer.fromJson<bool>(json['inTrash']),
+      trashMovedAt: serializer.fromJson<DateTime?>(json['trashMovedAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
@@ -1544,16 +1123,10 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       'collectedAmount': serializer.toJson<double>(collectedAmount),
       'delayedSubscribers': serializer.toJson<int>(delayedSubscribers),
       'completionDate': serializer.toJson<DateTime?>(completionDate),
-      'lastModified': serializer.toJson<DateTime?>(lastModified),
-      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
-      'syncStatus': serializer.toJson<String?>(syncStatus),
-      'dirtyFlag': serializer.toJson<bool?>(dirtyFlag),
-      'cloudId': serializer.toJson<String?>(cloudId),
-      'deletedLocally': serializer.toJson<bool?>(deletedLocally),
-      'permissionsMask': serializer.toJson<String?>(permissionsMask),
       'ownerId': serializer.toJson<String?>(ownerId),
       'version': serializer.toJson<int>(version),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'inTrash': serializer.toJson<bool>(inTrash),
+      'trashMovedAt': serializer.toJson<DateTime?>(trashMovedAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
@@ -1568,16 +1141,10 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
           double? collectedAmount,
           int? delayedSubscribers,
           Value<DateTime?> completionDate = const Value.absent(),
-          Value<DateTime?> lastModified = const Value.absent(),
-          Value<DateTime?> lastSyncedAt = const Value.absent(),
-          Value<String?> syncStatus = const Value.absent(),
-          Value<bool?> dirtyFlag = const Value.absent(),
-          Value<String?> cloudId = const Value.absent(),
-          Value<bool?> deletedLocally = const Value.absent(),
-          Value<String?> permissionsMask = const Value.absent(),
           Value<String?> ownerId = const Value.absent(),
           int? version,
-          bool? isDeleted,
+          bool? inTrash,
+          Value<DateTime?> trashMovedAt = const Value.absent(),
           Value<DateTime?> updatedAt = const Value.absent(),
           Value<DateTime?> createdAt = const Value.absent()}) =>
       Cabinet(
@@ -1590,21 +1157,11 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
         delayedSubscribers: delayedSubscribers ?? this.delayedSubscribers,
         completionDate:
             completionDate.present ? completionDate.value : this.completionDate,
-        lastModified:
-            lastModified.present ? lastModified.value : this.lastModified,
-        lastSyncedAt:
-            lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
-        syncStatus: syncStatus.present ? syncStatus.value : this.syncStatus,
-        dirtyFlag: dirtyFlag.present ? dirtyFlag.value : this.dirtyFlag,
-        cloudId: cloudId.present ? cloudId.value : this.cloudId,
-        deletedLocally:
-            deletedLocally.present ? deletedLocally.value : this.deletedLocally,
-        permissionsMask: permissionsMask.present
-            ? permissionsMask.value
-            : this.permissionsMask,
         ownerId: ownerId.present ? ownerId.value : this.ownerId,
         version: version ?? this.version,
-        isDeleted: isDeleted ?? this.isDeleted,
+        inTrash: inTrash ?? this.inTrash,
+        trashMovedAt:
+            trashMovedAt.present ? trashMovedAt.value : this.trashMovedAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
@@ -1628,25 +1185,12 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       completionDate: data.completionDate.present
           ? data.completionDate.value
           : this.completionDate,
-      lastModified: data.lastModified.present
-          ? data.lastModified.value
-          : this.lastModified,
-      lastSyncedAt: data.lastSyncedAt.present
-          ? data.lastSyncedAt.value
-          : this.lastSyncedAt,
-      syncStatus:
-          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
-      dirtyFlag: data.dirtyFlag.present ? data.dirtyFlag.value : this.dirtyFlag,
-      cloudId: data.cloudId.present ? data.cloudId.value : this.cloudId,
-      deletedLocally: data.deletedLocally.present
-          ? data.deletedLocally.value
-          : this.deletedLocally,
-      permissionsMask: data.permissionsMask.present
-          ? data.permissionsMask.value
-          : this.permissionsMask,
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       version: data.version.present ? data.version.value : this.version,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      inTrash: data.inTrash.present ? data.inTrash.value : this.inTrash,
+      trashMovedAt: data.trashMovedAt.present
+          ? data.trashMovedAt.value
+          : this.trashMovedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1663,16 +1207,10 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
           ..write('collectedAmount: $collectedAmount, ')
           ..write('delayedSubscribers: $delayedSubscribers, ')
           ..write('completionDate: $completionDate, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1689,16 +1227,10 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
       collectedAmount,
       delayedSubscribers,
       completionDate,
-      lastModified,
-      lastSyncedAt,
-      syncStatus,
-      dirtyFlag,
-      cloudId,
-      deletedLocally,
-      permissionsMask,
       ownerId,
       version,
-      isDeleted,
+      inTrash,
+      trashMovedAt,
       updatedAt,
       createdAt);
   @override
@@ -1713,16 +1245,10 @@ class Cabinet extends DataClass implements Insertable<Cabinet> {
           other.collectedAmount == this.collectedAmount &&
           other.delayedSubscribers == this.delayedSubscribers &&
           other.completionDate == this.completionDate &&
-          other.lastModified == this.lastModified &&
-          other.lastSyncedAt == this.lastSyncedAt &&
-          other.syncStatus == this.syncStatus &&
-          other.dirtyFlag == this.dirtyFlag &&
-          other.cloudId == this.cloudId &&
-          other.deletedLocally == this.deletedLocally &&
-          other.permissionsMask == this.permissionsMask &&
           other.ownerId == this.ownerId &&
           other.version == this.version &&
-          other.isDeleted == this.isDeleted &&
+          other.inTrash == this.inTrash &&
+          other.trashMovedAt == this.trashMovedAt &&
           other.updatedAt == this.updatedAt &&
           other.createdAt == this.createdAt);
 }
@@ -1736,16 +1262,10 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
   final Value<double> collectedAmount;
   final Value<int> delayedSubscribers;
   final Value<DateTime?> completionDate;
-  final Value<DateTime?> lastModified;
-  final Value<DateTime?> lastSyncedAt;
-  final Value<String?> syncStatus;
-  final Value<bool?> dirtyFlag;
-  final Value<String?> cloudId;
-  final Value<bool?> deletedLocally;
-  final Value<String?> permissionsMask;
   final Value<String?> ownerId;
   final Value<int> version;
-  final Value<bool> isDeleted;
+  final Value<bool> inTrash;
+  final Value<DateTime?> trashMovedAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> createdAt;
   final Value<int> rowid;
@@ -1758,16 +1278,10 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
     this.collectedAmount = const Value.absent(),
     this.delayedSubscribers = const Value.absent(),
     this.completionDate = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1781,16 +1295,10 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
     this.collectedAmount = const Value.absent(),
     required int delayedSubscribers,
     this.completionDate = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1808,16 +1316,10 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
     Expression<double>? collectedAmount,
     Expression<int>? delayedSubscribers,
     Expression<DateTime>? completionDate,
-    Expression<DateTime>? lastModified,
-    Expression<DateTime>? lastSyncedAt,
-    Expression<String>? syncStatus,
-    Expression<bool>? dirtyFlag,
-    Expression<String>? cloudId,
-    Expression<bool>? deletedLocally,
-    Expression<String>? permissionsMask,
     Expression<String>? ownerId,
     Expression<int>? version,
-    Expression<bool>? isDeleted,
+    Expression<bool>? inTrash,
+    Expression<DateTime>? trashMovedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -1831,16 +1333,10 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
       if (collectedAmount != null) 'collected_amount': collectedAmount,
       if (delayedSubscribers != null) 'delayed_subscribers': delayedSubscribers,
       if (completionDate != null) 'completion_date': completionDate,
-      if (lastModified != null) 'last_modified': lastModified,
-      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
-      if (syncStatus != null) 'sync_status': syncStatus,
-      if (dirtyFlag != null) 'dirty_flag': dirtyFlag,
-      if (cloudId != null) 'cloud_id': cloudId,
-      if (deletedLocally != null) 'deleted_locally': deletedLocally,
-      if (permissionsMask != null) 'permissions_mask': permissionsMask,
       if (ownerId != null) 'owner_id': ownerId,
       if (version != null) 'version': version,
-      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (inTrash != null) 'in_trash': inTrash,
+      if (trashMovedAt != null) 'trash_moved_at': trashMovedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -1856,16 +1352,10 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
       Value<double>? collectedAmount,
       Value<int>? delayedSubscribers,
       Value<DateTime?>? completionDate,
-      Value<DateTime?>? lastModified,
-      Value<DateTime?>? lastSyncedAt,
-      Value<String?>? syncStatus,
-      Value<bool?>? dirtyFlag,
-      Value<String?>? cloudId,
-      Value<bool?>? deletedLocally,
-      Value<String?>? permissionsMask,
       Value<String?>? ownerId,
       Value<int>? version,
-      Value<bool>? isDeleted,
+      Value<bool>? inTrash,
+      Value<DateTime?>? trashMovedAt,
       Value<DateTime?>? updatedAt,
       Value<DateTime?>? createdAt,
       Value<int>? rowid}) {
@@ -1878,16 +1368,10 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
       collectedAmount: collectedAmount ?? this.collectedAmount,
       delayedSubscribers: delayedSubscribers ?? this.delayedSubscribers,
       completionDate: completionDate ?? this.completionDate,
-      lastModified: lastModified ?? this.lastModified,
-      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-      syncStatus: syncStatus ?? this.syncStatus,
-      dirtyFlag: dirtyFlag ?? this.dirtyFlag,
-      cloudId: cloudId ?? this.cloudId,
-      deletedLocally: deletedLocally ?? this.deletedLocally,
-      permissionsMask: permissionsMask ?? this.permissionsMask,
       ownerId: ownerId ?? this.ownerId,
       version: version ?? this.version,
-      isDeleted: isDeleted ?? this.isDeleted,
+      inTrash: inTrash ?? this.inTrash,
+      trashMovedAt: trashMovedAt ?? this.trashMovedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -1921,35 +1405,17 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
     if (completionDate.present) {
       map['completion_date'] = Variable<DateTime>(completionDate.value);
     }
-    if (lastModified.present) {
-      map['last_modified'] = Variable<DateTime>(lastModified.value);
-    }
-    if (lastSyncedAt.present) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
-    }
-    if (syncStatus.present) {
-      map['sync_status'] = Variable<String>(syncStatus.value);
-    }
-    if (dirtyFlag.present) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag.value);
-    }
-    if (cloudId.present) {
-      map['cloud_id'] = Variable<String>(cloudId.value);
-    }
-    if (deletedLocally.present) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally.value);
-    }
-    if (permissionsMask.present) {
-      map['permissions_mask'] = Variable<String>(permissionsMask.value);
-    }
     if (ownerId.present) {
       map['owner_id'] = Variable<String>(ownerId.value);
     }
     if (version.present) {
       map['version'] = Variable<int>(version.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    if (inTrash.present) {
+      map['in_trash'] = Variable<bool>(inTrash.value);
+    }
+    if (trashMovedAt.present) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -1974,16 +1440,10 @@ class CabinetsTableCompanion extends UpdateCompanion<Cabinet> {
           ..write('collectedAmount: $collectedAmount, ')
           ..write('delayedSubscribers: $delayedSubscribers, ')
           ..write('completionDate: $completionDate, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -2030,58 +1490,6 @@ class $PaymentsTableTable extends PaymentsTable
   late final GeneratedColumn<String> cabinet = GeneratedColumn<String>(
       'cabinet', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _lastModifiedMeta =
-      const VerificationMeta('lastModified');
-  @override
-  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
-      'last_modified', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncedAtMeta =
-      const VerificationMeta('lastSyncedAt');
-  @override
-  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
-      'last_synced_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _syncStatusMeta =
-      const VerificationMeta('syncStatus');
-  @override
-  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
-      'sync_status', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('local_only'));
-  static const VerificationMeta _dirtyFlagMeta =
-      const VerificationMeta('dirtyFlag');
-  @override
-  late final GeneratedColumn<bool> dirtyFlag = GeneratedColumn<bool>(
-      'dirty_flag', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("dirty_flag" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _cloudIdMeta =
-      const VerificationMeta('cloudId');
-  @override
-  late final GeneratedColumn<String> cloudId = GeneratedColumn<String>(
-      'cloud_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _deletedLocallyMeta =
-      const VerificationMeta('deletedLocally');
-  @override
-  late final GeneratedColumn<bool> deletedLocally = GeneratedColumn<bool>(
-      'deleted_locally', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("deleted_locally" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _permissionsMaskMeta =
-      const VerificationMeta('permissionsMask');
-  @override
-  late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
-      'permissions_mask', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _ownerIdMeta =
       const VerificationMeta('ownerId');
   @override
@@ -2096,16 +1504,22 @@ class $PaymentsTableTable extends PaymentsTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+  static const VerificationMeta _inTrashMeta =
+      const VerificationMeta('inTrash');
   @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
+  late final GeneratedColumn<bool> inTrash = GeneratedColumn<bool>(
+      'in_trash', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+          GeneratedColumn.constraintIsAlways('CHECK ("in_trash" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _trashMovedAtMeta =
+      const VerificationMeta('trashMovedAt');
+  @override
+  late final GeneratedColumn<DateTime> trashMovedAt = GeneratedColumn<DateTime>(
+      'trash_moved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
@@ -2126,16 +1540,10 @@ class $PaymentsTableTable extends PaymentsTable
         worker,
         date,
         cabinet,
-        lastModified,
-        lastSyncedAt,
-        syncStatus,
-        dirtyFlag,
-        cloudId,
-        deletedLocally,
-        permissionsMask,
         ownerId,
         version,
-        isDeleted,
+        inTrash,
+        trashMovedAt,
         updatedAt,
         createdAt
       ];
@@ -2186,44 +1594,6 @@ class $PaymentsTableTable extends PaymentsTable
     } else if (isInserting) {
       context.missing(_cabinetMeta);
     }
-    if (data.containsKey('last_modified')) {
-      context.handle(
-          _lastModifiedMeta,
-          lastModified.isAcceptableOrUnknown(
-              data['last_modified']!, _lastModifiedMeta));
-    }
-    if (data.containsKey('last_synced_at')) {
-      context.handle(
-          _lastSyncedAtMeta,
-          lastSyncedAt.isAcceptableOrUnknown(
-              data['last_synced_at']!, _lastSyncedAtMeta));
-    }
-    if (data.containsKey('sync_status')) {
-      context.handle(
-          _syncStatusMeta,
-          syncStatus.isAcceptableOrUnknown(
-              data['sync_status']!, _syncStatusMeta));
-    }
-    if (data.containsKey('dirty_flag')) {
-      context.handle(_dirtyFlagMeta,
-          dirtyFlag.isAcceptableOrUnknown(data['dirty_flag']!, _dirtyFlagMeta));
-    }
-    if (data.containsKey('cloud_id')) {
-      context.handle(_cloudIdMeta,
-          cloudId.isAcceptableOrUnknown(data['cloud_id']!, _cloudIdMeta));
-    }
-    if (data.containsKey('deleted_locally')) {
-      context.handle(
-          _deletedLocallyMeta,
-          deletedLocally.isAcceptableOrUnknown(
-              data['deleted_locally']!, _deletedLocallyMeta));
-    }
-    if (data.containsKey('permissions_mask')) {
-      context.handle(
-          _permissionsMaskMeta,
-          permissionsMask.isAcceptableOrUnknown(
-              data['permissions_mask']!, _permissionsMaskMeta));
-    }
     if (data.containsKey('owner_id')) {
       context.handle(_ownerIdMeta,
           ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
@@ -2232,9 +1602,15 @@ class $PaymentsTableTable extends PaymentsTable
       context.handle(_versionMeta,
           version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+    if (data.containsKey('in_trash')) {
+      context.handle(_inTrashMeta,
+          inTrash.isAcceptableOrUnknown(data['in_trash']!, _inTrashMeta));
+    }
+    if (data.containsKey('trash_moved_at')) {
+      context.handle(
+          _trashMovedAtMeta,
+          trashMovedAt.isAcceptableOrUnknown(
+              data['trash_moved_at']!, _trashMovedAtMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
@@ -2265,26 +1641,14 @@ class $PaymentsTableTable extends PaymentsTable
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
       cabinet: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}cabinet'])!,
-      lastModified: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_modified']),
-      lastSyncedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}last_synced_at']),
-      syncStatus: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_status']),
-      dirtyFlag: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}dirty_flag']),
-      cloudId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}cloud_id']),
-      deletedLocally: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
-      permissionsMask: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
       ownerId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
       version: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      inTrash: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}in_trash'])!,
+      trashMovedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}trash_moved_at']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
       createdAt: attachedDatabase.typeMapping
@@ -2305,16 +1669,10 @@ class Payment extends DataClass implements Insertable<Payment> {
   final String worker;
   final DateTime date;
   final String cabinet;
-  final DateTime? lastModified;
-  final DateTime? lastSyncedAt;
-  final String? syncStatus;
-  final bool? dirtyFlag;
-  final String? cloudId;
-  final bool? deletedLocally;
-  final String? permissionsMask;
   final String? ownerId;
   final int version;
-  final bool isDeleted;
+  final bool inTrash;
+  final DateTime? trashMovedAt;
   final DateTime? updatedAt;
   final DateTime? createdAt;
   const Payment(
@@ -2324,16 +1682,10 @@ class Payment extends DataClass implements Insertable<Payment> {
       required this.worker,
       required this.date,
       required this.cabinet,
-      this.lastModified,
-      this.lastSyncedAt,
-      this.syncStatus,
-      this.dirtyFlag,
-      this.cloudId,
-      this.deletedLocally,
-      this.permissionsMask,
       this.ownerId,
       required this.version,
-      required this.isDeleted,
+      required this.inTrash,
+      this.trashMovedAt,
       this.updatedAt,
       this.createdAt});
   @override
@@ -2345,32 +1697,14 @@ class Payment extends DataClass implements Insertable<Payment> {
     map['worker'] = Variable<String>(worker);
     map['date'] = Variable<DateTime>(date);
     map['cabinet'] = Variable<String>(cabinet);
-    if (!nullToAbsent || lastModified != null) {
-      map['last_modified'] = Variable<DateTime>(lastModified);
-    }
-    if (!nullToAbsent || lastSyncedAt != null) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
-    }
-    if (!nullToAbsent || syncStatus != null) {
-      map['sync_status'] = Variable<String>(syncStatus);
-    }
-    if (!nullToAbsent || dirtyFlag != null) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag);
-    }
-    if (!nullToAbsent || cloudId != null) {
-      map['cloud_id'] = Variable<String>(cloudId);
-    }
-    if (!nullToAbsent || deletedLocally != null) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally);
-    }
-    if (!nullToAbsent || permissionsMask != null) {
-      map['permissions_mask'] = Variable<String>(permissionsMask);
-    }
     if (!nullToAbsent || ownerId != null) {
       map['owner_id'] = Variable<String>(ownerId);
     }
     map['version'] = Variable<int>(version);
-    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['in_trash'] = Variable<bool>(inTrash);
+    if (!nullToAbsent || trashMovedAt != null) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt);
+    }
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
@@ -2388,32 +1722,14 @@ class Payment extends DataClass implements Insertable<Payment> {
       worker: Value(worker),
       date: Value(date),
       cabinet: Value(cabinet),
-      lastModified: lastModified == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastModified),
-      lastSyncedAt: lastSyncedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncedAt),
-      syncStatus: syncStatus == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncStatus),
-      dirtyFlag: dirtyFlag == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dirtyFlag),
-      cloudId: cloudId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(cloudId),
-      deletedLocally: deletedLocally == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedLocally),
-      permissionsMask: permissionsMask == null && nullToAbsent
-          ? const Value.absent()
-          : Value(permissionsMask),
       ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
           : Value(ownerId),
       version: Value(version),
-      isDeleted: Value(isDeleted),
+      inTrash: Value(inTrash),
+      trashMovedAt: trashMovedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashMovedAt),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
@@ -2433,16 +1749,10 @@ class Payment extends DataClass implements Insertable<Payment> {
       worker: serializer.fromJson<String>(json['worker']),
       date: serializer.fromJson<DateTime>(json['date']),
       cabinet: serializer.fromJson<String>(json['cabinet']),
-      lastModified: serializer.fromJson<DateTime?>(json['lastModified']),
-      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
-      syncStatus: serializer.fromJson<String?>(json['syncStatus']),
-      dirtyFlag: serializer.fromJson<bool?>(json['dirtyFlag']),
-      cloudId: serializer.fromJson<String?>(json['cloudId']),
-      deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
-      permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       version: serializer.fromJson<int>(json['version']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      inTrash: serializer.fromJson<bool>(json['inTrash']),
+      trashMovedAt: serializer.fromJson<DateTime?>(json['trashMovedAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
@@ -2457,16 +1767,10 @@ class Payment extends DataClass implements Insertable<Payment> {
       'worker': serializer.toJson<String>(worker),
       'date': serializer.toJson<DateTime>(date),
       'cabinet': serializer.toJson<String>(cabinet),
-      'lastModified': serializer.toJson<DateTime?>(lastModified),
-      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
-      'syncStatus': serializer.toJson<String?>(syncStatus),
-      'dirtyFlag': serializer.toJson<bool?>(dirtyFlag),
-      'cloudId': serializer.toJson<String?>(cloudId),
-      'deletedLocally': serializer.toJson<bool?>(deletedLocally),
-      'permissionsMask': serializer.toJson<String?>(permissionsMask),
       'ownerId': serializer.toJson<String?>(ownerId),
       'version': serializer.toJson<int>(version),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'inTrash': serializer.toJson<bool>(inTrash),
+      'trashMovedAt': serializer.toJson<DateTime?>(trashMovedAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
@@ -2479,16 +1783,10 @@ class Payment extends DataClass implements Insertable<Payment> {
           String? worker,
           DateTime? date,
           String? cabinet,
-          Value<DateTime?> lastModified = const Value.absent(),
-          Value<DateTime?> lastSyncedAt = const Value.absent(),
-          Value<String?> syncStatus = const Value.absent(),
-          Value<bool?> dirtyFlag = const Value.absent(),
-          Value<String?> cloudId = const Value.absent(),
-          Value<bool?> deletedLocally = const Value.absent(),
-          Value<String?> permissionsMask = const Value.absent(),
           Value<String?> ownerId = const Value.absent(),
           int? version,
-          bool? isDeleted,
+          bool? inTrash,
+          Value<DateTime?> trashMovedAt = const Value.absent(),
           Value<DateTime?> updatedAt = const Value.absent(),
           Value<DateTime?> createdAt = const Value.absent()}) =>
       Payment(
@@ -2498,21 +1796,11 @@ class Payment extends DataClass implements Insertable<Payment> {
         worker: worker ?? this.worker,
         date: date ?? this.date,
         cabinet: cabinet ?? this.cabinet,
-        lastModified:
-            lastModified.present ? lastModified.value : this.lastModified,
-        lastSyncedAt:
-            lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
-        syncStatus: syncStatus.present ? syncStatus.value : this.syncStatus,
-        dirtyFlag: dirtyFlag.present ? dirtyFlag.value : this.dirtyFlag,
-        cloudId: cloudId.present ? cloudId.value : this.cloudId,
-        deletedLocally:
-            deletedLocally.present ? deletedLocally.value : this.deletedLocally,
-        permissionsMask: permissionsMask.present
-            ? permissionsMask.value
-            : this.permissionsMask,
         ownerId: ownerId.present ? ownerId.value : this.ownerId,
         version: version ?? this.version,
-        isDeleted: isDeleted ?? this.isDeleted,
+        inTrash: inTrash ?? this.inTrash,
+        trashMovedAt:
+            trashMovedAt.present ? trashMovedAt.value : this.trashMovedAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
@@ -2526,25 +1814,12 @@ class Payment extends DataClass implements Insertable<Payment> {
       worker: data.worker.present ? data.worker.value : this.worker,
       date: data.date.present ? data.date.value : this.date,
       cabinet: data.cabinet.present ? data.cabinet.value : this.cabinet,
-      lastModified: data.lastModified.present
-          ? data.lastModified.value
-          : this.lastModified,
-      lastSyncedAt: data.lastSyncedAt.present
-          ? data.lastSyncedAt.value
-          : this.lastSyncedAt,
-      syncStatus:
-          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
-      dirtyFlag: data.dirtyFlag.present ? data.dirtyFlag.value : this.dirtyFlag,
-      cloudId: data.cloudId.present ? data.cloudId.value : this.cloudId,
-      deletedLocally: data.deletedLocally.present
-          ? data.deletedLocally.value
-          : this.deletedLocally,
-      permissionsMask: data.permissionsMask.present
-          ? data.permissionsMask.value
-          : this.permissionsMask,
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       version: data.version.present ? data.version.value : this.version,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      inTrash: data.inTrash.present ? data.inTrash.value : this.inTrash,
+      trashMovedAt: data.trashMovedAt.present
+          ? data.trashMovedAt.value
+          : this.trashMovedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -2559,16 +1834,10 @@ class Payment extends DataClass implements Insertable<Payment> {
           ..write('worker: $worker, ')
           ..write('date: $date, ')
           ..write('cabinet: $cabinet, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -2576,25 +1845,8 @@ class Payment extends DataClass implements Insertable<Payment> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      subscriberId,
-      amount,
-      worker,
-      date,
-      cabinet,
-      lastModified,
-      lastSyncedAt,
-      syncStatus,
-      dirtyFlag,
-      cloudId,
-      deletedLocally,
-      permissionsMask,
-      ownerId,
-      version,
-      isDeleted,
-      updatedAt,
-      createdAt);
+  int get hashCode => Object.hash(id, subscriberId, amount, worker, date,
+      cabinet, ownerId, version, inTrash, trashMovedAt, updatedAt, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2605,16 +1857,10 @@ class Payment extends DataClass implements Insertable<Payment> {
           other.worker == this.worker &&
           other.date == this.date &&
           other.cabinet == this.cabinet &&
-          other.lastModified == this.lastModified &&
-          other.lastSyncedAt == this.lastSyncedAt &&
-          other.syncStatus == this.syncStatus &&
-          other.dirtyFlag == this.dirtyFlag &&
-          other.cloudId == this.cloudId &&
-          other.deletedLocally == this.deletedLocally &&
-          other.permissionsMask == this.permissionsMask &&
           other.ownerId == this.ownerId &&
           other.version == this.version &&
-          other.isDeleted == this.isDeleted &&
+          other.inTrash == this.inTrash &&
+          other.trashMovedAt == this.trashMovedAt &&
           other.updatedAt == this.updatedAt &&
           other.createdAt == this.createdAt);
 }
@@ -2626,16 +1872,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
   final Value<String> worker;
   final Value<DateTime> date;
   final Value<String> cabinet;
-  final Value<DateTime?> lastModified;
-  final Value<DateTime?> lastSyncedAt;
-  final Value<String?> syncStatus;
-  final Value<bool?> dirtyFlag;
-  final Value<String?> cloudId;
-  final Value<bool?> deletedLocally;
-  final Value<String?> permissionsMask;
   final Value<String?> ownerId;
   final Value<int> version;
-  final Value<bool> isDeleted;
+  final Value<bool> inTrash;
+  final Value<DateTime?> trashMovedAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> createdAt;
   final Value<int> rowid;
@@ -2646,16 +1886,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
     this.worker = const Value.absent(),
     this.date = const Value.absent(),
     this.cabinet = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2667,16 +1901,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
     required String worker,
     required DateTime date,
     required String cabinet,
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2693,16 +1921,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
     Expression<String>? worker,
     Expression<DateTime>? date,
     Expression<String>? cabinet,
-    Expression<DateTime>? lastModified,
-    Expression<DateTime>? lastSyncedAt,
-    Expression<String>? syncStatus,
-    Expression<bool>? dirtyFlag,
-    Expression<String>? cloudId,
-    Expression<bool>? deletedLocally,
-    Expression<String>? permissionsMask,
     Expression<String>? ownerId,
     Expression<int>? version,
-    Expression<bool>? isDeleted,
+    Expression<bool>? inTrash,
+    Expression<DateTime>? trashMovedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -2714,16 +1936,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
       if (worker != null) 'worker': worker,
       if (date != null) 'date': date,
       if (cabinet != null) 'cabinet': cabinet,
-      if (lastModified != null) 'last_modified': lastModified,
-      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
-      if (syncStatus != null) 'sync_status': syncStatus,
-      if (dirtyFlag != null) 'dirty_flag': dirtyFlag,
-      if (cloudId != null) 'cloud_id': cloudId,
-      if (deletedLocally != null) 'deleted_locally': deletedLocally,
-      if (permissionsMask != null) 'permissions_mask': permissionsMask,
       if (ownerId != null) 'owner_id': ownerId,
       if (version != null) 'version': version,
-      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (inTrash != null) 'in_trash': inTrash,
+      if (trashMovedAt != null) 'trash_moved_at': trashMovedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -2737,16 +1953,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
       Value<String>? worker,
       Value<DateTime>? date,
       Value<String>? cabinet,
-      Value<DateTime?>? lastModified,
-      Value<DateTime?>? lastSyncedAt,
-      Value<String?>? syncStatus,
-      Value<bool?>? dirtyFlag,
-      Value<String?>? cloudId,
-      Value<bool?>? deletedLocally,
-      Value<String?>? permissionsMask,
       Value<String?>? ownerId,
       Value<int>? version,
-      Value<bool>? isDeleted,
+      Value<bool>? inTrash,
+      Value<DateTime?>? trashMovedAt,
       Value<DateTime?>? updatedAt,
       Value<DateTime?>? createdAt,
       Value<int>? rowid}) {
@@ -2757,16 +1967,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
       worker: worker ?? this.worker,
       date: date ?? this.date,
       cabinet: cabinet ?? this.cabinet,
-      lastModified: lastModified ?? this.lastModified,
-      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-      syncStatus: syncStatus ?? this.syncStatus,
-      dirtyFlag: dirtyFlag ?? this.dirtyFlag,
-      cloudId: cloudId ?? this.cloudId,
-      deletedLocally: deletedLocally ?? this.deletedLocally,
-      permissionsMask: permissionsMask ?? this.permissionsMask,
       ownerId: ownerId ?? this.ownerId,
       version: version ?? this.version,
-      isDeleted: isDeleted ?? this.isDeleted,
+      inTrash: inTrash ?? this.inTrash,
+      trashMovedAt: trashMovedAt ?? this.trashMovedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -2794,35 +1998,17 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
     if (cabinet.present) {
       map['cabinet'] = Variable<String>(cabinet.value);
     }
-    if (lastModified.present) {
-      map['last_modified'] = Variable<DateTime>(lastModified.value);
-    }
-    if (lastSyncedAt.present) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
-    }
-    if (syncStatus.present) {
-      map['sync_status'] = Variable<String>(syncStatus.value);
-    }
-    if (dirtyFlag.present) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag.value);
-    }
-    if (cloudId.present) {
-      map['cloud_id'] = Variable<String>(cloudId.value);
-    }
-    if (deletedLocally.present) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally.value);
-    }
-    if (permissionsMask.present) {
-      map['permissions_mask'] = Variable<String>(permissionsMask.value);
-    }
     if (ownerId.present) {
       map['owner_id'] = Variable<String>(ownerId.value);
     }
     if (version.present) {
       map['version'] = Variable<int>(version.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    if (inTrash.present) {
+      map['in_trash'] = Variable<bool>(inTrash.value);
+    }
+    if (trashMovedAt.present) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -2845,16 +2031,10 @@ class PaymentsTableCompanion extends UpdateCompanion<Payment> {
           ..write('worker: $worker, ')
           ..write('date: $date, ')
           ..write('cabinet: $cabinet, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -2889,7 +2069,9 @@ class $WorkersTableTable extends WorkersTable
   @override
   late final GeneratedColumn<String> permissions = GeneratedColumn<String>(
       'permissions', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('{}'));
   static const VerificationMeta _todayCollectedMeta =
       const VerificationMeta('todayCollected');
   @override
@@ -2906,58 +2088,6 @@ class $WorkersTableTable extends WorkersTable
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
-  static const VerificationMeta _lastModifiedMeta =
-      const VerificationMeta('lastModified');
-  @override
-  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
-      'last_modified', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncedAtMeta =
-      const VerificationMeta('lastSyncedAt');
-  @override
-  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
-      'last_synced_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _syncStatusMeta =
-      const VerificationMeta('syncStatus');
-  @override
-  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
-      'sync_status', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('local_only'));
-  static const VerificationMeta _dirtyFlagMeta =
-      const VerificationMeta('dirtyFlag');
-  @override
-  late final GeneratedColumn<bool> dirtyFlag = GeneratedColumn<bool>(
-      'dirty_flag', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("dirty_flag" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _cloudIdMeta =
-      const VerificationMeta('cloudId');
-  @override
-  late final GeneratedColumn<String> cloudId = GeneratedColumn<String>(
-      'cloud_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _deletedLocallyMeta =
-      const VerificationMeta('deletedLocally');
-  @override
-  late final GeneratedColumn<bool> deletedLocally = GeneratedColumn<bool>(
-      'deleted_locally', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("deleted_locally" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _permissionsMaskMeta =
-      const VerificationMeta('permissionsMask');
-  @override
-  late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
-      'permissions_mask', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _ownerIdMeta =
       const VerificationMeta('ownerId');
   @override
@@ -2972,16 +2102,22 @@ class $WorkersTableTable extends WorkersTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+  static const VerificationMeta _inTrashMeta =
+      const VerificationMeta('inTrash');
   @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
+  late final GeneratedColumn<bool> inTrash = GeneratedColumn<bool>(
+      'in_trash', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+          GeneratedColumn.constraintIsAlways('CHECK ("in_trash" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _trashMovedAtMeta =
+      const VerificationMeta('trashMovedAt');
+  @override
+  late final GeneratedColumn<DateTime> trashMovedAt = GeneratedColumn<DateTime>(
+      'trash_moved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
@@ -3002,16 +2138,10 @@ class $WorkersTableTable extends WorkersTable
         permissions,
         todayCollected,
         monthTotal,
-        lastModified,
-        lastSyncedAt,
-        syncStatus,
-        dirtyFlag,
-        cloudId,
-        deletedLocally,
-        permissionsMask,
         ownerId,
         version,
-        isDeleted,
+        inTrash,
+        trashMovedAt,
         updatedAt,
         createdAt
       ];
@@ -3047,8 +2177,6 @@ class $WorkersTableTable extends WorkersTable
           _permissionsMeta,
           permissions.isAcceptableOrUnknown(
               data['permissions']!, _permissionsMeta));
-    } else if (isInserting) {
-      context.missing(_permissionsMeta);
     }
     if (data.containsKey('today_collected')) {
       context.handle(
@@ -3062,44 +2190,6 @@ class $WorkersTableTable extends WorkersTable
           monthTotal.isAcceptableOrUnknown(
               data['month_total']!, _monthTotalMeta));
     }
-    if (data.containsKey('last_modified')) {
-      context.handle(
-          _lastModifiedMeta,
-          lastModified.isAcceptableOrUnknown(
-              data['last_modified']!, _lastModifiedMeta));
-    }
-    if (data.containsKey('last_synced_at')) {
-      context.handle(
-          _lastSyncedAtMeta,
-          lastSyncedAt.isAcceptableOrUnknown(
-              data['last_synced_at']!, _lastSyncedAtMeta));
-    }
-    if (data.containsKey('sync_status')) {
-      context.handle(
-          _syncStatusMeta,
-          syncStatus.isAcceptableOrUnknown(
-              data['sync_status']!, _syncStatusMeta));
-    }
-    if (data.containsKey('dirty_flag')) {
-      context.handle(_dirtyFlagMeta,
-          dirtyFlag.isAcceptableOrUnknown(data['dirty_flag']!, _dirtyFlagMeta));
-    }
-    if (data.containsKey('cloud_id')) {
-      context.handle(_cloudIdMeta,
-          cloudId.isAcceptableOrUnknown(data['cloud_id']!, _cloudIdMeta));
-    }
-    if (data.containsKey('deleted_locally')) {
-      context.handle(
-          _deletedLocallyMeta,
-          deletedLocally.isAcceptableOrUnknown(
-              data['deleted_locally']!, _deletedLocallyMeta));
-    }
-    if (data.containsKey('permissions_mask')) {
-      context.handle(
-          _permissionsMaskMeta,
-          permissionsMask.isAcceptableOrUnknown(
-              data['permissions_mask']!, _permissionsMaskMeta));
-    }
     if (data.containsKey('owner_id')) {
       context.handle(_ownerIdMeta,
           ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
@@ -3108,9 +2198,15 @@ class $WorkersTableTable extends WorkersTable
       context.handle(_versionMeta,
           version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+    if (data.containsKey('in_trash')) {
+      context.handle(_inTrashMeta,
+          inTrash.isAcceptableOrUnknown(data['in_trash']!, _inTrashMeta));
+    }
+    if (data.containsKey('trash_moved_at')) {
+      context.handle(
+          _trashMovedAtMeta,
+          trashMovedAt.isAcceptableOrUnknown(
+              data['trash_moved_at']!, _trashMovedAtMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
@@ -3141,26 +2237,14 @@ class $WorkersTableTable extends WorkersTable
           DriftSqlType.double, data['${effectivePrefix}today_collected'])!,
       monthTotal: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}month_total'])!,
-      lastModified: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_modified']),
-      lastSyncedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}last_synced_at']),
-      syncStatus: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_status']),
-      dirtyFlag: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}dirty_flag']),
-      cloudId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}cloud_id']),
-      deletedLocally: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
-      permissionsMask: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
       ownerId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
       version: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      inTrash: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}in_trash'])!,
+      trashMovedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}trash_moved_at']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
       createdAt: attachedDatabase.typeMapping
@@ -3181,16 +2265,10 @@ class Worker extends DataClass implements Insertable<Worker> {
   final String permissions;
   final double todayCollected;
   final double monthTotal;
-  final DateTime? lastModified;
-  final DateTime? lastSyncedAt;
-  final String? syncStatus;
-  final bool? dirtyFlag;
-  final String? cloudId;
-  final bool? deletedLocally;
-  final String? permissionsMask;
   final String? ownerId;
   final int version;
-  final bool isDeleted;
+  final bool inTrash;
+  final DateTime? trashMovedAt;
   final DateTime? updatedAt;
   final DateTime? createdAt;
   const Worker(
@@ -3200,16 +2278,10 @@ class Worker extends DataClass implements Insertable<Worker> {
       required this.permissions,
       required this.todayCollected,
       required this.monthTotal,
-      this.lastModified,
-      this.lastSyncedAt,
-      this.syncStatus,
-      this.dirtyFlag,
-      this.cloudId,
-      this.deletedLocally,
-      this.permissionsMask,
       this.ownerId,
       required this.version,
-      required this.isDeleted,
+      required this.inTrash,
+      this.trashMovedAt,
       this.updatedAt,
       this.createdAt});
   @override
@@ -3221,32 +2293,14 @@ class Worker extends DataClass implements Insertable<Worker> {
     map['permissions'] = Variable<String>(permissions);
     map['today_collected'] = Variable<double>(todayCollected);
     map['month_total'] = Variable<double>(monthTotal);
-    if (!nullToAbsent || lastModified != null) {
-      map['last_modified'] = Variable<DateTime>(lastModified);
-    }
-    if (!nullToAbsent || lastSyncedAt != null) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
-    }
-    if (!nullToAbsent || syncStatus != null) {
-      map['sync_status'] = Variable<String>(syncStatus);
-    }
-    if (!nullToAbsent || dirtyFlag != null) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag);
-    }
-    if (!nullToAbsent || cloudId != null) {
-      map['cloud_id'] = Variable<String>(cloudId);
-    }
-    if (!nullToAbsent || deletedLocally != null) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally);
-    }
-    if (!nullToAbsent || permissionsMask != null) {
-      map['permissions_mask'] = Variable<String>(permissionsMask);
-    }
     if (!nullToAbsent || ownerId != null) {
       map['owner_id'] = Variable<String>(ownerId);
     }
     map['version'] = Variable<int>(version);
-    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['in_trash'] = Variable<bool>(inTrash);
+    if (!nullToAbsent || trashMovedAt != null) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt);
+    }
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
@@ -3264,32 +2318,14 @@ class Worker extends DataClass implements Insertable<Worker> {
       permissions: Value(permissions),
       todayCollected: Value(todayCollected),
       monthTotal: Value(monthTotal),
-      lastModified: lastModified == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastModified),
-      lastSyncedAt: lastSyncedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncedAt),
-      syncStatus: syncStatus == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncStatus),
-      dirtyFlag: dirtyFlag == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dirtyFlag),
-      cloudId: cloudId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(cloudId),
-      deletedLocally: deletedLocally == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedLocally),
-      permissionsMask: permissionsMask == null && nullToAbsent
-          ? const Value.absent()
-          : Value(permissionsMask),
       ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
           : Value(ownerId),
       version: Value(version),
-      isDeleted: Value(isDeleted),
+      inTrash: Value(inTrash),
+      trashMovedAt: trashMovedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashMovedAt),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
@@ -3309,16 +2345,10 @@ class Worker extends DataClass implements Insertable<Worker> {
       permissions: serializer.fromJson<String>(json['permissions']),
       todayCollected: serializer.fromJson<double>(json['todayCollected']),
       monthTotal: serializer.fromJson<double>(json['monthTotal']),
-      lastModified: serializer.fromJson<DateTime?>(json['lastModified']),
-      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
-      syncStatus: serializer.fromJson<String?>(json['syncStatus']),
-      dirtyFlag: serializer.fromJson<bool?>(json['dirtyFlag']),
-      cloudId: serializer.fromJson<String?>(json['cloudId']),
-      deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
-      permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       version: serializer.fromJson<int>(json['version']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      inTrash: serializer.fromJson<bool>(json['inTrash']),
+      trashMovedAt: serializer.fromJson<DateTime?>(json['trashMovedAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
@@ -3333,16 +2363,10 @@ class Worker extends DataClass implements Insertable<Worker> {
       'permissions': serializer.toJson<String>(permissions),
       'todayCollected': serializer.toJson<double>(todayCollected),
       'monthTotal': serializer.toJson<double>(monthTotal),
-      'lastModified': serializer.toJson<DateTime?>(lastModified),
-      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
-      'syncStatus': serializer.toJson<String?>(syncStatus),
-      'dirtyFlag': serializer.toJson<bool?>(dirtyFlag),
-      'cloudId': serializer.toJson<String?>(cloudId),
-      'deletedLocally': serializer.toJson<bool?>(deletedLocally),
-      'permissionsMask': serializer.toJson<String?>(permissionsMask),
       'ownerId': serializer.toJson<String?>(ownerId),
       'version': serializer.toJson<int>(version),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'inTrash': serializer.toJson<bool>(inTrash),
+      'trashMovedAt': serializer.toJson<DateTime?>(trashMovedAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
@@ -3355,16 +2379,10 @@ class Worker extends DataClass implements Insertable<Worker> {
           String? permissions,
           double? todayCollected,
           double? monthTotal,
-          Value<DateTime?> lastModified = const Value.absent(),
-          Value<DateTime?> lastSyncedAt = const Value.absent(),
-          Value<String?> syncStatus = const Value.absent(),
-          Value<bool?> dirtyFlag = const Value.absent(),
-          Value<String?> cloudId = const Value.absent(),
-          Value<bool?> deletedLocally = const Value.absent(),
-          Value<String?> permissionsMask = const Value.absent(),
           Value<String?> ownerId = const Value.absent(),
           int? version,
-          bool? isDeleted,
+          bool? inTrash,
+          Value<DateTime?> trashMovedAt = const Value.absent(),
           Value<DateTime?> updatedAt = const Value.absent(),
           Value<DateTime?> createdAt = const Value.absent()}) =>
       Worker(
@@ -3374,21 +2392,11 @@ class Worker extends DataClass implements Insertable<Worker> {
         permissions: permissions ?? this.permissions,
         todayCollected: todayCollected ?? this.todayCollected,
         monthTotal: monthTotal ?? this.monthTotal,
-        lastModified:
-            lastModified.present ? lastModified.value : this.lastModified,
-        lastSyncedAt:
-            lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
-        syncStatus: syncStatus.present ? syncStatus.value : this.syncStatus,
-        dirtyFlag: dirtyFlag.present ? dirtyFlag.value : this.dirtyFlag,
-        cloudId: cloudId.present ? cloudId.value : this.cloudId,
-        deletedLocally:
-            deletedLocally.present ? deletedLocally.value : this.deletedLocally,
-        permissionsMask: permissionsMask.present
-            ? permissionsMask.value
-            : this.permissionsMask,
         ownerId: ownerId.present ? ownerId.value : this.ownerId,
         version: version ?? this.version,
-        isDeleted: isDeleted ?? this.isDeleted,
+        inTrash: inTrash ?? this.inTrash,
+        trashMovedAt:
+            trashMovedAt.present ? trashMovedAt.value : this.trashMovedAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
@@ -3404,25 +2412,12 @@ class Worker extends DataClass implements Insertable<Worker> {
           : this.todayCollected,
       monthTotal:
           data.monthTotal.present ? data.monthTotal.value : this.monthTotal,
-      lastModified: data.lastModified.present
-          ? data.lastModified.value
-          : this.lastModified,
-      lastSyncedAt: data.lastSyncedAt.present
-          ? data.lastSyncedAt.value
-          : this.lastSyncedAt,
-      syncStatus:
-          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
-      dirtyFlag: data.dirtyFlag.present ? data.dirtyFlag.value : this.dirtyFlag,
-      cloudId: data.cloudId.present ? data.cloudId.value : this.cloudId,
-      deletedLocally: data.deletedLocally.present
-          ? data.deletedLocally.value
-          : this.deletedLocally,
-      permissionsMask: data.permissionsMask.present
-          ? data.permissionsMask.value
-          : this.permissionsMask,
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       version: data.version.present ? data.version.value : this.version,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      inTrash: data.inTrash.present ? data.inTrash.value : this.inTrash,
+      trashMovedAt: data.trashMovedAt.present
+          ? data.trashMovedAt.value
+          : this.trashMovedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -3437,16 +2432,10 @@ class Worker extends DataClass implements Insertable<Worker> {
           ..write('permissions: $permissions, ')
           ..write('todayCollected: $todayCollected, ')
           ..write('monthTotal: $monthTotal, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -3461,16 +2450,10 @@ class Worker extends DataClass implements Insertable<Worker> {
       permissions,
       todayCollected,
       monthTotal,
-      lastModified,
-      lastSyncedAt,
-      syncStatus,
-      dirtyFlag,
-      cloudId,
-      deletedLocally,
-      permissionsMask,
       ownerId,
       version,
-      isDeleted,
+      inTrash,
+      trashMovedAt,
       updatedAt,
       createdAt);
   @override
@@ -3483,16 +2466,10 @@ class Worker extends DataClass implements Insertable<Worker> {
           other.permissions == this.permissions &&
           other.todayCollected == this.todayCollected &&
           other.monthTotal == this.monthTotal &&
-          other.lastModified == this.lastModified &&
-          other.lastSyncedAt == this.lastSyncedAt &&
-          other.syncStatus == this.syncStatus &&
-          other.dirtyFlag == this.dirtyFlag &&
-          other.cloudId == this.cloudId &&
-          other.deletedLocally == this.deletedLocally &&
-          other.permissionsMask == this.permissionsMask &&
           other.ownerId == this.ownerId &&
           other.version == this.version &&
-          other.isDeleted == this.isDeleted &&
+          other.inTrash == this.inTrash &&
+          other.trashMovedAt == this.trashMovedAt &&
           other.updatedAt == this.updatedAt &&
           other.createdAt == this.createdAt);
 }
@@ -3504,16 +2481,10 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
   final Value<String> permissions;
   final Value<double> todayCollected;
   final Value<double> monthTotal;
-  final Value<DateTime?> lastModified;
-  final Value<DateTime?> lastSyncedAt;
-  final Value<String?> syncStatus;
-  final Value<bool?> dirtyFlag;
-  final Value<String?> cloudId;
-  final Value<bool?> deletedLocally;
-  final Value<String?> permissionsMask;
   final Value<String?> ownerId;
   final Value<int> version;
-  final Value<bool> isDeleted;
+  final Value<bool> inTrash;
+  final Value<DateTime?> trashMovedAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> createdAt;
   final Value<int> rowid;
@@ -3524,16 +2495,10 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
     this.permissions = const Value.absent(),
     this.todayCollected = const Value.absent(),
     this.monthTotal = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3542,26 +2507,19 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
     required String id,
     required String name,
     required String phone,
-    required String permissions,
+    this.permissions = const Value.absent(),
     this.todayCollected = const Value.absent(),
     this.monthTotal = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         name = Value(name),
-        phone = Value(phone),
-        permissions = Value(permissions);
+        phone = Value(phone);
   static Insertable<Worker> custom({
     Expression<String>? id,
     Expression<String>? name,
@@ -3569,16 +2527,10 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
     Expression<String>? permissions,
     Expression<double>? todayCollected,
     Expression<double>? monthTotal,
-    Expression<DateTime>? lastModified,
-    Expression<DateTime>? lastSyncedAt,
-    Expression<String>? syncStatus,
-    Expression<bool>? dirtyFlag,
-    Expression<String>? cloudId,
-    Expression<bool>? deletedLocally,
-    Expression<String>? permissionsMask,
     Expression<String>? ownerId,
     Expression<int>? version,
-    Expression<bool>? isDeleted,
+    Expression<bool>? inTrash,
+    Expression<DateTime>? trashMovedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -3590,16 +2542,10 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
       if (permissions != null) 'permissions': permissions,
       if (todayCollected != null) 'today_collected': todayCollected,
       if (monthTotal != null) 'month_total': monthTotal,
-      if (lastModified != null) 'last_modified': lastModified,
-      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
-      if (syncStatus != null) 'sync_status': syncStatus,
-      if (dirtyFlag != null) 'dirty_flag': dirtyFlag,
-      if (cloudId != null) 'cloud_id': cloudId,
-      if (deletedLocally != null) 'deleted_locally': deletedLocally,
-      if (permissionsMask != null) 'permissions_mask': permissionsMask,
       if (ownerId != null) 'owner_id': ownerId,
       if (version != null) 'version': version,
-      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (inTrash != null) 'in_trash': inTrash,
+      if (trashMovedAt != null) 'trash_moved_at': trashMovedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -3613,16 +2559,10 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
       Value<String>? permissions,
       Value<double>? todayCollected,
       Value<double>? monthTotal,
-      Value<DateTime?>? lastModified,
-      Value<DateTime?>? lastSyncedAt,
-      Value<String?>? syncStatus,
-      Value<bool?>? dirtyFlag,
-      Value<String?>? cloudId,
-      Value<bool?>? deletedLocally,
-      Value<String?>? permissionsMask,
       Value<String?>? ownerId,
       Value<int>? version,
-      Value<bool>? isDeleted,
+      Value<bool>? inTrash,
+      Value<DateTime?>? trashMovedAt,
       Value<DateTime?>? updatedAt,
       Value<DateTime?>? createdAt,
       Value<int>? rowid}) {
@@ -3633,16 +2573,10 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
       permissions: permissions ?? this.permissions,
       todayCollected: todayCollected ?? this.todayCollected,
       monthTotal: monthTotal ?? this.monthTotal,
-      lastModified: lastModified ?? this.lastModified,
-      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-      syncStatus: syncStatus ?? this.syncStatus,
-      dirtyFlag: dirtyFlag ?? this.dirtyFlag,
-      cloudId: cloudId ?? this.cloudId,
-      deletedLocally: deletedLocally ?? this.deletedLocally,
-      permissionsMask: permissionsMask ?? this.permissionsMask,
       ownerId: ownerId ?? this.ownerId,
       version: version ?? this.version,
-      isDeleted: isDeleted ?? this.isDeleted,
+      inTrash: inTrash ?? this.inTrash,
+      trashMovedAt: trashMovedAt ?? this.trashMovedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -3670,35 +2604,17 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
     if (monthTotal.present) {
       map['month_total'] = Variable<double>(monthTotal.value);
     }
-    if (lastModified.present) {
-      map['last_modified'] = Variable<DateTime>(lastModified.value);
-    }
-    if (lastSyncedAt.present) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
-    }
-    if (syncStatus.present) {
-      map['sync_status'] = Variable<String>(syncStatus.value);
-    }
-    if (dirtyFlag.present) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag.value);
-    }
-    if (cloudId.present) {
-      map['cloud_id'] = Variable<String>(cloudId.value);
-    }
-    if (deletedLocally.present) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally.value);
-    }
-    if (permissionsMask.present) {
-      map['permissions_mask'] = Variable<String>(permissionsMask.value);
-    }
     if (ownerId.present) {
       map['owner_id'] = Variable<String>(ownerId.value);
     }
     if (version.present) {
       map['version'] = Variable<int>(version.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    if (inTrash.present) {
+      map['in_trash'] = Variable<bool>(inTrash.value);
+    }
+    if (trashMovedAt.present) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -3721,16 +2637,10 @@ class WorkersTableCompanion extends UpdateCompanion<Worker> {
           ..write('permissions: $permissions, ')
           ..write('todayCollected: $todayCollected, ')
           ..write('monthTotal: $monthTotal, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -3784,58 +2694,6 @@ class $AuditLogTableTable extends AuditLogTable
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
-  static const VerificationMeta _lastModifiedMeta =
-      const VerificationMeta('lastModified');
-  @override
-  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
-      'last_modified', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncedAtMeta =
-      const VerificationMeta('lastSyncedAt');
-  @override
-  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
-      'last_synced_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _syncStatusMeta =
-      const VerificationMeta('syncStatus');
-  @override
-  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
-      'sync_status', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('local_only'));
-  static const VerificationMeta _dirtyFlagMeta =
-      const VerificationMeta('dirtyFlag');
-  @override
-  late final GeneratedColumn<bool> dirtyFlag = GeneratedColumn<bool>(
-      'dirty_flag', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("dirty_flag" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _cloudIdMeta =
-      const VerificationMeta('cloudId');
-  @override
-  late final GeneratedColumn<String> cloudId = GeneratedColumn<String>(
-      'cloud_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _deletedLocallyMeta =
-      const VerificationMeta('deletedLocally');
-  @override
-  late final GeneratedColumn<bool> deletedLocally = GeneratedColumn<bool>(
-      'deleted_locally', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("deleted_locally" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _permissionsMaskMeta =
-      const VerificationMeta('permissionsMask');
-  @override
-  late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
-      'permissions_mask', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _ownerIdMeta =
       const VerificationMeta('ownerId');
   @override
@@ -3850,16 +2708,22 @@ class $AuditLogTableTable extends AuditLogTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+  static const VerificationMeta _inTrashMeta =
+      const VerificationMeta('inTrash');
   @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
+  late final GeneratedColumn<bool> inTrash = GeneratedColumn<bool>(
+      'in_trash', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+          GeneratedColumn.constraintIsAlways('CHECK ("in_trash" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _trashMovedAtMeta =
+      const VerificationMeta('trashMovedAt');
+  @override
+  late final GeneratedColumn<DateTime> trashMovedAt = GeneratedColumn<DateTime>(
+      'trash_moved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
@@ -3881,16 +2745,10 @@ class $AuditLogTableTable extends AuditLogTable
         details,
         type,
         timestamp,
-        lastModified,
-        lastSyncedAt,
-        syncStatus,
-        dirtyFlag,
-        cloudId,
-        deletedLocally,
-        permissionsMask,
         ownerId,
         version,
-        isDeleted,
+        inTrash,
+        trashMovedAt,
         updatedAt,
         createdAt
       ];
@@ -3943,44 +2801,6 @@ class $AuditLogTableTable extends AuditLogTable
       context.handle(_timestampMeta,
           timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta));
     }
-    if (data.containsKey('last_modified')) {
-      context.handle(
-          _lastModifiedMeta,
-          lastModified.isAcceptableOrUnknown(
-              data['last_modified']!, _lastModifiedMeta));
-    }
-    if (data.containsKey('last_synced_at')) {
-      context.handle(
-          _lastSyncedAtMeta,
-          lastSyncedAt.isAcceptableOrUnknown(
-              data['last_synced_at']!, _lastSyncedAtMeta));
-    }
-    if (data.containsKey('sync_status')) {
-      context.handle(
-          _syncStatusMeta,
-          syncStatus.isAcceptableOrUnknown(
-              data['sync_status']!, _syncStatusMeta));
-    }
-    if (data.containsKey('dirty_flag')) {
-      context.handle(_dirtyFlagMeta,
-          dirtyFlag.isAcceptableOrUnknown(data['dirty_flag']!, _dirtyFlagMeta));
-    }
-    if (data.containsKey('cloud_id')) {
-      context.handle(_cloudIdMeta,
-          cloudId.isAcceptableOrUnknown(data['cloud_id']!, _cloudIdMeta));
-    }
-    if (data.containsKey('deleted_locally')) {
-      context.handle(
-          _deletedLocallyMeta,
-          deletedLocally.isAcceptableOrUnknown(
-              data['deleted_locally']!, _deletedLocallyMeta));
-    }
-    if (data.containsKey('permissions_mask')) {
-      context.handle(
-          _permissionsMaskMeta,
-          permissionsMask.isAcceptableOrUnknown(
-              data['permissions_mask']!, _permissionsMaskMeta));
-    }
     if (data.containsKey('owner_id')) {
       context.handle(_ownerIdMeta,
           ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
@@ -3989,9 +2809,15 @@ class $AuditLogTableTable extends AuditLogTable
       context.handle(_versionMeta,
           version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+    if (data.containsKey('in_trash')) {
+      context.handle(_inTrashMeta,
+          inTrash.isAcceptableOrUnknown(data['in_trash']!, _inTrashMeta));
+    }
+    if (data.containsKey('trash_moved_at')) {
+      context.handle(
+          _trashMovedAtMeta,
+          trashMovedAt.isAcceptableOrUnknown(
+              data['trash_moved_at']!, _trashMovedAtMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
@@ -4024,26 +2850,14 @@ class $AuditLogTableTable extends AuditLogTable
           .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
       timestamp: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}timestamp'])!,
-      lastModified: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_modified']),
-      lastSyncedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}last_synced_at']),
-      syncStatus: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_status']),
-      dirtyFlag: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}dirty_flag']),
-      cloudId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}cloud_id']),
-      deletedLocally: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
-      permissionsMask: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
       ownerId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
       version: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      inTrash: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}in_trash'])!,
+      trashMovedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}trash_moved_at']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
       createdAt: attachedDatabase.typeMapping
@@ -4065,16 +2879,10 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
   final String details;
   final String type;
   final DateTime timestamp;
-  final DateTime? lastModified;
-  final DateTime? lastSyncedAt;
-  final String? syncStatus;
-  final bool? dirtyFlag;
-  final String? cloudId;
-  final bool? deletedLocally;
-  final String? permissionsMask;
   final String? ownerId;
   final int version;
-  final bool isDeleted;
+  final bool inTrash;
+  final DateTime? trashMovedAt;
   final DateTime? updatedAt;
   final DateTime? createdAt;
   const AuditLogEntry(
@@ -4085,16 +2893,10 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       required this.details,
       required this.type,
       required this.timestamp,
-      this.lastModified,
-      this.lastSyncedAt,
-      this.syncStatus,
-      this.dirtyFlag,
-      this.cloudId,
-      this.deletedLocally,
-      this.permissionsMask,
       this.ownerId,
       required this.version,
-      required this.isDeleted,
+      required this.inTrash,
+      this.trashMovedAt,
       this.updatedAt,
       this.createdAt});
   @override
@@ -4107,32 +2909,14 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
     map['details'] = Variable<String>(details);
     map['type'] = Variable<String>(type);
     map['timestamp'] = Variable<DateTime>(timestamp);
-    if (!nullToAbsent || lastModified != null) {
-      map['last_modified'] = Variable<DateTime>(lastModified);
-    }
-    if (!nullToAbsent || lastSyncedAt != null) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
-    }
-    if (!nullToAbsent || syncStatus != null) {
-      map['sync_status'] = Variable<String>(syncStatus);
-    }
-    if (!nullToAbsent || dirtyFlag != null) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag);
-    }
-    if (!nullToAbsent || cloudId != null) {
-      map['cloud_id'] = Variable<String>(cloudId);
-    }
-    if (!nullToAbsent || deletedLocally != null) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally);
-    }
-    if (!nullToAbsent || permissionsMask != null) {
-      map['permissions_mask'] = Variable<String>(permissionsMask);
-    }
     if (!nullToAbsent || ownerId != null) {
       map['owner_id'] = Variable<String>(ownerId);
     }
     map['version'] = Variable<int>(version);
-    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['in_trash'] = Variable<bool>(inTrash);
+    if (!nullToAbsent || trashMovedAt != null) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt);
+    }
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
@@ -4151,32 +2935,14 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       details: Value(details),
       type: Value(type),
       timestamp: Value(timestamp),
-      lastModified: lastModified == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastModified),
-      lastSyncedAt: lastSyncedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncedAt),
-      syncStatus: syncStatus == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncStatus),
-      dirtyFlag: dirtyFlag == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dirtyFlag),
-      cloudId: cloudId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(cloudId),
-      deletedLocally: deletedLocally == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedLocally),
-      permissionsMask: permissionsMask == null && nullToAbsent
-          ? const Value.absent()
-          : Value(permissionsMask),
       ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
           : Value(ownerId),
       version: Value(version),
-      isDeleted: Value(isDeleted),
+      inTrash: Value(inTrash),
+      trashMovedAt: trashMovedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashMovedAt),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
@@ -4197,16 +2963,10 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       details: serializer.fromJson<String>(json['details']),
       type: serializer.fromJson<String>(json['type']),
       timestamp: serializer.fromJson<DateTime>(json['timestamp']),
-      lastModified: serializer.fromJson<DateTime?>(json['lastModified']),
-      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
-      syncStatus: serializer.fromJson<String?>(json['syncStatus']),
-      dirtyFlag: serializer.fromJson<bool?>(json['dirtyFlag']),
-      cloudId: serializer.fromJson<String?>(json['cloudId']),
-      deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
-      permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       version: serializer.fromJson<int>(json['version']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      inTrash: serializer.fromJson<bool>(json['inTrash']),
+      trashMovedAt: serializer.fromJson<DateTime?>(json['trashMovedAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
@@ -4222,16 +2982,10 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       'details': serializer.toJson<String>(details),
       'type': serializer.toJson<String>(type),
       'timestamp': serializer.toJson<DateTime>(timestamp),
-      'lastModified': serializer.toJson<DateTime?>(lastModified),
-      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
-      'syncStatus': serializer.toJson<String?>(syncStatus),
-      'dirtyFlag': serializer.toJson<bool?>(dirtyFlag),
-      'cloudId': serializer.toJson<String?>(cloudId),
-      'deletedLocally': serializer.toJson<bool?>(deletedLocally),
-      'permissionsMask': serializer.toJson<String?>(permissionsMask),
       'ownerId': serializer.toJson<String?>(ownerId),
       'version': serializer.toJson<int>(version),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'inTrash': serializer.toJson<bool>(inTrash),
+      'trashMovedAt': serializer.toJson<DateTime?>(trashMovedAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
@@ -4245,16 +2999,10 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
           String? details,
           String? type,
           DateTime? timestamp,
-          Value<DateTime?> lastModified = const Value.absent(),
-          Value<DateTime?> lastSyncedAt = const Value.absent(),
-          Value<String?> syncStatus = const Value.absent(),
-          Value<bool?> dirtyFlag = const Value.absent(),
-          Value<String?> cloudId = const Value.absent(),
-          Value<bool?> deletedLocally = const Value.absent(),
-          Value<String?> permissionsMask = const Value.absent(),
           Value<String?> ownerId = const Value.absent(),
           int? version,
-          bool? isDeleted,
+          bool? inTrash,
+          Value<DateTime?> trashMovedAt = const Value.absent(),
           Value<DateTime?> updatedAt = const Value.absent(),
           Value<DateTime?> createdAt = const Value.absent()}) =>
       AuditLogEntry(
@@ -4265,21 +3013,11 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
         details: details ?? this.details,
         type: type ?? this.type,
         timestamp: timestamp ?? this.timestamp,
-        lastModified:
-            lastModified.present ? lastModified.value : this.lastModified,
-        lastSyncedAt:
-            lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
-        syncStatus: syncStatus.present ? syncStatus.value : this.syncStatus,
-        dirtyFlag: dirtyFlag.present ? dirtyFlag.value : this.dirtyFlag,
-        cloudId: cloudId.present ? cloudId.value : this.cloudId,
-        deletedLocally:
-            deletedLocally.present ? deletedLocally.value : this.deletedLocally,
-        permissionsMask: permissionsMask.present
-            ? permissionsMask.value
-            : this.permissionsMask,
         ownerId: ownerId.present ? ownerId.value : this.ownerId,
         version: version ?? this.version,
-        isDeleted: isDeleted ?? this.isDeleted,
+        inTrash: inTrash ?? this.inTrash,
+        trashMovedAt:
+            trashMovedAt.present ? trashMovedAt.value : this.trashMovedAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
@@ -4292,25 +3030,12 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
       details: data.details.present ? data.details.value : this.details,
       type: data.type.present ? data.type.value : this.type,
       timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
-      lastModified: data.lastModified.present
-          ? data.lastModified.value
-          : this.lastModified,
-      lastSyncedAt: data.lastSyncedAt.present
-          ? data.lastSyncedAt.value
-          : this.lastSyncedAt,
-      syncStatus:
-          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
-      dirtyFlag: data.dirtyFlag.present ? data.dirtyFlag.value : this.dirtyFlag,
-      cloudId: data.cloudId.present ? data.cloudId.value : this.cloudId,
-      deletedLocally: data.deletedLocally.present
-          ? data.deletedLocally.value
-          : this.deletedLocally,
-      permissionsMask: data.permissionsMask.present
-          ? data.permissionsMask.value
-          : this.permissionsMask,
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       version: data.version.present ? data.version.value : this.version,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      inTrash: data.inTrash.present ? data.inTrash.value : this.inTrash,
+      trashMovedAt: data.trashMovedAt.present
+          ? data.trashMovedAt.value
+          : this.trashMovedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -4326,16 +3051,10 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
           ..write('details: $details, ')
           ..write('type: $type, ')
           ..write('timestamp: $timestamp, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -4343,26 +3062,8 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      user,
-      action,
-      target,
-      details,
-      type,
-      timestamp,
-      lastModified,
-      lastSyncedAt,
-      syncStatus,
-      dirtyFlag,
-      cloudId,
-      deletedLocally,
-      permissionsMask,
-      ownerId,
-      version,
-      isDeleted,
-      updatedAt,
-      createdAt);
+  int get hashCode => Object.hash(id, user, action, target, details, type,
+      timestamp, ownerId, version, inTrash, trashMovedAt, updatedAt, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4374,16 +3075,10 @@ class AuditLogEntry extends DataClass implements Insertable<AuditLogEntry> {
           other.details == this.details &&
           other.type == this.type &&
           other.timestamp == this.timestamp &&
-          other.lastModified == this.lastModified &&
-          other.lastSyncedAt == this.lastSyncedAt &&
-          other.syncStatus == this.syncStatus &&
-          other.dirtyFlag == this.dirtyFlag &&
-          other.cloudId == this.cloudId &&
-          other.deletedLocally == this.deletedLocally &&
-          other.permissionsMask == this.permissionsMask &&
           other.ownerId == this.ownerId &&
           other.version == this.version &&
-          other.isDeleted == this.isDeleted &&
+          other.inTrash == this.inTrash &&
+          other.trashMovedAt == this.trashMovedAt &&
           other.updatedAt == this.updatedAt &&
           other.createdAt == this.createdAt);
 }
@@ -4396,16 +3091,10 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
   final Value<String> details;
   final Value<String> type;
   final Value<DateTime> timestamp;
-  final Value<DateTime?> lastModified;
-  final Value<DateTime?> lastSyncedAt;
-  final Value<String?> syncStatus;
-  final Value<bool?> dirtyFlag;
-  final Value<String?> cloudId;
-  final Value<bool?> deletedLocally;
-  final Value<String?> permissionsMask;
   final Value<String?> ownerId;
   final Value<int> version;
-  final Value<bool> isDeleted;
+  final Value<bool> inTrash;
+  final Value<DateTime?> trashMovedAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> createdAt;
   final Value<int> rowid;
@@ -4417,16 +3106,10 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
     this.details = const Value.absent(),
     this.type = const Value.absent(),
     this.timestamp = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -4439,16 +3122,10 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
     required String details,
     required String type,
     this.timestamp = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -4466,16 +3143,10 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
     Expression<String>? details,
     Expression<String>? type,
     Expression<DateTime>? timestamp,
-    Expression<DateTime>? lastModified,
-    Expression<DateTime>? lastSyncedAt,
-    Expression<String>? syncStatus,
-    Expression<bool>? dirtyFlag,
-    Expression<String>? cloudId,
-    Expression<bool>? deletedLocally,
-    Expression<String>? permissionsMask,
     Expression<String>? ownerId,
     Expression<int>? version,
-    Expression<bool>? isDeleted,
+    Expression<bool>? inTrash,
+    Expression<DateTime>? trashMovedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -4488,16 +3159,10 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
       if (details != null) 'details': details,
       if (type != null) 'type': type,
       if (timestamp != null) 'timestamp': timestamp,
-      if (lastModified != null) 'last_modified': lastModified,
-      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
-      if (syncStatus != null) 'sync_status': syncStatus,
-      if (dirtyFlag != null) 'dirty_flag': dirtyFlag,
-      if (cloudId != null) 'cloud_id': cloudId,
-      if (deletedLocally != null) 'deleted_locally': deletedLocally,
-      if (permissionsMask != null) 'permissions_mask': permissionsMask,
       if (ownerId != null) 'owner_id': ownerId,
       if (version != null) 'version': version,
-      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (inTrash != null) 'in_trash': inTrash,
+      if (trashMovedAt != null) 'trash_moved_at': trashMovedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -4512,16 +3177,10 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
       Value<String>? details,
       Value<String>? type,
       Value<DateTime>? timestamp,
-      Value<DateTime?>? lastModified,
-      Value<DateTime?>? lastSyncedAt,
-      Value<String?>? syncStatus,
-      Value<bool?>? dirtyFlag,
-      Value<String?>? cloudId,
-      Value<bool?>? deletedLocally,
-      Value<String?>? permissionsMask,
       Value<String?>? ownerId,
       Value<int>? version,
-      Value<bool>? isDeleted,
+      Value<bool>? inTrash,
+      Value<DateTime?>? trashMovedAt,
       Value<DateTime?>? updatedAt,
       Value<DateTime?>? createdAt,
       Value<int>? rowid}) {
@@ -4533,16 +3192,10 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
       details: details ?? this.details,
       type: type ?? this.type,
       timestamp: timestamp ?? this.timestamp,
-      lastModified: lastModified ?? this.lastModified,
-      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-      syncStatus: syncStatus ?? this.syncStatus,
-      dirtyFlag: dirtyFlag ?? this.dirtyFlag,
-      cloudId: cloudId ?? this.cloudId,
-      deletedLocally: deletedLocally ?? this.deletedLocally,
-      permissionsMask: permissionsMask ?? this.permissionsMask,
       ownerId: ownerId ?? this.ownerId,
       version: version ?? this.version,
-      isDeleted: isDeleted ?? this.isDeleted,
+      inTrash: inTrash ?? this.inTrash,
+      trashMovedAt: trashMovedAt ?? this.trashMovedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -4573,35 +3226,17 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
     if (timestamp.present) {
       map['timestamp'] = Variable<DateTime>(timestamp.value);
     }
-    if (lastModified.present) {
-      map['last_modified'] = Variable<DateTime>(lastModified.value);
-    }
-    if (lastSyncedAt.present) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
-    }
-    if (syncStatus.present) {
-      map['sync_status'] = Variable<String>(syncStatus.value);
-    }
-    if (dirtyFlag.present) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag.value);
-    }
-    if (cloudId.present) {
-      map['cloud_id'] = Variable<String>(cloudId.value);
-    }
-    if (deletedLocally.present) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally.value);
-    }
-    if (permissionsMask.present) {
-      map['permissions_mask'] = Variable<String>(permissionsMask.value);
-    }
     if (ownerId.present) {
       map['owner_id'] = Variable<String>(ownerId.value);
     }
     if (version.present) {
       map['version'] = Variable<int>(version.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    if (inTrash.present) {
+      map['in_trash'] = Variable<bool>(inTrash.value);
+    }
+    if (trashMovedAt.present) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -4625,16 +3260,10 @@ class AuditLogTableCompanion extends UpdateCompanion<AuditLogEntry> {
           ..write('details: $details, ')
           ..write('type: $type, ')
           ..write('timestamp: $timestamp, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -4668,63 +3297,13 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
   static const VerificationMeta _isActiveMeta =
       const VerificationMeta('isActive');
   @override
-  late final GeneratedColumn<int> isActive = GeneratedColumn<int>(
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
       'is_active', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0));
-  static const VerificationMeta _lastModifiedMeta =
-      const VerificationMeta('lastModified');
-  @override
-  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
-      'last_modified', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _lastSyncedAtMeta =
-      const VerificationMeta('lastSyncedAt');
-  @override
-  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
-      'last_synced_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _syncStatusMeta =
-      const VerificationMeta('syncStatus');
-  @override
-  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
-      'sync_status', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('local_only'));
-  static const VerificationMeta _dirtyFlagMeta =
-      const VerificationMeta('dirtyFlag');
-  @override
-  late final GeneratedColumn<bool> dirtyFlag = GeneratedColumn<bool>(
-      'dirty_flag', aliasedName, true,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("dirty_flag" IN (0, 1))'),
+          GeneratedColumn.constraintIsAlways('CHECK ("is_active" IN (0, 1))'),
       defaultValue: const Constant(false));
-  static const VerificationMeta _cloudIdMeta =
-      const VerificationMeta('cloudId');
-  @override
-  late final GeneratedColumn<String> cloudId = GeneratedColumn<String>(
-      'cloud_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _deletedLocallyMeta =
-      const VerificationMeta('deletedLocally');
-  @override
-  late final GeneratedColumn<bool> deletedLocally = GeneratedColumn<bool>(
-      'deleted_locally', aliasedName, true,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("deleted_locally" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _permissionsMaskMeta =
-      const VerificationMeta('permissionsMask');
-  @override
-  late final GeneratedColumn<String> permissionsMask = GeneratedColumn<String>(
-      'permissions_mask', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _ownerIdMeta =
       const VerificationMeta('ownerId');
   @override
@@ -4739,16 +3318,22 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+  static const VerificationMeta _inTrashMeta =
+      const VerificationMeta('inTrash');
   @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
+  late final GeneratedColumn<bool> inTrash = GeneratedColumn<bool>(
+      'in_trash', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+          GeneratedColumn.constraintIsAlways('CHECK ("in_trash" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _trashMovedAtMeta =
+      const VerificationMeta('trashMovedAt');
+  @override
+  late final GeneratedColumn<DateTime> trashMovedAt = GeneratedColumn<DateTime>(
+      'trash_moved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
@@ -4771,16 +3356,10 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
         title,
         content,
         isActive,
-        lastModified,
-        lastSyncedAt,
-        syncStatus,
-        dirtyFlag,
-        cloudId,
-        deletedLocally,
-        permissionsMask,
         ownerId,
         version,
-        isDeleted,
+        inTrash,
+        trashMovedAt,
         updatedAt,
         createdAt
       ];
@@ -4816,44 +3395,6 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
       context.handle(_isActiveMeta,
           isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
     }
-    if (data.containsKey('last_modified')) {
-      context.handle(
-          _lastModifiedMeta,
-          lastModified.isAcceptableOrUnknown(
-              data['last_modified']!, _lastModifiedMeta));
-    }
-    if (data.containsKey('last_synced_at')) {
-      context.handle(
-          _lastSyncedAtMeta,
-          lastSyncedAt.isAcceptableOrUnknown(
-              data['last_synced_at']!, _lastSyncedAtMeta));
-    }
-    if (data.containsKey('sync_status')) {
-      context.handle(
-          _syncStatusMeta,
-          syncStatus.isAcceptableOrUnknown(
-              data['sync_status']!, _syncStatusMeta));
-    }
-    if (data.containsKey('dirty_flag')) {
-      context.handle(_dirtyFlagMeta,
-          dirtyFlag.isAcceptableOrUnknown(data['dirty_flag']!, _dirtyFlagMeta));
-    }
-    if (data.containsKey('cloud_id')) {
-      context.handle(_cloudIdMeta,
-          cloudId.isAcceptableOrUnknown(data['cloud_id']!, _cloudIdMeta));
-    }
-    if (data.containsKey('deleted_locally')) {
-      context.handle(
-          _deletedLocallyMeta,
-          deletedLocally.isAcceptableOrUnknown(
-              data['deleted_locally']!, _deletedLocallyMeta));
-    }
-    if (data.containsKey('permissions_mask')) {
-      context.handle(
-          _permissionsMaskMeta,
-          permissionsMask.isAcceptableOrUnknown(
-              data['permissions_mask']!, _permissionsMaskMeta));
-    }
     if (data.containsKey('owner_id')) {
       context.handle(_ownerIdMeta,
           ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta));
@@ -4862,9 +3403,15 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
       context.handle(_versionMeta,
           version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+    if (data.containsKey('in_trash')) {
+      context.handle(_inTrashMeta,
+          inTrash.isAcceptableOrUnknown(data['in_trash']!, _inTrashMeta));
+    }
+    if (data.containsKey('trash_moved_at')) {
+      context.handle(
+          _trashMovedAtMeta,
+          trashMovedAt.isAcceptableOrUnknown(
+              data['trash_moved_at']!, _trashMovedAtMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
@@ -4890,27 +3437,15 @@ class $WhatsappTemplatesTableTable extends WhatsappTemplatesTable
       content: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}content'])!,
       isActive: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}is_active'])!,
-      lastModified: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_modified']),
-      lastSyncedAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}last_synced_at']),
-      syncStatus: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_status']),
-      dirtyFlag: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}dirty_flag']),
-      cloudId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}cloud_id']),
-      deletedLocally: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted_locally']),
-      permissionsMask: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}permissions_mask']),
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
       ownerId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
       version: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      inTrash: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}in_trash'])!,
+      trashMovedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}trash_moved_at']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       createdAt: attachedDatabase.typeMapping
@@ -4929,17 +3464,11 @@ class WhatsappTemplateData extends DataClass
   final String id;
   final String title;
   final String content;
-  final int isActive;
-  final DateTime? lastModified;
-  final DateTime? lastSyncedAt;
-  final String? syncStatus;
-  final bool? dirtyFlag;
-  final String? cloudId;
-  final bool? deletedLocally;
-  final String? permissionsMask;
+  final bool isActive;
   final String? ownerId;
   final int version;
-  final bool isDeleted;
+  final bool inTrash;
+  final DateTime? trashMovedAt;
   final DateTime updatedAt;
   final DateTime createdAt;
   const WhatsappTemplateData(
@@ -4947,16 +3476,10 @@ class WhatsappTemplateData extends DataClass
       required this.title,
       required this.content,
       required this.isActive,
-      this.lastModified,
-      this.lastSyncedAt,
-      this.syncStatus,
-      this.dirtyFlag,
-      this.cloudId,
-      this.deletedLocally,
-      this.permissionsMask,
       this.ownerId,
       required this.version,
-      required this.isDeleted,
+      required this.inTrash,
+      this.trashMovedAt,
       required this.updatedAt,
       required this.createdAt});
   @override
@@ -4965,33 +3488,15 @@ class WhatsappTemplateData extends DataClass
     map['id'] = Variable<String>(id);
     map['title'] = Variable<String>(title);
     map['content'] = Variable<String>(content);
-    map['is_active'] = Variable<int>(isActive);
-    if (!nullToAbsent || lastModified != null) {
-      map['last_modified'] = Variable<DateTime>(lastModified);
-    }
-    if (!nullToAbsent || lastSyncedAt != null) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
-    }
-    if (!nullToAbsent || syncStatus != null) {
-      map['sync_status'] = Variable<String>(syncStatus);
-    }
-    if (!nullToAbsent || dirtyFlag != null) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag);
-    }
-    if (!nullToAbsent || cloudId != null) {
-      map['cloud_id'] = Variable<String>(cloudId);
-    }
-    if (!nullToAbsent || deletedLocally != null) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally);
-    }
-    if (!nullToAbsent || permissionsMask != null) {
-      map['permissions_mask'] = Variable<String>(permissionsMask);
-    }
+    map['is_active'] = Variable<bool>(isActive);
     if (!nullToAbsent || ownerId != null) {
       map['owner_id'] = Variable<String>(ownerId);
     }
     map['version'] = Variable<int>(version);
-    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['in_trash'] = Variable<bool>(inTrash);
+    if (!nullToAbsent || trashMovedAt != null) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt);
+    }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -5003,32 +3508,14 @@ class WhatsappTemplateData extends DataClass
       title: Value(title),
       content: Value(content),
       isActive: Value(isActive),
-      lastModified: lastModified == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastModified),
-      lastSyncedAt: lastSyncedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncedAt),
-      syncStatus: syncStatus == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncStatus),
-      dirtyFlag: dirtyFlag == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dirtyFlag),
-      cloudId: cloudId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(cloudId),
-      deletedLocally: deletedLocally == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedLocally),
-      permissionsMask: permissionsMask == null && nullToAbsent
-          ? const Value.absent()
-          : Value(permissionsMask),
       ownerId: ownerId == null && nullToAbsent
           ? const Value.absent()
           : Value(ownerId),
       version: Value(version),
-      isDeleted: Value(isDeleted),
+      inTrash: Value(inTrash),
+      trashMovedAt: trashMovedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashMovedAt),
       updatedAt: Value(updatedAt),
       createdAt: Value(createdAt),
     );
@@ -5041,17 +3528,11 @@ class WhatsappTemplateData extends DataClass
       id: serializer.fromJson<String>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       content: serializer.fromJson<String>(json['content']),
-      isActive: serializer.fromJson<int>(json['isActive']),
-      lastModified: serializer.fromJson<DateTime?>(json['lastModified']),
-      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
-      syncStatus: serializer.fromJson<String?>(json['syncStatus']),
-      dirtyFlag: serializer.fromJson<bool?>(json['dirtyFlag']),
-      cloudId: serializer.fromJson<String?>(json['cloudId']),
-      deletedLocally: serializer.fromJson<bool?>(json['deletedLocally']),
-      permissionsMask: serializer.fromJson<String?>(json['permissionsMask']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       version: serializer.fromJson<int>(json['version']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      inTrash: serializer.fromJson<bool>(json['inTrash']),
+      trashMovedAt: serializer.fromJson<DateTime?>(json['trashMovedAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -5063,17 +3544,11 @@ class WhatsappTemplateData extends DataClass
       'id': serializer.toJson<String>(id),
       'title': serializer.toJson<String>(title),
       'content': serializer.toJson<String>(content),
-      'isActive': serializer.toJson<int>(isActive),
-      'lastModified': serializer.toJson<DateTime?>(lastModified),
-      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
-      'syncStatus': serializer.toJson<String?>(syncStatus),
-      'dirtyFlag': serializer.toJson<bool?>(dirtyFlag),
-      'cloudId': serializer.toJson<String?>(cloudId),
-      'deletedLocally': serializer.toJson<bool?>(deletedLocally),
-      'permissionsMask': serializer.toJson<String?>(permissionsMask),
+      'isActive': serializer.toJson<bool>(isActive),
       'ownerId': serializer.toJson<String?>(ownerId),
       'version': serializer.toJson<int>(version),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'inTrash': serializer.toJson<bool>(inTrash),
+      'trashMovedAt': serializer.toJson<DateTime?>(trashMovedAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -5083,17 +3558,11 @@ class WhatsappTemplateData extends DataClass
           {String? id,
           String? title,
           String? content,
-          int? isActive,
-          Value<DateTime?> lastModified = const Value.absent(),
-          Value<DateTime?> lastSyncedAt = const Value.absent(),
-          Value<String?> syncStatus = const Value.absent(),
-          Value<bool?> dirtyFlag = const Value.absent(),
-          Value<String?> cloudId = const Value.absent(),
-          Value<bool?> deletedLocally = const Value.absent(),
-          Value<String?> permissionsMask = const Value.absent(),
+          bool? isActive,
           Value<String?> ownerId = const Value.absent(),
           int? version,
-          bool? isDeleted,
+          bool? inTrash,
+          Value<DateTime?> trashMovedAt = const Value.absent(),
           DateTime? updatedAt,
           DateTime? createdAt}) =>
       WhatsappTemplateData(
@@ -5101,21 +3570,11 @@ class WhatsappTemplateData extends DataClass
         title: title ?? this.title,
         content: content ?? this.content,
         isActive: isActive ?? this.isActive,
-        lastModified:
-            lastModified.present ? lastModified.value : this.lastModified,
-        lastSyncedAt:
-            lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
-        syncStatus: syncStatus.present ? syncStatus.value : this.syncStatus,
-        dirtyFlag: dirtyFlag.present ? dirtyFlag.value : this.dirtyFlag,
-        cloudId: cloudId.present ? cloudId.value : this.cloudId,
-        deletedLocally:
-            deletedLocally.present ? deletedLocally.value : this.deletedLocally,
-        permissionsMask: permissionsMask.present
-            ? permissionsMask.value
-            : this.permissionsMask,
         ownerId: ownerId.present ? ownerId.value : this.ownerId,
         version: version ?? this.version,
-        isDeleted: isDeleted ?? this.isDeleted,
+        inTrash: inTrash ?? this.inTrash,
+        trashMovedAt:
+            trashMovedAt.present ? trashMovedAt.value : this.trashMovedAt,
         updatedAt: updatedAt ?? this.updatedAt,
         createdAt: createdAt ?? this.createdAt,
       );
@@ -5125,25 +3584,12 @@ class WhatsappTemplateData extends DataClass
       title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
-      lastModified: data.lastModified.present
-          ? data.lastModified.value
-          : this.lastModified,
-      lastSyncedAt: data.lastSyncedAt.present
-          ? data.lastSyncedAt.value
-          : this.lastSyncedAt,
-      syncStatus:
-          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
-      dirtyFlag: data.dirtyFlag.present ? data.dirtyFlag.value : this.dirtyFlag,
-      cloudId: data.cloudId.present ? data.cloudId.value : this.cloudId,
-      deletedLocally: data.deletedLocally.present
-          ? data.deletedLocally.value
-          : this.deletedLocally,
-      permissionsMask: data.permissionsMask.present
-          ? data.permissionsMask.value
-          : this.permissionsMask,
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       version: data.version.present ? data.version.value : this.version,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      inTrash: data.inTrash.present ? data.inTrash.value : this.inTrash,
+      trashMovedAt: data.trashMovedAt.present
+          ? data.trashMovedAt.value
+          : this.trashMovedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -5156,16 +3602,10 @@ class WhatsappTemplateData extends DataClass
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('isActive: $isActive, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -5173,23 +3613,8 @@ class WhatsappTemplateData extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      title,
-      content,
-      isActive,
-      lastModified,
-      lastSyncedAt,
-      syncStatus,
-      dirtyFlag,
-      cloudId,
-      deletedLocally,
-      permissionsMask,
-      ownerId,
-      version,
-      isDeleted,
-      updatedAt,
-      createdAt);
+  int get hashCode => Object.hash(id, title, content, isActive, ownerId,
+      version, inTrash, trashMovedAt, updatedAt, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5198,16 +3623,10 @@ class WhatsappTemplateData extends DataClass
           other.title == this.title &&
           other.content == this.content &&
           other.isActive == this.isActive &&
-          other.lastModified == this.lastModified &&
-          other.lastSyncedAt == this.lastSyncedAt &&
-          other.syncStatus == this.syncStatus &&
-          other.dirtyFlag == this.dirtyFlag &&
-          other.cloudId == this.cloudId &&
-          other.deletedLocally == this.deletedLocally &&
-          other.permissionsMask == this.permissionsMask &&
           other.ownerId == this.ownerId &&
           other.version == this.version &&
-          other.isDeleted == this.isDeleted &&
+          other.inTrash == this.inTrash &&
+          other.trashMovedAt == this.trashMovedAt &&
           other.updatedAt == this.updatedAt &&
           other.createdAt == this.createdAt);
 }
@@ -5217,17 +3636,11 @@ class WhatsappTemplatesTableCompanion
   final Value<String> id;
   final Value<String> title;
   final Value<String> content;
-  final Value<int> isActive;
-  final Value<DateTime?> lastModified;
-  final Value<DateTime?> lastSyncedAt;
-  final Value<String?> syncStatus;
-  final Value<bool?> dirtyFlag;
-  final Value<String?> cloudId;
-  final Value<bool?> deletedLocally;
-  final Value<String?> permissionsMask;
+  final Value<bool> isActive;
   final Value<String?> ownerId;
   final Value<int> version;
-  final Value<bool> isDeleted;
+  final Value<bool> inTrash;
+  final Value<DateTime?> trashMovedAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -5236,16 +3649,10 @@ class WhatsappTemplatesTableCompanion
     this.title = const Value.absent(),
     this.content = const Value.absent(),
     this.isActive = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -5255,16 +3662,10 @@ class WhatsappTemplatesTableCompanion
     required String title,
     required String content,
     this.isActive = const Value.absent(),
-    this.lastModified = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.syncStatus = const Value.absent(),
-    this.dirtyFlag = const Value.absent(),
-    this.cloudId = const Value.absent(),
-    this.deletedLocally = const Value.absent(),
-    this.permissionsMask = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -5275,17 +3676,11 @@ class WhatsappTemplatesTableCompanion
     Expression<String>? id,
     Expression<String>? title,
     Expression<String>? content,
-    Expression<int>? isActive,
-    Expression<DateTime>? lastModified,
-    Expression<DateTime>? lastSyncedAt,
-    Expression<String>? syncStatus,
-    Expression<bool>? dirtyFlag,
-    Expression<String>? cloudId,
-    Expression<bool>? deletedLocally,
-    Expression<String>? permissionsMask,
+    Expression<bool>? isActive,
     Expression<String>? ownerId,
     Expression<int>? version,
-    Expression<bool>? isDeleted,
+    Expression<bool>? inTrash,
+    Expression<DateTime>? trashMovedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -5295,16 +3690,10 @@ class WhatsappTemplatesTableCompanion
       if (title != null) 'title': title,
       if (content != null) 'content': content,
       if (isActive != null) 'is_active': isActive,
-      if (lastModified != null) 'last_modified': lastModified,
-      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
-      if (syncStatus != null) 'sync_status': syncStatus,
-      if (dirtyFlag != null) 'dirty_flag': dirtyFlag,
-      if (cloudId != null) 'cloud_id': cloudId,
-      if (deletedLocally != null) 'deleted_locally': deletedLocally,
-      if (permissionsMask != null) 'permissions_mask': permissionsMask,
       if (ownerId != null) 'owner_id': ownerId,
       if (version != null) 'version': version,
-      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (inTrash != null) 'in_trash': inTrash,
+      if (trashMovedAt != null) 'trash_moved_at': trashMovedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -5315,17 +3704,11 @@ class WhatsappTemplatesTableCompanion
       {Value<String>? id,
       Value<String>? title,
       Value<String>? content,
-      Value<int>? isActive,
-      Value<DateTime?>? lastModified,
-      Value<DateTime?>? lastSyncedAt,
-      Value<String?>? syncStatus,
-      Value<bool?>? dirtyFlag,
-      Value<String?>? cloudId,
-      Value<bool?>? deletedLocally,
-      Value<String?>? permissionsMask,
+      Value<bool>? isActive,
       Value<String?>? ownerId,
       Value<int>? version,
-      Value<bool>? isDeleted,
+      Value<bool>? inTrash,
+      Value<DateTime?>? trashMovedAt,
       Value<DateTime>? updatedAt,
       Value<DateTime>? createdAt,
       Value<int>? rowid}) {
@@ -5334,16 +3717,10 @@ class WhatsappTemplatesTableCompanion
       title: title ?? this.title,
       content: content ?? this.content,
       isActive: isActive ?? this.isActive,
-      lastModified: lastModified ?? this.lastModified,
-      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-      syncStatus: syncStatus ?? this.syncStatus,
-      dirtyFlag: dirtyFlag ?? this.dirtyFlag,
-      cloudId: cloudId ?? this.cloudId,
-      deletedLocally: deletedLocally ?? this.deletedLocally,
-      permissionsMask: permissionsMask ?? this.permissionsMask,
       ownerId: ownerId ?? this.ownerId,
       version: version ?? this.version,
-      isDeleted: isDeleted ?? this.isDeleted,
+      inTrash: inTrash ?? this.inTrash,
+      trashMovedAt: trashMovedAt ?? this.trashMovedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -5363,28 +3740,7 @@ class WhatsappTemplatesTableCompanion
       map['content'] = Variable<String>(content.value);
     }
     if (isActive.present) {
-      map['is_active'] = Variable<int>(isActive.value);
-    }
-    if (lastModified.present) {
-      map['last_modified'] = Variable<DateTime>(lastModified.value);
-    }
-    if (lastSyncedAt.present) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
-    }
-    if (syncStatus.present) {
-      map['sync_status'] = Variable<String>(syncStatus.value);
-    }
-    if (dirtyFlag.present) {
-      map['dirty_flag'] = Variable<bool>(dirtyFlag.value);
-    }
-    if (cloudId.present) {
-      map['cloud_id'] = Variable<String>(cloudId.value);
-    }
-    if (deletedLocally.present) {
-      map['deleted_locally'] = Variable<bool>(deletedLocally.value);
-    }
-    if (permissionsMask.present) {
-      map['permissions_mask'] = Variable<String>(permissionsMask.value);
+      map['is_active'] = Variable<bool>(isActive.value);
     }
     if (ownerId.present) {
       map['owner_id'] = Variable<String>(ownerId.value);
@@ -5392,8 +3748,11 @@ class WhatsappTemplatesTableCompanion
     if (version.present) {
       map['version'] = Variable<int>(version.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    if (inTrash.present) {
+      map['in_trash'] = Variable<bool>(inTrash.value);
+    }
+    if (trashMovedAt.present) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -5414,16 +3773,10 @@ class WhatsappTemplatesTableCompanion
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('isActive: $isActive, ')
-          ..write('lastModified: $lastModified, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('syncStatus: $syncStatus, ')
-          ..write('dirtyFlag: $dirtyFlag, ')
-          ..write('cloudId: $cloudId, ')
-          ..write('deletedLocally: $deletedLocally, ')
-          ..write('permissionsMask: $permissionsMask, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -5480,16 +3833,22 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+  static const VerificationMeta _inTrashMeta =
+      const VerificationMeta('inTrash');
   @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
+  late final GeneratedColumn<bool> inTrash = GeneratedColumn<bool>(
+      'in_trash', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
+          GeneratedColumn.constraintIsAlways('CHECK ("in_trash" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _trashMovedAtMeta =
+      const VerificationMeta('trashMovedAt');
+  @override
+  late final GeneratedColumn<DateTime> trashMovedAt = GeneratedColumn<DateTime>(
+      'trash_moved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
@@ -5515,7 +3874,8 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
         logoPath,
         ownerId,
         version,
-        isDeleted,
+        inTrash,
+        trashMovedAt,
         updatedAt,
         createdAt
       ];
@@ -5567,9 +3927,15 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
       context.handle(_versionMeta,
           version.isAcceptableOrUnknown(data['version']!, _versionMeta));
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+    if (data.containsKey('in_trash')) {
+      context.handle(_inTrashMeta,
+          inTrash.isAcceptableOrUnknown(data['in_trash']!, _inTrashMeta));
+    }
+    if (data.containsKey('trash_moved_at')) {
+      context.handle(
+          _trashMovedAtMeta,
+          trashMovedAt.isAcceptableOrUnknown(
+              data['trash_moved_at']!, _trashMovedAtMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
@@ -5602,8 +3968,10 @@ class $GeneratorSettingsTableTable extends GeneratorSettingsTable
           .read(DriftSqlType.string, data['${effectivePrefix}owner_id']),
       version: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}version'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      inTrash: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}in_trash'])!,
+      trashMovedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}trash_moved_at']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       createdAt: attachedDatabase.typeMapping
@@ -5626,7 +3994,8 @@ class GeneratorSettingsData extends DataClass
   final String? logoPath;
   final String? ownerId;
   final int version;
-  final bool isDeleted;
+  final bool inTrash;
+  final DateTime? trashMovedAt;
   final DateTime updatedAt;
   final DateTime createdAt;
   const GeneratorSettingsData(
@@ -5637,7 +4006,8 @@ class GeneratorSettingsData extends DataClass
       this.logoPath,
       this.ownerId,
       required this.version,
-      required this.isDeleted,
+      required this.inTrash,
+      this.trashMovedAt,
       required this.updatedAt,
       required this.createdAt});
   @override
@@ -5654,7 +4024,10 @@ class GeneratorSettingsData extends DataClass
       map['owner_id'] = Variable<String>(ownerId);
     }
     map['version'] = Variable<int>(version);
-    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['in_trash'] = Variable<bool>(inTrash);
+    if (!nullToAbsent || trashMovedAt != null) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt);
+    }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -5673,7 +4046,10 @@ class GeneratorSettingsData extends DataClass
           ? const Value.absent()
           : Value(ownerId),
       version: Value(version),
-      isDeleted: Value(isDeleted),
+      inTrash: Value(inTrash),
+      trashMovedAt: trashMovedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashMovedAt),
       updatedAt: Value(updatedAt),
       createdAt: Value(createdAt),
     );
@@ -5690,7 +4066,8 @@ class GeneratorSettingsData extends DataClass
       logoPath: serializer.fromJson<String?>(json['logoPath']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       version: serializer.fromJson<int>(json['version']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      inTrash: serializer.fromJson<bool>(json['inTrash']),
+      trashMovedAt: serializer.fromJson<DateTime?>(json['trashMovedAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -5706,7 +4083,8 @@ class GeneratorSettingsData extends DataClass
       'logoPath': serializer.toJson<String?>(logoPath),
       'ownerId': serializer.toJson<String?>(ownerId),
       'version': serializer.toJson<int>(version),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'inTrash': serializer.toJson<bool>(inTrash),
+      'trashMovedAt': serializer.toJson<DateTime?>(trashMovedAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -5720,7 +4098,8 @@ class GeneratorSettingsData extends DataClass
           Value<String?> logoPath = const Value.absent(),
           Value<String?> ownerId = const Value.absent(),
           int? version,
-          bool? isDeleted,
+          bool? inTrash,
+          Value<DateTime?> trashMovedAt = const Value.absent(),
           DateTime? updatedAt,
           DateTime? createdAt}) =>
       GeneratorSettingsData(
@@ -5731,7 +4110,9 @@ class GeneratorSettingsData extends DataClass
         logoPath: logoPath.present ? logoPath.value : this.logoPath,
         ownerId: ownerId.present ? ownerId.value : this.ownerId,
         version: version ?? this.version,
-        isDeleted: isDeleted ?? this.isDeleted,
+        inTrash: inTrash ?? this.inTrash,
+        trashMovedAt:
+            trashMovedAt.present ? trashMovedAt.value : this.trashMovedAt,
         updatedAt: updatedAt ?? this.updatedAt,
         createdAt: createdAt ?? this.createdAt,
       );
@@ -5746,7 +4127,10 @@ class GeneratorSettingsData extends DataClass
       logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       version: data.version.present ? data.version.value : this.version,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      inTrash: data.inTrash.present ? data.inTrash.value : this.inTrash,
+      trashMovedAt: data.trashMovedAt.present
+          ? data.trashMovedAt.value
+          : this.trashMovedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -5762,7 +4146,8 @@ class GeneratorSettingsData extends DataClass
           ..write('logoPath: $logoPath, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -5771,7 +4156,7 @@ class GeneratorSettingsData extends DataClass
 
   @override
   int get hashCode => Object.hash(id, name, phoneNumber, address, logoPath,
-      ownerId, version, isDeleted, updatedAt, createdAt);
+      ownerId, version, inTrash, trashMovedAt, updatedAt, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5783,7 +4168,8 @@ class GeneratorSettingsData extends DataClass
           other.logoPath == this.logoPath &&
           other.ownerId == this.ownerId &&
           other.version == this.version &&
-          other.isDeleted == this.isDeleted &&
+          other.inTrash == this.inTrash &&
+          other.trashMovedAt == this.trashMovedAt &&
           other.updatedAt == this.updatedAt &&
           other.createdAt == this.createdAt);
 }
@@ -5797,7 +4183,8 @@ class GeneratorSettingsTableCompanion
   final Value<String?> logoPath;
   final Value<String?> ownerId;
   final Value<int> version;
-  final Value<bool> isDeleted;
+  final Value<bool> inTrash;
+  final Value<DateTime?> trashMovedAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -5809,7 +4196,8 @@ class GeneratorSettingsTableCompanion
     this.logoPath = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -5822,7 +4210,8 @@ class GeneratorSettingsTableCompanion
     this.logoPath = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.version = const Value.absent(),
-    this.isDeleted = const Value.absent(),
+    this.inTrash = const Value.absent(),
+    this.trashMovedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -5838,7 +4227,8 @@ class GeneratorSettingsTableCompanion
     Expression<String>? logoPath,
     Expression<String>? ownerId,
     Expression<int>? version,
-    Expression<bool>? isDeleted,
+    Expression<bool>? inTrash,
+    Expression<DateTime>? trashMovedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -5851,7 +4241,8 @@ class GeneratorSettingsTableCompanion
       if (logoPath != null) 'logo_path': logoPath,
       if (ownerId != null) 'owner_id': ownerId,
       if (version != null) 'version': version,
-      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (inTrash != null) 'in_trash': inTrash,
+      if (trashMovedAt != null) 'trash_moved_at': trashMovedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -5866,7 +4257,8 @@ class GeneratorSettingsTableCompanion
       Value<String?>? logoPath,
       Value<String?>? ownerId,
       Value<int>? version,
-      Value<bool>? isDeleted,
+      Value<bool>? inTrash,
+      Value<DateTime?>? trashMovedAt,
       Value<DateTime>? updatedAt,
       Value<DateTime>? createdAt,
       Value<int>? rowid}) {
@@ -5878,7 +4270,8 @@ class GeneratorSettingsTableCompanion
       logoPath: logoPath ?? this.logoPath,
       ownerId: ownerId ?? this.ownerId,
       version: version ?? this.version,
-      isDeleted: isDeleted ?? this.isDeleted,
+      inTrash: inTrash ?? this.inTrash,
+      trashMovedAt: trashMovedAt ?? this.trashMovedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -5909,8 +4302,11 @@ class GeneratorSettingsTableCompanion
     if (version.present) {
       map['version'] = Variable<int>(version.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    if (inTrash.present) {
+      map['in_trash'] = Variable<bool>(inTrash.value);
+    }
+    if (trashMovedAt.present) {
+      map['trash_moved_at'] = Variable<DateTime>(trashMovedAt.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -5934,7 +4330,8 @@ class GeneratorSettingsTableCompanion
           ..write('logoPath: $logoPath, ')
           ..write('ownerId: $ownerId, ')
           ..write('version: $version, ')
-          ..write('isDeleted: $isDeleted, ')
+          ..write('inTrash: $inTrash, ')
+          ..write('trashMovedAt: $trashMovedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -7443,6 +5840,297 @@ class TrashTableCompanion extends UpdateCompanion<TrashItem> {
   }
 }
 
+class $SyncMetadataTableTable extends SyncMetadataTable
+    with TableInfo<$SyncMetadataTableTable, SyncMetadataEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncMetadataTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityTableNameMeta =
+      const VerificationMeta('entityTableName');
+  @override
+  late final GeneratedColumn<String> entityTableName = GeneratedColumn<String>(
+      'entity_table_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lastSyncTimestampMeta =
+      const VerificationMeta('lastSyncTimestamp');
+  @override
+  late final GeneratedColumn<int> lastSyncTimestamp = GeneratedColumn<int>(
+      'last_sync_timestamp', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _syncCursorMeta =
+      const VerificationMeta('syncCursor');
+  @override
+  late final GeneratedColumn<String> syncCursor = GeneratedColumn<String>(
+      'sync_cursor', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _lastSyncAtMeta =
+      const VerificationMeta('lastSyncAt');
+  @override
+  late final GeneratedColumn<DateTime> lastSyncAt = GeneratedColumn<DateTime>(
+      'last_sync_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [entityTableName, lastSyncTimestamp, syncCursor, lastSyncAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_metadata_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<SyncMetadataEntry> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_table_name')) {
+      context.handle(
+          _entityTableNameMeta,
+          entityTableName.isAcceptableOrUnknown(
+              data['entity_table_name']!, _entityTableNameMeta));
+    } else if (isInserting) {
+      context.missing(_entityTableNameMeta);
+    }
+    if (data.containsKey('last_sync_timestamp')) {
+      context.handle(
+          _lastSyncTimestampMeta,
+          lastSyncTimestamp.isAcceptableOrUnknown(
+              data['last_sync_timestamp']!, _lastSyncTimestampMeta));
+    }
+    if (data.containsKey('sync_cursor')) {
+      context.handle(
+          _syncCursorMeta,
+          syncCursor.isAcceptableOrUnknown(
+              data['sync_cursor']!, _syncCursorMeta));
+    }
+    if (data.containsKey('last_sync_at')) {
+      context.handle(
+          _lastSyncAtMeta,
+          lastSyncAt.isAcceptableOrUnknown(
+              data['last_sync_at']!, _lastSyncAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityTableName};
+  @override
+  SyncMetadataEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncMetadataEntry(
+      entityTableName: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}entity_table_name'])!,
+      lastSyncTimestamp: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}last_sync_timestamp'])!,
+      syncCursor: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_cursor']),
+      lastSyncAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_sync_at']),
+    );
+  }
+
+  @override
+  $SyncMetadataTableTable createAlias(String alias) {
+    return $SyncMetadataTableTable(attachedDatabase, alias);
+  }
+}
+
+class SyncMetadataEntry extends DataClass
+    implements Insertable<SyncMetadataEntry> {
+  final String entityTableName;
+  final int lastSyncTimestamp;
+  final String? syncCursor;
+  final DateTime? lastSyncAt;
+  const SyncMetadataEntry(
+      {required this.entityTableName,
+      required this.lastSyncTimestamp,
+      this.syncCursor,
+      this.lastSyncAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_table_name'] = Variable<String>(entityTableName);
+    map['last_sync_timestamp'] = Variable<int>(lastSyncTimestamp);
+    if (!nullToAbsent || syncCursor != null) {
+      map['sync_cursor'] = Variable<String>(syncCursor);
+    }
+    if (!nullToAbsent || lastSyncAt != null) {
+      map['last_sync_at'] = Variable<DateTime>(lastSyncAt);
+    }
+    return map;
+  }
+
+  SyncMetadataTableCompanion toCompanion(bool nullToAbsent) {
+    return SyncMetadataTableCompanion(
+      entityTableName: Value(entityTableName),
+      lastSyncTimestamp: Value(lastSyncTimestamp),
+      syncCursor: syncCursor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncCursor),
+      lastSyncAt: lastSyncAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncAt),
+    );
+  }
+
+  factory SyncMetadataEntry.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncMetadataEntry(
+      entityTableName: serializer.fromJson<String>(json['entityTableName']),
+      lastSyncTimestamp: serializer.fromJson<int>(json['lastSyncTimestamp']),
+      syncCursor: serializer.fromJson<String?>(json['syncCursor']),
+      lastSyncAt: serializer.fromJson<DateTime?>(json['lastSyncAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entityTableName': serializer.toJson<String>(entityTableName),
+      'lastSyncTimestamp': serializer.toJson<int>(lastSyncTimestamp),
+      'syncCursor': serializer.toJson<String?>(syncCursor),
+      'lastSyncAt': serializer.toJson<DateTime?>(lastSyncAt),
+    };
+  }
+
+  SyncMetadataEntry copyWith(
+          {String? entityTableName,
+          int? lastSyncTimestamp,
+          Value<String?> syncCursor = const Value.absent(),
+          Value<DateTime?> lastSyncAt = const Value.absent()}) =>
+      SyncMetadataEntry(
+        entityTableName: entityTableName ?? this.entityTableName,
+        lastSyncTimestamp: lastSyncTimestamp ?? this.lastSyncTimestamp,
+        syncCursor: syncCursor.present ? syncCursor.value : this.syncCursor,
+        lastSyncAt: lastSyncAt.present ? lastSyncAt.value : this.lastSyncAt,
+      );
+  SyncMetadataEntry copyWithCompanion(SyncMetadataTableCompanion data) {
+    return SyncMetadataEntry(
+      entityTableName: data.entityTableName.present
+          ? data.entityTableName.value
+          : this.entityTableName,
+      lastSyncTimestamp: data.lastSyncTimestamp.present
+          ? data.lastSyncTimestamp.value
+          : this.lastSyncTimestamp,
+      syncCursor:
+          data.syncCursor.present ? data.syncCursor.value : this.syncCursor,
+      lastSyncAt:
+          data.lastSyncAt.present ? data.lastSyncAt.value : this.lastSyncAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncMetadataEntry(')
+          ..write('entityTableName: $entityTableName, ')
+          ..write('lastSyncTimestamp: $lastSyncTimestamp, ')
+          ..write('syncCursor: $syncCursor, ')
+          ..write('lastSyncAt: $lastSyncAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(entityTableName, lastSyncTimestamp, syncCursor, lastSyncAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncMetadataEntry &&
+          other.entityTableName == this.entityTableName &&
+          other.lastSyncTimestamp == this.lastSyncTimestamp &&
+          other.syncCursor == this.syncCursor &&
+          other.lastSyncAt == this.lastSyncAt);
+}
+
+class SyncMetadataTableCompanion extends UpdateCompanion<SyncMetadataEntry> {
+  final Value<String> entityTableName;
+  final Value<int> lastSyncTimestamp;
+  final Value<String?> syncCursor;
+  final Value<DateTime?> lastSyncAt;
+  final Value<int> rowid;
+  const SyncMetadataTableCompanion({
+    this.entityTableName = const Value.absent(),
+    this.lastSyncTimestamp = const Value.absent(),
+    this.syncCursor = const Value.absent(),
+    this.lastSyncAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncMetadataTableCompanion.insert({
+    required String entityTableName,
+    this.lastSyncTimestamp = const Value.absent(),
+    this.syncCursor = const Value.absent(),
+    this.lastSyncAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : entityTableName = Value(entityTableName);
+  static Insertable<SyncMetadataEntry> custom({
+    Expression<String>? entityTableName,
+    Expression<int>? lastSyncTimestamp,
+    Expression<String>? syncCursor,
+    Expression<DateTime>? lastSyncAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityTableName != null) 'entity_table_name': entityTableName,
+      if (lastSyncTimestamp != null) 'last_sync_timestamp': lastSyncTimestamp,
+      if (syncCursor != null) 'sync_cursor': syncCursor,
+      if (lastSyncAt != null) 'last_sync_at': lastSyncAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncMetadataTableCompanion copyWith(
+      {Value<String>? entityTableName,
+      Value<int>? lastSyncTimestamp,
+      Value<String?>? syncCursor,
+      Value<DateTime?>? lastSyncAt,
+      Value<int>? rowid}) {
+    return SyncMetadataTableCompanion(
+      entityTableName: entityTableName ?? this.entityTableName,
+      lastSyncTimestamp: lastSyncTimestamp ?? this.lastSyncTimestamp,
+      syncCursor: syncCursor ?? this.syncCursor,
+      lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityTableName.present) {
+      map['entity_table_name'] = Variable<String>(entityTableName.value);
+    }
+    if (lastSyncTimestamp.present) {
+      map['last_sync_timestamp'] = Variable<int>(lastSyncTimestamp.value);
+    }
+    if (syncCursor.present) {
+      map['sync_cursor'] = Variable<String>(syncCursor.value);
+    }
+    if (lastSyncAt.present) {
+      map['last_sync_at'] = Variable<DateTime>(lastSyncAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncMetadataTableCompanion(')
+          ..write('entityTableName: $entityTableName, ')
+          ..write('lastSyncTimestamp: $lastSyncTimestamp, ')
+          ..write('syncCursor: $syncCursor, ')
+          ..write('lastSyncAt: $lastSyncAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7459,6 +6147,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $OutboxTableTable outboxTable = $OutboxTableTable(this);
   late final $EventsTableTable eventsTable = $EventsTableTable(this);
   late final $TrashTableTable trashTable = $TrashTableTable(this);
+  late final $SyncMetadataTableTable syncMetadataTable =
+      $SyncMetadataTableTable(this);
   late final SubscribersDao subscribersDao =
       SubscribersDao(this as AppDatabase);
   late final CabinetsDao cabinetsDao = CabinetsDao(this as AppDatabase);
@@ -7471,6 +6161,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       GeneratorSettingsDao(this as AppDatabase);
   late final EventsDao eventsDao = EventsDao(this as AppDatabase);
   late final TrashDao trashDao = TrashDao(this as AppDatabase);
+  late final SyncMetadataDao syncMetadataDao =
+      SyncMetadataDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7485,7 +6177,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         generatorSettingsTable,
         outboxTable,
         eventsTable,
-        trashTable
+        trashTable,
+        syncMetadataTable
       ];
 }
 
@@ -7496,21 +6189,15 @@ typedef $$SubscribersTableTableCreateCompanionBuilder
   required String code,
   required String cabinet,
   required String phone,
-  required int status,
+  Value<String> status,
   required DateTime startDate,
   Value<double> accumulatedDebt,
   Value<String?> tags,
   Value<String?> notes,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -7522,21 +6209,15 @@ typedef $$SubscribersTableTableUpdateCompanionBuilder
   Value<String> code,
   Value<String> cabinet,
   Value<String> phone,
-  Value<int> status,
+  Value<String> status,
   Value<DateTime> startDate,
   Value<double> accumulatedDebt,
   Value<String?> tags,
   Value<String?> notes,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -7566,7 +6247,7 @@ class $$SubscribersTableTableFilterComposer
   ColumnFilters<String> get phone => $composableBuilder(
       column: $table.phone, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get status => $composableBuilder(
+  ColumnFilters<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get startDate => $composableBuilder(
@@ -7582,37 +6263,17 @@ class $$SubscribersTableTableFilterComposer
   ColumnFilters<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
@@ -7645,7 +6306,7 @@ class $$SubscribersTableTableOrderingComposer
   ColumnOrderings<String> get phone => $composableBuilder(
       column: $table.phone, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get status => $composableBuilder(
+  ColumnOrderings<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get startDate => $composableBuilder(
@@ -7661,39 +6322,18 @@ class $$SubscribersTableTableOrderingComposer
   ColumnOrderings<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
@@ -7726,7 +6366,7 @@ class $$SubscribersTableTableAnnotationComposer
   GeneratedColumn<String> get phone =>
       $composableBuilder(column: $table.phone, builder: (column) => column);
 
-  GeneratedColumn<int> get status =>
+  GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
   GeneratedColumn<DateTime> get startDate =>
@@ -7741,35 +6381,17 @@ class $$SubscribersTableTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirtyFlag =>
-      $composableBuilder(column: $table.dirtyFlag, builder: (column) => column);
-
-  GeneratedColumn<String> get cloudId =>
-      $composableBuilder(column: $table.cloudId, builder: (column) => column);
-
-  GeneratedColumn<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally, builder: (column) => column);
-
-  GeneratedColumn<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask, builder: (column) => column);
-
   GeneratedColumn<String> get ownerId =>
       $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
   GeneratedColumn<int> get version =>
       $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+  GeneratedColumn<bool> get inTrash =>
+      $composableBuilder(column: $table.inTrash, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -7810,21 +6432,15 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
             Value<String> code = const Value.absent(),
             Value<String> cabinet = const Value.absent(),
             Value<String> phone = const Value.absent(),
-            Value<int> status = const Value.absent(),
+            Value<String> status = const Value.absent(),
             Value<DateTime> startDate = const Value.absent(),
             Value<double> accumulatedDebt = const Value.absent(),
             Value<String?> tags = const Value.absent(),
             Value<String?> notes = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -7840,16 +6456,10 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
             accumulatedDebt: accumulatedDebt,
             tags: tags,
             notes: notes,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -7860,21 +6470,15 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
             required String code,
             required String cabinet,
             required String phone,
-            required int status,
+            Value<String> status = const Value.absent(),
             required DateTime startDate,
             Value<double> accumulatedDebt = const Value.absent(),
             Value<String?> tags = const Value.absent(),
             Value<String?> notes = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -7890,16 +6494,10 @@ class $$SubscribersTableTableTableManager extends RootTableManager<
             accumulatedDebt: accumulatedDebt,
             tags: tags,
             notes: notes,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -7936,16 +6534,10 @@ typedef $$CabinetsTableTableCreateCompanionBuilder = CabinetsTableCompanion
   Value<double> collectedAmount,
   required int delayedSubscribers,
   Value<DateTime?> completionDate,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -7960,16 +6552,10 @@ typedef $$CabinetsTableTableUpdateCompanionBuilder = CabinetsTableCompanion
   Value<double> collectedAmount,
   Value<int> delayedSubscribers,
   Value<DateTime?> completionDate,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -8013,37 +6599,17 @@ class $$CabinetsTableTableFilterComposer
       column: $table.completionDate,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
@@ -8090,39 +6656,18 @@ class $$CabinetsTableTableOrderingComposer
       column: $table.completionDate,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
@@ -8164,35 +6709,17 @@ class $$CabinetsTableTableAnnotationComposer
   GeneratedColumn<DateTime> get completionDate => $composableBuilder(
       column: $table.completionDate, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirtyFlag =>
-      $composableBuilder(column: $table.dirtyFlag, builder: (column) => column);
-
-  GeneratedColumn<String> get cloudId =>
-      $composableBuilder(column: $table.cloudId, builder: (column) => column);
-
-  GeneratedColumn<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally, builder: (column) => column);
-
-  GeneratedColumn<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask, builder: (column) => column);
-
   GeneratedColumn<String> get ownerId =>
       $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
   GeneratedColumn<int> get version =>
       $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+  GeneratedColumn<bool> get inTrash =>
+      $composableBuilder(column: $table.inTrash, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -8232,16 +6759,10 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
             Value<double> collectedAmount = const Value.absent(),
             Value<int> delayedSubscribers = const Value.absent(),
             Value<DateTime?> completionDate = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -8255,16 +6776,10 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
             collectedAmount: collectedAmount,
             delayedSubscribers: delayedSubscribers,
             completionDate: completionDate,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -8278,16 +6793,10 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
             Value<double> collectedAmount = const Value.absent(),
             required int delayedSubscribers,
             Value<DateTime?> completionDate = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -8301,16 +6810,10 @@ class $$CabinetsTableTableTableManager extends RootTableManager<
             collectedAmount: collectedAmount,
             delayedSubscribers: delayedSubscribers,
             completionDate: completionDate,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -8342,16 +6845,10 @@ typedef $$PaymentsTableTableCreateCompanionBuilder = PaymentsTableCompanion
   required String worker,
   required DateTime date,
   required String cabinet,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -8364,16 +6861,10 @@ typedef $$PaymentsTableTableUpdateCompanionBuilder = PaymentsTableCompanion
   Value<String> worker,
   Value<DateTime> date,
   Value<String> cabinet,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -8406,37 +6897,17 @@ class $$PaymentsTableTableFilterComposer
   ColumnFilters<String> get cabinet => $composableBuilder(
       column: $table.cabinet, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
@@ -8473,39 +6944,18 @@ class $$PaymentsTableTableOrderingComposer
   ColumnOrderings<String> get cabinet => $composableBuilder(
       column: $table.cabinet, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
@@ -8541,35 +6991,17 @@ class $$PaymentsTableTableAnnotationComposer
   GeneratedColumn<String> get cabinet =>
       $composableBuilder(column: $table.cabinet, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirtyFlag =>
-      $composableBuilder(column: $table.dirtyFlag, builder: (column) => column);
-
-  GeneratedColumn<String> get cloudId =>
-      $composableBuilder(column: $table.cloudId, builder: (column) => column);
-
-  GeneratedColumn<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally, builder: (column) => column);
-
-  GeneratedColumn<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask, builder: (column) => column);
-
   GeneratedColumn<String> get ownerId =>
       $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
   GeneratedColumn<int> get version =>
       $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+  GeneratedColumn<bool> get inTrash =>
+      $composableBuilder(column: $table.inTrash, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -8607,16 +7039,10 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
             Value<String> worker = const Value.absent(),
             Value<DateTime> date = const Value.absent(),
             Value<String> cabinet = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -8628,16 +7054,10 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
             worker: worker,
             date: date,
             cabinet: cabinet,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -8649,16 +7069,10 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
             required String worker,
             required DateTime date,
             required String cabinet,
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -8670,16 +7084,10 @@ class $$PaymentsTableTableTableManager extends RootTableManager<
             worker: worker,
             date: date,
             cabinet: cabinet,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -8708,19 +7116,13 @@ typedef $$WorkersTableTableCreateCompanionBuilder = WorkersTableCompanion
   required String id,
   required String name,
   required String phone,
-  required String permissions,
+  Value<String> permissions,
   Value<double> todayCollected,
   Value<double> monthTotal,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -8733,16 +7135,10 @@ typedef $$WorkersTableTableUpdateCompanionBuilder = WorkersTableCompanion
   Value<String> permissions,
   Value<double> todayCollected,
   Value<double> monthTotal,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -8776,37 +7172,17 @@ class $$WorkersTableTableFilterComposer
   ColumnFilters<double> get monthTotal => $composableBuilder(
       column: $table.monthTotal, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
@@ -8843,39 +7219,18 @@ class $$WorkersTableTableOrderingComposer
   ColumnOrderings<double> get monthTotal => $composableBuilder(
       column: $table.monthTotal, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
@@ -8911,35 +7266,17 @@ class $$WorkersTableTableAnnotationComposer
   GeneratedColumn<double> get monthTotal => $composableBuilder(
       column: $table.monthTotal, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirtyFlag =>
-      $composableBuilder(column: $table.dirtyFlag, builder: (column) => column);
-
-  GeneratedColumn<String> get cloudId =>
-      $composableBuilder(column: $table.cloudId, builder: (column) => column);
-
-  GeneratedColumn<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally, builder: (column) => column);
-
-  GeneratedColumn<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask, builder: (column) => column);
-
   GeneratedColumn<String> get ownerId =>
       $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
   GeneratedColumn<int> get version =>
       $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+  GeneratedColumn<bool> get inTrash =>
+      $composableBuilder(column: $table.inTrash, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -8977,16 +7314,10 @@ class $$WorkersTableTableTableManager extends RootTableManager<
             Value<String> permissions = const Value.absent(),
             Value<double> todayCollected = const Value.absent(),
             Value<double> monthTotal = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -8998,16 +7329,10 @@ class $$WorkersTableTableTableManager extends RootTableManager<
             permissions: permissions,
             todayCollected: todayCollected,
             monthTotal: monthTotal,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -9016,19 +7341,13 @@ class $$WorkersTableTableTableManager extends RootTableManager<
             required String id,
             required String name,
             required String phone,
-            required String permissions,
+            Value<String> permissions = const Value.absent(),
             Value<double> todayCollected = const Value.absent(),
             Value<double> monthTotal = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -9040,16 +7359,10 @@ class $$WorkersTableTableTableManager extends RootTableManager<
             permissions: permissions,
             todayCollected: todayCollected,
             monthTotal: monthTotal,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -9082,16 +7395,10 @@ typedef $$AuditLogTableTableCreateCompanionBuilder = AuditLogTableCompanion
   required String details,
   required String type,
   Value<DateTime> timestamp,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -9105,16 +7412,10 @@ typedef $$AuditLogTableTableUpdateCompanionBuilder = AuditLogTableCompanion
   Value<String> details,
   Value<String> type,
   Value<DateTime> timestamp,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> createdAt,
   Value<int> rowid,
@@ -9150,37 +7451,17 @@ class $$AuditLogTableTableFilterComposer
   ColumnFilters<DateTime> get timestamp => $composableBuilder(
       column: $table.timestamp, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
@@ -9219,39 +7500,18 @@ class $$AuditLogTableTableOrderingComposer
   ColumnOrderings<DateTime> get timestamp => $composableBuilder(
       column: $table.timestamp, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
@@ -9290,35 +7550,17 @@ class $$AuditLogTableTableAnnotationComposer
   GeneratedColumn<DateTime> get timestamp =>
       $composableBuilder(column: $table.timestamp, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirtyFlag =>
-      $composableBuilder(column: $table.dirtyFlag, builder: (column) => column);
-
-  GeneratedColumn<String> get cloudId =>
-      $composableBuilder(column: $table.cloudId, builder: (column) => column);
-
-  GeneratedColumn<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally, builder: (column) => column);
-
-  GeneratedColumn<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask, builder: (column) => column);
-
   GeneratedColumn<String> get ownerId =>
       $composableBuilder(column: $table.ownerId, builder: (column) => column);
 
   GeneratedColumn<int> get version =>
       $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+  GeneratedColumn<bool> get inTrash =>
+      $composableBuilder(column: $table.inTrash, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -9360,16 +7602,10 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
             Value<String> details = const Value.absent(),
             Value<String> type = const Value.absent(),
             Value<DateTime> timestamp = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -9382,16 +7618,10 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
             details: details,
             type: type,
             timestamp: timestamp,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -9404,16 +7634,10 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
             required String details,
             required String type,
             Value<DateTime> timestamp = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -9426,16 +7650,10 @@ class $$AuditLogTableTableTableManager extends RootTableManager<
             details: details,
             type: type,
             timestamp: timestamp,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -9467,17 +7685,11 @@ typedef $$WhatsappTemplatesTableTableCreateCompanionBuilder
   required String id,
   required String title,
   required String content,
-  Value<int> isActive,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
+  Value<bool> isActive,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime> updatedAt,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -9487,17 +7699,11 @@ typedef $$WhatsappTemplatesTableTableUpdateCompanionBuilder
   Value<String> id,
   Value<String> title,
   Value<String> content,
-  Value<int> isActive,
-  Value<DateTime?> lastModified,
-  Value<DateTime?> lastSyncedAt,
-  Value<String?> syncStatus,
-  Value<bool?> dirtyFlag,
-  Value<String?> cloudId,
-  Value<bool?> deletedLocally,
-  Value<String?> permissionsMask,
+  Value<bool> isActive,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime> updatedAt,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -9521,31 +7727,8 @@ class $$WhatsappTemplatesTableTableFilterComposer
   ColumnFilters<String> get content => $composableBuilder(
       column: $table.content, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get isActive => $composableBuilder(
+  ColumnFilters<bool> get isActive => $composableBuilder(
       column: $table.isActive, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnFilters(column));
@@ -9553,8 +7736,11 @@ class $$WhatsappTemplatesTableTableFilterComposer
   ColumnFilters<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
@@ -9581,33 +7767,8 @@ class $$WhatsappTemplatesTableTableOrderingComposer
   ColumnOrderings<String> get content => $composableBuilder(
       column: $table.content, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get isActive => $composableBuilder(
+  ColumnOrderings<bool> get isActive => $composableBuilder(
       column: $table.isActive, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get dirtyFlag => $composableBuilder(
-      column: $table.dirtyFlag, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get cloudId => $composableBuilder(
-      column: $table.cloudId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask,
-      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get ownerId => $composableBuilder(
       column: $table.ownerId, builder: (column) => ColumnOrderings(column));
@@ -9615,8 +7776,12 @@ class $$WhatsappTemplatesTableTableOrderingComposer
   ColumnOrderings<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
@@ -9643,29 +7808,8 @@ class $$WhatsappTemplatesTableTableAnnotationComposer
   GeneratedColumn<String> get content =>
       $composableBuilder(column: $table.content, builder: (column) => column);
 
-  GeneratedColumn<int> get isActive =>
+  GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
-      column: $table.lastModified, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
-      column: $table.lastSyncedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get syncStatus => $composableBuilder(
-      column: $table.syncStatus, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirtyFlag =>
-      $composableBuilder(column: $table.dirtyFlag, builder: (column) => column);
-
-  GeneratedColumn<String> get cloudId =>
-      $composableBuilder(column: $table.cloudId, builder: (column) => column);
-
-  GeneratedColumn<bool> get deletedLocally => $composableBuilder(
-      column: $table.deletedLocally, builder: (column) => column);
-
-  GeneratedColumn<String> get permissionsMask => $composableBuilder(
-      column: $table.permissionsMask, builder: (column) => column);
 
   GeneratedColumn<String> get ownerId =>
       $composableBuilder(column: $table.ownerId, builder: (column) => column);
@@ -9673,8 +7817,11 @@ class $$WhatsappTemplatesTableTableAnnotationComposer
   GeneratedColumn<int> get version =>
       $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+  GeneratedColumn<bool> get inTrash =>
+      $composableBuilder(column: $table.inTrash, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -9717,17 +7864,11 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
             Value<String> id = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String> content = const Value.absent(),
-            Value<int> isActive = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
+            Value<bool> isActive = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -9737,16 +7878,10 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
             title: title,
             content: content,
             isActive: isActive,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -9755,17 +7890,11 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
             required String id,
             required String title,
             required String content,
-            Value<int> isActive = const Value.absent(),
-            Value<DateTime?> lastModified = const Value.absent(),
-            Value<DateTime?> lastSyncedAt = const Value.absent(),
-            Value<String?> syncStatus = const Value.absent(),
-            Value<bool?> dirtyFlag = const Value.absent(),
-            Value<String?> cloudId = const Value.absent(),
-            Value<bool?> deletedLocally = const Value.absent(),
-            Value<String?> permissionsMask = const Value.absent(),
+            Value<bool> isActive = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -9775,16 +7904,10 @@ class $$WhatsappTemplatesTableTableTableManager extends RootTableManager<
             title: title,
             content: content,
             isActive: isActive,
-            lastModified: lastModified,
-            lastSyncedAt: lastSyncedAt,
-            syncStatus: syncStatus,
-            dirtyFlag: dirtyFlag,
-            cloudId: cloudId,
-            deletedLocally: deletedLocally,
-            permissionsMask: permissionsMask,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -9822,7 +7945,8 @@ typedef $$GeneratorSettingsTableTableCreateCompanionBuilder
   Value<String?> logoPath,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime> updatedAt,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -9836,7 +7960,8 @@ typedef $$GeneratorSettingsTableTableUpdateCompanionBuilder
   Value<String?> logoPath,
   Value<String?> ownerId,
   Value<int> version,
-  Value<bool> isDeleted,
+  Value<bool> inTrash,
+  Value<DateTime?> trashMovedAt,
   Value<DateTime> updatedAt,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -9872,8 +7997,11 @@ class $$GeneratorSettingsTableTableFilterComposer
   ColumnFilters<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
@@ -9912,8 +8040,12 @@ class $$GeneratorSettingsTableTableOrderingComposer
   ColumnOrderings<int> get version => $composableBuilder(
       column: $table.version, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get inTrash => $composableBuilder(
+      column: $table.inTrash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
@@ -9952,8 +8084,11 @@ class $$GeneratorSettingsTableTableAnnotationComposer
   GeneratedColumn<int> get version =>
       $composableBuilder(column: $table.version, builder: (column) => column);
 
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+  GeneratedColumn<bool> get inTrash =>
+      $composableBuilder(column: $table.inTrash, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get trashMovedAt => $composableBuilder(
+      column: $table.trashMovedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -10000,7 +8135,8 @@ class $$GeneratorSettingsTableTableTableManager extends RootTableManager<
             Value<String?> logoPath = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -10013,7 +8149,8 @@ class $$GeneratorSettingsTableTableTableManager extends RootTableManager<
             logoPath: logoPath,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -10026,7 +8163,8 @@ class $$GeneratorSettingsTableTableTableManager extends RootTableManager<
             Value<String?> logoPath = const Value.absent(),
             Value<String?> ownerId = const Value.absent(),
             Value<int> version = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
+            Value<bool> inTrash = const Value.absent(),
+            Value<DateTime?> trashMovedAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -10039,7 +8177,8 @@ class $$GeneratorSettingsTableTableTableManager extends RootTableManager<
             logoPath: logoPath,
             ownerId: ownerId,
             version: version,
-            isDeleted: isDeleted,
+            inTrash: inTrash,
+            trashMovedAt: trashMovedAt,
             updatedAt: updatedAt,
             createdAt: createdAt,
             rowid: rowid,
@@ -10784,6 +8923,170 @@ typedef $$TrashTableTableProcessedTableManager = ProcessedTableManager<
     (TrashItem, BaseReferences<_$AppDatabase, $TrashTableTable, TrashItem>),
     TrashItem,
     PrefetchHooks Function()>;
+typedef $$SyncMetadataTableTableCreateCompanionBuilder
+    = SyncMetadataTableCompanion Function({
+  required String entityTableName,
+  Value<int> lastSyncTimestamp,
+  Value<String?> syncCursor,
+  Value<DateTime?> lastSyncAt,
+  Value<int> rowid,
+});
+typedef $$SyncMetadataTableTableUpdateCompanionBuilder
+    = SyncMetadataTableCompanion Function({
+  Value<String> entityTableName,
+  Value<int> lastSyncTimestamp,
+  Value<String?> syncCursor,
+  Value<DateTime?> lastSyncAt,
+  Value<int> rowid,
+});
+
+class $$SyncMetadataTableTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncMetadataTableTable> {
+  $$SyncMetadataTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get entityTableName => $composableBuilder(
+      column: $table.entityTableName,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get lastSyncTimestamp => $composableBuilder(
+      column: $table.lastSyncTimestamp,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncCursor => $composableBuilder(
+      column: $table.syncCursor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastSyncAt => $composableBuilder(
+      column: $table.lastSyncAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$SyncMetadataTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncMetadataTableTable> {
+  $$SyncMetadataTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get entityTableName => $composableBuilder(
+      column: $table.entityTableName,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get lastSyncTimestamp => $composableBuilder(
+      column: $table.lastSyncTimestamp,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncCursor => $composableBuilder(
+      column: $table.syncCursor, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastSyncAt => $composableBuilder(
+      column: $table.lastSyncAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SyncMetadataTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncMetadataTableTable> {
+  $$SyncMetadataTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get entityTableName => $composableBuilder(
+      column: $table.entityTableName, builder: (column) => column);
+
+  GeneratedColumn<int> get lastSyncTimestamp => $composableBuilder(
+      column: $table.lastSyncTimestamp, builder: (column) => column);
+
+  GeneratedColumn<String> get syncCursor => $composableBuilder(
+      column: $table.syncCursor, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncAt => $composableBuilder(
+      column: $table.lastSyncAt, builder: (column) => column);
+}
+
+class $$SyncMetadataTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SyncMetadataTableTable,
+    SyncMetadataEntry,
+    $$SyncMetadataTableTableFilterComposer,
+    $$SyncMetadataTableTableOrderingComposer,
+    $$SyncMetadataTableTableAnnotationComposer,
+    $$SyncMetadataTableTableCreateCompanionBuilder,
+    $$SyncMetadataTableTableUpdateCompanionBuilder,
+    (
+      SyncMetadataEntry,
+      BaseReferences<_$AppDatabase, $SyncMetadataTableTable, SyncMetadataEntry>
+    ),
+    SyncMetadataEntry,
+    PrefetchHooks Function()> {
+  $$SyncMetadataTableTableTableManager(
+      _$AppDatabase db, $SyncMetadataTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncMetadataTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncMetadataTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncMetadataTableTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> entityTableName = const Value.absent(),
+            Value<int> lastSyncTimestamp = const Value.absent(),
+            Value<String?> syncCursor = const Value.absent(),
+            Value<DateTime?> lastSyncAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SyncMetadataTableCompanion(
+            entityTableName: entityTableName,
+            lastSyncTimestamp: lastSyncTimestamp,
+            syncCursor: syncCursor,
+            lastSyncAt: lastSyncAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String entityTableName,
+            Value<int> lastSyncTimestamp = const Value.absent(),
+            Value<String?> syncCursor = const Value.absent(),
+            Value<DateTime?> lastSyncAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SyncMetadataTableCompanion.insert(
+            entityTableName: entityTableName,
+            lastSyncTimestamp: lastSyncTimestamp,
+            syncCursor: syncCursor,
+            lastSyncAt: lastSyncAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SyncMetadataTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SyncMetadataTableTable,
+    SyncMetadataEntry,
+    $$SyncMetadataTableTableFilterComposer,
+    $$SyncMetadataTableTableOrderingComposer,
+    $$SyncMetadataTableTableAnnotationComposer,
+    $$SyncMetadataTableTableCreateCompanionBuilder,
+    $$SyncMetadataTableTableUpdateCompanionBuilder,
+    (
+      SyncMetadataEntry,
+      BaseReferences<_$AppDatabase, $SyncMetadataTableTable, SyncMetadataEntry>
+    ),
+    SyncMetadataEntry,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10810,4 +9113,6 @@ class $AppDatabaseManager {
       $$EventsTableTableTableManager(_db, _db.eventsTable);
   $$TrashTableTableTableManager get trashTable =>
       $$TrashTableTableTableManager(_db, _db.trashTable);
+  $$SyncMetadataTableTableTableManager get syncMetadataTable =>
+      $$SyncMetadataTableTableTableManager(_db, _db.syncMetadataTable);
 }

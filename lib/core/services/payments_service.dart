@@ -32,6 +32,11 @@ class PaymentsService extends BaseService {
 
   // Add a new payment
   Future<String> addPayment(Payment payment, {required String ownerId}) {
+    if (payment.amount <= 0)
+      throw ArgumentError('Payment amount must be positive');
+    if (payment.subscriberId.isEmpty)
+      throw ArgumentError('Subscriber ID required');
+
     final id = _uuid.v4();
     final now = DateTime.now();
     final companion = PaymentsTableCompanion(
@@ -43,7 +48,7 @@ class PaymentsService extends BaseService {
       date: Value(payment.date),
       cabinet: Value(payment.cabinet),
       version: const Value(1),
-      isDeleted: const Value(false),
+      inTrash: const Value(false),
       createdAt: Value(now),
       updatedAt: Value(now),
     );
@@ -62,7 +67,7 @@ class PaymentsService extends BaseService {
         'date': payment.date.millisecondsSinceEpoch,
         'cabinet': payment.cabinet,
         'version': 1,
-        'isDeleted': false,
+        'inTrash': false,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': now.millisecondsSinceEpoch,
       },
@@ -95,7 +100,7 @@ class PaymentsService extends BaseService {
         'date': payment.date.millisecondsSinceEpoch,
         'cabinet': payment.cabinet,
         'version': newVersion,
-        'isDeleted': payment.isDeleted,
+        'inTrash': payment.inTrash,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': payment.createdAt?.millisecondsSinceEpoch ??
             now.millisecondsSinceEpoch,
@@ -106,13 +111,14 @@ class PaymentsService extends BaseService {
   }
 
   // Soft delete a payment (move to trash first)
-  Future<bool> deletePayment(String id, {required String ownerId}) async {
-    final now = DateTime.now();
-    final existing = await _dao.getPaymentById(id, ownerId: ownerId);
-    final newVersion = (existing?.version ?? 0) + 1;
+  Future<bool> deletePayment(String id, {required String ownerId}) {
+    return database.transaction(() async {
+      final now = DateTime.now();
+      final existing = await _dao.getPaymentById(id, ownerId: ownerId);
+      if (existing == null) return false;
+      final newVersion = (existing.version ?? 0) + 1;
 
-    // Move to trash before soft deleting
-    if (existing != null) {
+      // Move to trash before soft deleting
       try {
         final trashService = TrashService(database);
         await trashService.moveToTrash(
@@ -133,30 +139,30 @@ class PaymentsService extends BaseService {
       } catch (e) {
         debugPrint('[PaymentsService] Failed to move payment to trash: $e');
       }
-    }
 
-    final companion = PaymentsTableCompanion(
-      id: Value(id),
-      ownerId: Value(ownerId),
-      isDeleted: const Value(true),
-      version: Value(newVersion),
-      updatedAt: Value(now),
-    );
+      final companion = PaymentsTableCompanion(
+        id: Value(id),
+        ownerId: Value(ownerId),
+        inTrash: const Value(true),
+        version: Value(newVersion),
+        updatedAt: Value(now),
+      );
 
-    // Add to outbox for Convex sync
-    // Use cloudId for delete lookup (local UUID)
-    _outbox.addEntry(
-      targetTable: 'payments',
-      operationType: 'delete',
-      documentId: id,
-      payload: {
-        'cloudId': id, // Send cloudId for lookup instead of Convex id
-        'ownerId': ownerId,
-        'version': newVersion,
-      },
-    );
+      // Add to outbox for Convex sync
+      // Use cloudId for delete lookup (local UUID)
+      _outbox.addEntry(
+        targetTable: 'payments',
+        operationType: 'delete',
+        documentId: id,
+        payload: {
+          'cloudId': id, // Send cloudId for lookup instead of Convex id
+          'ownerId': ownerId,
+          'version': newVersion,
+        },
+      );
 
-    return _dao.updatePayment(companion);
+      return _dao.updatePayment(companion);
+    });
   }
 
   // Watch all payments (reactive stream)

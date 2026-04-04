@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/database/daos/workers_dao.dart';
+import 'package:mawlid_al_dhaki/core/models/worker_permissions.dart';
 import 'package:mawlid_al_dhaki/core/services/base_service.dart';
 import 'package:mawlid_al_dhaki/core/services/outbox_service.dart';
 import 'package:mawlid_al_dhaki/core/services/trash_service.dart';
@@ -30,7 +32,14 @@ class WorkersService extends BaseService {
   }
 
   // Add a new worker
-  Future<String> addWorker(Worker worker, {required String ownerId}) {
+  Future<String> addWorker(Worker worker,
+      {required String ownerId, required WorkerPermissions workerPermissions}) {
+    if (worker.name.trim().isEmpty) throw ArgumentError('Name cannot be empty');
+    if (worker.todayCollected < 0)
+      throw ArgumentError('Today collected cannot be negative');
+    if (worker.monthTotal < 0)
+      throw ArgumentError('Month total cannot be negative');
+
     final id = _uuid.v4();
     final now = DateTime.now();
     final companion = WorkersTableCompanion(
@@ -38,11 +47,11 @@ class WorkersService extends BaseService {
       ownerId: Value(ownerId),
       name: Value(worker.name),
       phone: Value(worker.phone),
-      permissions: Value(worker.permissions),
+      permissions: Value(jsonEncode(workerPermissions.toJson())),
       todayCollected: Value(worker.todayCollected),
       monthTotal: Value(worker.monthTotal),
       version: const Value(1),
-      isDeleted: const Value(false),
+      inTrash: const Value(false),
       createdAt: Value(now),
       updatedAt: Value(now),
     );
@@ -57,11 +66,11 @@ class WorkersService extends BaseService {
         'ownerId': ownerId,
         'name': worker.name,
         'phone': worker.phone,
-        'permissions': worker.permissions,
+        'permissions': jsonEncode(workerPermissions.toJson()),
         'todayCollected': worker.todayCollected,
         'monthTotal': worker.monthTotal,
         'version': 1,
-        'isDeleted': false,
+        'inTrash': false,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': now.millisecondsSinceEpoch,
       },
@@ -94,7 +103,7 @@ class WorkersService extends BaseService {
         'todayCollected': worker.todayCollected,
         'monthTotal': worker.monthTotal,
         'version': newVersion,
-        'isDeleted': worker.isDeleted,
+        'inTrash': worker.inTrash,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': worker.createdAt?.millisecondsSinceEpoch ??
             now.millisecondsSinceEpoch,
@@ -104,14 +113,19 @@ class WorkersService extends BaseService {
     return _dao.updateWorker(companion);
   }
 
-  // Soft delete a worker (move to trash first)
-  Future<bool> deleteWorker(String id, {required String ownerId}) async {
-    final now = DateTime.now();
-    final existing = await _dao.getWorkerById(id, ownerId: ownerId);
-    final newVersion = (existing?.version ?? 0) + 1;
+  // Get permissions for a worker
+  WorkerPermissions getPermissions(Worker worker) =>
+      WorkerPermissions.fromJson(jsonDecode(worker.permissions));
 
-    // Move to trash before soft deleting
-    if (existing != null) {
+  // Soft delete a worker (move to trash first)
+  Future<bool> deleteWorker(String id, {required String ownerId}) {
+    return database.transaction(() async {
+      final now = DateTime.now();
+      final existing = await _dao.getWorkerById(id, ownerId: ownerId);
+      if (existing == null) return false;
+      final newVersion = (existing.version ?? 0) + 1;
+
+      // Move to trash before soft deleting
       try {
         final trashService = TrashService(database);
         await trashService.moveToTrash(
@@ -132,30 +146,30 @@ class WorkersService extends BaseService {
       } catch (e) {
         debugPrint('[WorkersService] Failed to move worker to trash: $e');
       }
-    }
 
-    final companion = WorkersTableCompanion(
-      id: Value(id),
-      ownerId: Value(ownerId),
-      isDeleted: const Value(true),
-      version: Value(newVersion),
-      updatedAt: Value(now),
-    );
+      final companion = WorkersTableCompanion(
+        id: Value(id),
+        ownerId: Value(ownerId),
+        inTrash: const Value(true),
+        version: Value(newVersion),
+        updatedAt: Value(now),
+      );
 
-    // Add to outbox for Convex sync
-    // Use cloudId for delete lookup (local UUID)
-    _outbox.addEntry(
-      targetTable: 'workers',
-      operationType: 'delete',
-      documentId: id,
-      payload: {
-        'cloudId': id, // Send cloudId for lookup instead of Convex id
-        'ownerId': ownerId,
-        'version': newVersion,
-      },
-    );
+      // Add to outbox for Convex sync
+      // Use cloudId for delete lookup (local UUID)
+      _outbox.addEntry(
+        targetTable: 'workers',
+        operationType: 'delete',
+        documentId: id,
+        payload: {
+          'cloudId': id, // Send cloudId for lookup instead of Convex id
+          'ownerId': ownerId,
+          'version': newVersion,
+        },
+      );
 
-    return _dao.updateWorker(companion);
+      return _dao.updateWorker(companion);
+    });
   }
 
   // Watch all workers (reactive stream)

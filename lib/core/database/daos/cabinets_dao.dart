@@ -15,7 +15,7 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
 
     return (select(cabinetsTable)
           ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.isDeleted.equals(false)))
+          ..where((tbl) => tbl.inTrash.equals(false)))
         .get();
   }
 
@@ -25,7 +25,7 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
 
     return (select(cabinetsTable)
           ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.isDeleted.equals(false)))
+          ..where((tbl) => tbl.inTrash.equals(false)))
         .watch();
   }
 
@@ -80,7 +80,7 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
     debugPrint('[CabinetsDao] softDeleteCabinet: $id');
     return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
         .write(CabinetsTableCompanion(
-      isDeleted: const Value(true),
+      inTrash: const Value(true),
       updatedAt: Value(DateTime.now()),
     ))
         .then((rows) {
@@ -148,7 +148,7 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
     final query = selectOnly(cabinetsTable)
       ..addColumns([cabinetsTable.id.count()])
       ..where(cabinetsTable.ownerId.equals(ownerId))
-      ..where(cabinetsTable.isDeleted.equals(false));
+      ..where(cabinetsTable.inTrash.equals(false));
 
     final result = await query.getSingle();
     return result.read(cabinetsTable.id.count()) ?? 0;
@@ -161,7 +161,7 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
     final query = selectOnly(cabinetsTable)
       ..addColumns([cabinetsTable.collectedAmount.sum()])
       ..where(cabinetsTable.ownerId.equals(ownerId))
-      ..where(cabinetsTable.isDeleted.equals(false));
+      ..where(cabinetsTable.inTrash.equals(false));
 
     final result = await query.getSingle();
     return result.read(cabinetsTable.collectedAmount.sum()) ?? 0.0;

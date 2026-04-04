@@ -75,7 +75,7 @@ class TrashService {
   /// This re-inserts the entity into the original table and syncs to Convex.
   Future<bool> restoreFromTrash(String trashId) async {
     final ownerId = _getCurrentOwnerId();
-    
+
     // Get trash item
     final items = await _trashDao.getAllTrashItems(ownerId: ownerId);
     final trashItem = items.firstWhere((item) => item.id == trashId);
@@ -95,10 +95,12 @@ class TrashService {
         'entityId': trashItem.entityId,
       });
     } catch (e) {
-      debugPrint('[TrashService] Failed to sync restoreFromTrash to Convex: $e');
+      debugPrint(
+          '[TrashService] Failed to sync restoreFromTrash to Convex: $e');
     }
 
-    debugPrint('[TrashService] Restored ${trashItem.entityType}/${trashItem.entityId} from trash');
+    debugPrint(
+        '[TrashService] Restored ${trashItem.entityType}/${trashItem.entityId} from trash');
     return true;
   }
 
@@ -109,7 +111,7 @@ class TrashService {
     String ownerId,
   ) async {
     final now = DateTime.now();
-    
+
     switch (entityType) {
       case 'subscribers':
         final companion = SubscribersTableCompanion(
@@ -119,19 +121,19 @@ class TrashService {
           code: Value(data['code'] as String),
           cabinet: Value(data['cabinet'] as String),
           phone: Value(data['phone'] as String),
-          status: Value(data['status'] as int),
+          status: Value(data['status'] as String),
           startDate: Value(DateTime.parse(data['startDate'] as String)),
           accumulatedDebt: Value(data['accumulatedDebt'] as double),
           tags: Value(data['tags'] as String?),
           notes: Value(data['notes'] as String?),
           version: Value(data['version'] as int? ?? 1),
-          isDeleted: const Value(false),
+          inTrash: const Value(false),
           createdAt: Value(now),
           updatedAt: Value(now),
         );
         await database.subscribersDao.addSubscriber(companion);
         break;
-        
+
       case 'cabinets':
         DateTime? completionDate;
         if (data['completionDate'] != null) {
@@ -150,13 +152,13 @@ class TrashService {
           delayedSubscribers: Value(data['delayedSubscribers'] as int),
           completionDate: Value(completionDate),
           version: Value(data['version'] as int? ?? 1),
-          isDeleted: const Value(false),
+          inTrash: const Value(false),
           createdAt: Value(now),
           updatedAt: Value(now),
         );
         await database.cabinetsDao.addCabinet(companion);
         break;
-        
+
       case 'payments':
         final companion = PaymentsTableCompanion(
           id: Value(data['id'] as String),
@@ -167,13 +169,13 @@ class TrashService {
           date: Value(DateTime.parse(data['date'] as String)),
           cabinet: Value(data['cabinet'] as String),
           version: Value(data['version'] as int? ?? 1),
-          isDeleted: const Value(false),
+          inTrash: const Value(false),
           createdAt: Value(now),
           updatedAt: Value(now),
         );
         await database.paymentsDao.addPayment(companion);
         break;
-        
+
       case 'workers':
         final companion = WorkersTableCompanion(
           id: Value(data['id'] as String),
@@ -184,13 +186,13 @@ class TrashService {
           todayCollected: Value(data['todayCollected'] as double),
           monthTotal: Value(data['monthTotal'] as double),
           version: Value(data['version'] as int? ?? 1),
-          isDeleted: const Value(false),
+          inTrash: const Value(false),
           createdAt: Value(now),
           updatedAt: Value(now),
         );
         await database.workersDao.addWorker(companion);
         break;
-        
+
       default:
         debugPrint('[TrashService] Unknown entity type: $entityType');
     }
@@ -200,13 +202,14 @@ class TrashService {
   /// This hard-deletes the entity from the original table if it exists.
   Future<bool> permanentlyDelete(String trashId) async {
     final ownerId = _getCurrentOwnerId();
-    
+
     // Get trash item
     final items = await _trashDao.getAllTrashItems(ownerId: ownerId);
     final trashItem = items.firstWhere((item) => item.id == trashId);
 
     // Hard-delete entity from original table if it still exists (soft-deleted)
-    await _hardDeleteEntityFromTable(trashItem.entityType, trashItem.entityId, ownerId);
+    await _hardDeleteEntityFromTable(
+        trashItem.entityType, trashItem.entityId, ownerId);
 
     // Delete from local trash
     await _trashDao.deleteTrashItem(trashId);
@@ -219,10 +222,12 @@ class TrashService {
         'entityId': trashItem.entityId,
       });
     } catch (e) {
-      debugPrint('[TrashService] Failed to sync permanentlyDelete to Convex: $e');
+      debugPrint(
+          '[TrashService] Failed to sync permanentlyDelete to Convex: $e');
     }
 
-    debugPrint('[TrashService] Permanently deleted ${trashItem.entityType}/${trashItem.entityId}');
+    debugPrint(
+        '[TrashService] Permanently deleted ${trashItem.entityType}/${trashItem.entityId}');
     return true;
   }
 
@@ -236,26 +241,31 @@ class TrashService {
       switch (entityType) {
         case 'subscribers':
           await (database.delete(database.subscribersTable)
-            ..where((t) => t.id.equals(entityId) & t.ownerId.equals(ownerId)))
+                ..where(
+                    (t) => t.id.equals(entityId) & t.ownerId.equals(ownerId)))
               .go();
           break;
         case 'cabinets':
           await (database.delete(database.cabinetsTable)
-            ..where((t) => t.id.equals(entityId) & t.ownerId.equals(ownerId)))
+                ..where(
+                    (t) => t.id.equals(entityId) & t.ownerId.equals(ownerId)))
               .go();
           break;
         case 'payments':
           await (database.delete(database.paymentsTable)
-            ..where((t) => t.id.equals(entityId) & t.ownerId.equals(ownerId)))
+                ..where(
+                    (t) => t.id.equals(entityId) & t.ownerId.equals(ownerId)))
               .go();
           break;
         case 'workers':
           await (database.delete(database.workersTable)
-            ..where((t) => t.id.equals(entityId) & t.ownerId.equals(ownerId)))
+                ..where(
+                    (t) => t.id.equals(entityId) & t.ownerId.equals(ownerId)))
               .go();
           break;
         default:
-          debugPrint('[TrashService] Unknown entity type for hard delete: $entityType');
+          debugPrint(
+              '[TrashService] Unknown entity type for hard delete: $entityType');
       }
     } catch (e) {
       debugPrint('[TrashService] Error hard deleting entity: $e');
@@ -265,13 +275,13 @@ class TrashService {
   /// Empty all trash.
   Future<bool> emptyTrash() async {
     final ownerId = _getCurrentOwnerId();
-    
+
     // Get all trash items and hard-delete their entities first
     final items = await _trashDao.getAllTrashItems(ownerId: ownerId);
     for (final item in items) {
       await _hardDeleteEntityFromTable(item.entityType, item.entityId, ownerId);
     }
-    
+
     final count = await _trashDao.deleteAllTrashItems(ownerId);
 
     // Sync to Convex
@@ -310,7 +320,8 @@ class TrashService {
     final expired = await _trashDao.getExpiredTrashItems();
     int deleted = 0;
     for (final item in expired) {
-      await _hardDeleteEntityFromTable(item.entityType, item.entityId, item.ownerId);
+      await _hardDeleteEntityFromTable(
+          item.entityType, item.entityId, item.ownerId);
       await _trashDao.deleteTrashItem(item.id);
       deleted++;
     }

@@ -33,6 +33,15 @@ class SubscribersService extends BaseService {
   // Add a new subscriber
   Future<String> addSubscriber(Subscriber subscriber,
       {required String ownerId}) {
+    if (subscriber.name.trim().isEmpty)
+      throw ArgumentError('Name cannot be empty');
+    if (subscriber.code.trim().isEmpty)
+      throw ArgumentError('Code cannot be empty');
+    if (subscriber.phone.trim().isEmpty)
+      throw ArgumentError('Phone cannot be empty');
+    if (subscriber.accumulatedDebt < 0)
+      throw ArgumentError('Debt cannot be negative');
+
     final id = _uuid.v4();
     final now = DateTime.now();
     final companion = SubscribersTableCompanion(
@@ -48,7 +57,7 @@ class SubscribersService extends BaseService {
       tags: Value(subscriber.tags),
       notes: Value(subscriber.notes),
       version: const Value(1),
-      isDeleted: const Value(false),
+      inTrash: const Value(false),
       createdAt: Value(now),
       updatedAt: Value(now),
     );
@@ -84,6 +93,11 @@ class SubscribersService extends BaseService {
   // Update a subscriber
   Future<bool> updateSubscriber(Subscriber subscriber,
       {required String ownerId}) {
+    if (subscriber.name.trim().isEmpty)
+      throw ArgumentError('Name cannot be empty');
+    if (subscriber.code.trim().isEmpty)
+      throw ArgumentError('Code cannot be empty');
+
     final now = DateTime.now();
     final newVersion = (subscriber.version ?? 0) + 1;
     final companion = subscriber.toCompanion(false).copyWith(
@@ -114,7 +128,7 @@ class SubscribersService extends BaseService {
         'tags': subscriber.tags,
         'notes': subscriber.notes,
         'version': newVersion,
-        'isDeleted': subscriber.isDeleted,
+        'inTrash': subscriber.inTrash,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': subscriber.createdAt?.millisecondsSinceEpoch ??
             now.millisecondsSinceEpoch,
@@ -125,14 +139,15 @@ class SubscribersService extends BaseService {
   }
 
   // Soft delete a subscriber (move to trash first)
-  Future<bool> deleteSubscriber(String id, {required String ownerId}) async {
-    final now = DateTime.now();
-    // Get current subscriber to increment version
-    final existing = await _dao.getSubscriberById(id, ownerId: ownerId);
-    final newVersion = (existing?.version ?? 0) + 1;
+  Future<bool> deleteSubscriber(String id, {required String ownerId}) {
+    return database.transaction(() async {
+      final now = DateTime.now();
+      // Get current subscriber to increment version
+      final existing = await _dao.getSubscriberById(id, ownerId: ownerId);
+      if (existing == null) return false;
+      final newVersion = (existing.version ?? 0) + 1;
 
-    // Move to trash before soft deleting
-    if (existing != null) {
+      // Move to trash before soft deleting
       try {
         final trashService = TrashService(database);
         await trashService.moveToTrash(
@@ -155,32 +170,33 @@ class SubscribersService extends BaseService {
         );
         debugPrint('[SubscribersService] Moved subscriber to trash');
       } catch (e) {
-        debugPrint('[SubscribersService] Failed to move subscriber to trash: $e');
+        debugPrint(
+            '[SubscribersService] Failed to move subscriber to trash: $e');
       }
-    }
 
-    final companion = SubscribersTableCompanion(
-      id: Value(id),
-      ownerId: Value(ownerId),
-      isDeleted: const Value(true),
-      version: Value(newVersion),
-      updatedAt: Value(now),
-    );
+      final companion = SubscribersTableCompanion(
+        id: Value(id),
+        ownerId: Value(ownerId),
+        inTrash: const Value(true),
+        version: Value(newVersion),
+        updatedAt: Value(now),
+      );
 
-    // Add to outbox for Convex sync
-    // Use cloudId for delete lookup (local UUID)
-    _outbox.addEntry(
-      targetTable: 'subscribers',
-      operationType: 'delete',
-      documentId: id,
-      payload: {
-        'cloudId': id, // Send cloudId for lookup instead of Convex id
-        'ownerId': ownerId,
-        'version': newVersion,
-      },
-    );
+      // Add to outbox for Convex sync
+      // Use cloudId for delete lookup (local UUID)
+      _outbox.addEntry(
+        targetTable: 'subscribers',
+        operationType: 'delete',
+        documentId: id,
+        payload: {
+          'cloudId': id, // Send cloudId for lookup instead of Convex id
+          'ownerId': ownerId,
+          'version': newVersion,
+        },
+      );
 
-    return _dao.updateSubscriber(companion);
+      return _dao.updateSubscriber(companion);
+    });
   }
 
   // Search subscribers by name or code
