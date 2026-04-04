@@ -63,12 +63,9 @@ export const saveSubscriber = mutation({
     if (args.accumulatedDebt < 0) throw new Error("Debt cannot be negative");
     
     // Validate cabinet reference exists and belongs to same owner
-    const cabinetDoc = await ctx.db.get(args.cabinet);
+    const cabinetDoc = await ctx.db.query("cabinets").withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", identitySubject).eq("cloudId", args.cabinet)).first();
     if (!cabinetDoc) {
       throw new Error("Referenced cabinet does not exist");
-    }
-    if (cabinetDoc.ownerId !== identitySubject) {
-      throw new Error("Referenced cabinet does not belong to this owner");
     }
     
     // Determine the Convex document ID to use
@@ -245,7 +242,7 @@ export const bulkSaveSubscribers = mutation({
       ownerId: v.string(),
       name: v.string(),
       code: v.string(),
-      cabinet: v.id("cabinets"),
+    cabinet: v.string(),
       phone: v.string(),
       status: v.union(v.literal("inactive"), v.literal("active"), v.literal("suspended"), v.literal("disconnected")),
       startDate: v.number(),
@@ -281,13 +278,9 @@ export const bulkSaveSubscribers = mutation({
 
       // Validate cabinet reference exists and belongs to same owner
       try {
-        const cabinetDoc = await ctx.db.get(subscriber.cabinet);
+        const cabinetDoc = await ctx.db.query("cabinets").withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", identity.subject).eq("cloudId", subscriber.cabinet)).first();
         if (!cabinetDoc) {
           results.push({ success: false, error: "Referenced cabinet does not exist" });
-          continue;
-        }
-        if (cabinetDoc.ownerId !== identity.subject) {
-          results.push({ success: false, error: "Referenced cabinet does not belong to this owner" });
           continue;
         }
       } catch {

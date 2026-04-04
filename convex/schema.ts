@@ -24,7 +24,7 @@ export default defineSchema({
     // Domain Data
     name: v.string(),
     code: v.string(), // Unique subscriber code
-    cabinet: v.union(v.id("cabinets"), v.string()), // Legacy data may be string letter
+    cabinet: v.string(), // UUID reference to cabinet
     phone: v.string(),
     status: v.union(v.literal("inactive"), v.literal("active"), v.literal("suspended"), v.literal("disconnected"), v.number()), // Legacy data may be numeric
     startDate: v.number(), // Unix timestamp
@@ -97,11 +97,11 @@ export default defineSchema({
     ownerId: v.string(),
     
     // Domain Data
-    subscriberId: v.id("subscribers"), // Reference to subscriber
+    subscriberId: v.string(), // UUID reference to subscriber
     amount: v.number(),
-    worker: v.id("workers"), // Worker who collected the payment
+    worker: v.string(), // UUID reference to worker
     date: v.number(), // Unix timestamp
-    cabinet: v.id("cabinets"),
+    cabinet: v.string(), // UUID reference to cabinet
     
     // Entity identification
     cloudId: v.optional(v.string()),

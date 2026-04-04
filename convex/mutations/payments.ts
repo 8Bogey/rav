@@ -14,11 +14,11 @@ export const savePayment = mutation({
     convexId: v.optional(v.string()), // Client's local ID or Convex mapping
     version: v.number(),
     ownerId: v.string(),
-    subscriberId: v.id("subscribers"),
+    subscriberId: v.string(),
     amount: v.number(),
-    worker: v.id("workers"),
+    worker: v.string(),
     date: v.number(),
-    cabinet: v.id("cabinets"),
+    cabinet: v.string(),
     lastModified: v.optional(v.number()),
     lastSyncedAt: v.optional(v.number()),
     syncStatus: v.optional(v.string()),
@@ -44,30 +44,21 @@ export const savePayment = mutation({
     const now = Date.now();
     
     // Validate subscriber reference exists and belongs to same owner
-    const subscriberDoc = await ctx.db.get(args.subscriberId);
+    const subscriberDoc = await ctx.db.query("subscribers").withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", identitySubject).eq("cloudId", args.subscriberId)).first();
     if (!subscriberDoc) {
       throw new Error("Referenced subscriber does not exist");
     }
-    if (subscriberDoc.ownerId !== identitySubject) {
-      throw new Error("Referenced subscriber does not belong to this owner");
-    }
 
     // Validate worker reference exists and belongs to same owner
-    const workerDoc = await ctx.db.get(args.worker);
+    const workerDoc = await ctx.db.query("workers").withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", identitySubject).eq("cloudId", args.worker)).first();
     if (!workerDoc) {
       throw new Error("Referenced worker does not exist");
     }
-    if (workerDoc.ownerId !== identitySubject) {
-      throw new Error("Referenced worker does not belong to this owner");
-    }
 
     // Validate cabinet reference exists and belongs to same owner
-    const cabinetDoc = await ctx.db.get(args.cabinet);
+    const cabinetDoc = await ctx.db.query("cabinets").withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", identitySubject).eq("cloudId", args.cabinet)).first();
     if (!cabinetDoc) {
       throw new Error("Referenced cabinet does not exist");
-    }
-    if (cabinetDoc.ownerId !== identitySubject) {
-      throw new Error("Referenced cabinet does not belong to this owner");
     }
     
     // Determine Convex document ID
