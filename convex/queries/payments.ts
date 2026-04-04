@@ -12,15 +12,14 @@ export const getActivePayments = query({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Skip auth check in dev mode - trust the ownerId from the client
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) { throw new Error("Unauthenticated"); }
-    // if (args.ownerId !== identity.subject) { return []; }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
 
     return await ctx.db
       .query("payments")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .collect();
   },
 });
@@ -48,7 +47,7 @@ export const getPaymentsPaginated = query({
     let query = ctx.db
       .query("payments")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false));
+      .filter((q) => q.neq(q.field("inTrash"), true));
 
     if (cursor) {
       const doc = await ctx.db.get(cursor as any);
@@ -85,7 +84,7 @@ export const getPaymentById = query({
     }
 
     const payment = await ctx.db.get(args.id);
-    if (!payment || payment.isDeleted || payment.ownerId !== args.ownerId) {
+    if (!payment || payment.inTrash || payment.ownerId !== args.ownerId) {
       return null;
     }
 
@@ -115,7 +114,7 @@ export const getPaymentsBySubscriber = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -144,7 +143,7 @@ export const getPaymentsByWorker = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -173,7 +172,7 @@ export const getPaymentsByCabinet = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -204,7 +203,7 @@ export const getPaymentsByDateRange = query({
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
           q.lte(q.field("date"), args.endDate),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -220,10 +219,9 @@ export const getPaymentsModifiedSince = query({
     since: v.number(),
   },
   handler: async (ctx, args) => {
-    // Skip auth check in dev mode
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) { throw new Error("Unauthenticated"); }
-    // if (args.ownerId !== identity.subject) { return []; }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
 
     // Include ALL payments (including deleted) so app can sync deletions
     const payments = await ctx.db

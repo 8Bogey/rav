@@ -17,15 +17,14 @@ export const getActiveSubscribers = query({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Skip auth check in dev mode - trust the ownerId from the client
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) { throw new Error("Unauthenticated"); }
-    // if (args.ownerId !== identity.subject) { return []; }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
 
     return await ctx.db
       .query("subscribers")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .collect();
   },
 });
@@ -53,7 +52,7 @@ export const getSubscribersPaginated = query({
     let query = ctx.db
       .query("subscribers")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false));
+      .filter((q) => q.neq(q.field("inTrash"), true));
 
     if (cursor) {
       const doc = await ctx.db.get(cursor as any);
@@ -82,15 +81,14 @@ export const getSubscriberById = query({
     convexId: v.optional(v.string()), // Alternative: explicit cloudId
   },
   handler: async (ctx, args) => {
-    // Allow unauthenticated access in dev mode - trust ownerId from client
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) {
-    //   throw new Error("Unauthenticated");
-    // }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
 
-    // if (args.ownerId !== identity.subject) {
-    //   return null;
-    // }
+    if (args.ownerId !== identity.subject) {
+      return null;
+    }
 
     // Try to resolve the document ID
     let documentId = args.id ?? args.convexId;
@@ -103,7 +101,7 @@ export const getSubscriberById = query({
     if (documentId.startsWith('subscribers/')) {
       // It's a Convex document ID
       const subscriber = await ctx.db.get(documentId as any);
-      if (!subscriber || subscriber.isDeleted || subscriber.ownerId !== args.ownerId) {
+      if (!subscriber || subscriber.inTrash || subscriber.ownerId !== args.ownerId) {
         return null;
       }
       return subscriber;
@@ -114,7 +112,7 @@ export const getSubscriberById = query({
         .withIndex("by_cloudId", (q) => q.eq("cloudId", documentId!))
         .first();
       
-      if (!subscriber || subscriber.isDeleted || subscriber.ownerId !== args.ownerId) {
+      if (!subscriber || subscriber.inTrash || subscriber.ownerId !== args.ownerId) {
         return null;
       }
       return subscriber;
@@ -144,7 +142,7 @@ export const getSubscribersByCabinet = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -155,7 +153,7 @@ export const getSubscribersByCabinet = query({
 export const getSubscribersByStatus = query({
   args: {
     ownerId: v.string(),
-    status: v.number(),
+    status: v.union(v.literal("inactive"), v.literal("active"), v.literal("suspended"), v.literal("disconnected")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -173,7 +171,7 @@ export const getSubscribersByStatus = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -202,7 +200,7 @@ export const getSubscriberByCode = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .take(1);
@@ -231,7 +229,7 @@ export const searchSubscribers = query({
     const allSubscribers = await ctx.db
       .query("subscribers")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .collect();
 
     const searchLower = args.searchTerm.toLowerCase();
@@ -250,10 +248,9 @@ export const getSubscribersModifiedSince = query({
     since: v.number(), // Unix timestamp
   },
   handler: async (ctx, args) => {
-    // Skip auth check in dev mode - trust the ownerId from the client
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) { throw new Error("Unauthenticated"); }
-    // if (args.ownerId !== identity.subject) { return []; }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
 
     // Include ALL subscribers (including deleted) so app can sync deletions
     const subscribers = await ctx.db

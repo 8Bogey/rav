@@ -23,7 +23,7 @@ export const getActiveAuditLogs = query({
     return await ctx.db
       .query("auditLog")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .collect();
   },
 });
@@ -51,7 +51,7 @@ export const getAuditLogsPaginated = query({
     let query = ctx.db
       .query("auditLog")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false));
+      .filter((q) => q.neq(q.field("inTrash"), true));
 
     if (cursor) {
       const doc = await ctx.db.get(cursor as any);
@@ -93,7 +93,7 @@ export const getAuditLogsByUser = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -122,7 +122,7 @@ export const getAuditLogsByAction = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -151,7 +151,7 @@ export const getAuditLogsByTarget = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();
@@ -182,7 +182,7 @@ export const getAuditLogsByDateRange = query({
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
           q.lte(q.field("timestamp"), args.endDate),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();

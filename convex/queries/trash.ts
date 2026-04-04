@@ -13,6 +13,10 @@ export const getTrashItems = query({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
+
     return await ctx.db
       .query("trash")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
@@ -31,6 +35,10 @@ export const getTrashItemsPaginated = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return { trashItems: [], nextCursor: null }; }
+
     const limit = args.limit ?? 50;
     let trashItems = await ctx.db
       .query("trash")
@@ -56,6 +64,10 @@ export const getTrashCount = query({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return { count: 0 }; }
+
     const items = await ctx.db
       .query("trash")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))

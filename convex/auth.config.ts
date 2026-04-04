@@ -1,8 +1,8 @@
 export default {
   providers: [
     {
-      domain: "https://dev-cqkioj1eiksobor3.us.auth0.com",
-      applicationID: "DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB",
+      domain: process.env.AUTH0_DOMAIN!,
+      applicationID: process.env.AUTH0_APPLICATION_ID!,
       // JWT audience must match Convex deployment for token verification
     },
   ],

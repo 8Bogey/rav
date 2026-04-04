@@ -23,7 +23,7 @@ export const getActiveWhatsappTemplates = query({
     return await ctx.db
       .query("whatsappTemplates")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .collect();
   },
 });
@@ -51,7 +51,7 @@ export const getWhatsappTemplatesPaginated = query({
     let query = ctx.db
       .query("whatsappTemplates")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false));
+      .filter((q) => q.neq(q.field("inTrash"), true));
 
     if (cursor) {
       const doc = await ctx.db.get(cursor as any);
@@ -88,7 +88,7 @@ export const getWhatsappTemplateById = query({
     }
 
     const template = await ctx.db.get(args.id);
-    if (!template || template.isDeleted || template.ownerId !== args.ownerId) {
+    if (!template || template.inTrash || template.ownerId !== args.ownerId) {
       return null;
     }
 
@@ -113,11 +113,11 @@ export const getActiveWhatsappTemplatesOnly = query({
 
     return await ctx.db
       .query("whatsappTemplates")
-      .withIndex("by_isActive", (q) => q.eq("isActive", 1))
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .collect();

@@ -12,15 +12,14 @@ export const getActiveWorkers = query({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Skip auth check in dev mode - trust the ownerId from the client
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) { throw new Error("Unauthenticated"); }
-    // if (args.ownerId !== identity.subject) { return []; }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
 
     return await ctx.db
       .query("workers")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .collect();
   },
 });
@@ -48,7 +47,7 @@ export const getWorkersPaginated = query({
     let query = ctx.db
       .query("workers")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false));
+      .filter((q) => q.neq(q.field("inTrash"), true));
 
     if (cursor) {
       const doc = await ctx.db.get(cursor as any);
@@ -85,7 +84,7 @@ export const getWorkerById = query({
     }
 
     const worker = await ctx.db.get(args.id);
-    if (!worker || worker.isDeleted || worker.ownerId !== args.ownerId) {
+    if (!worker || worker.inTrash || worker.ownerId !== args.ownerId) {
       return null;
     }
 
@@ -115,7 +114,7 @@ export const getWorkerByName = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .take(1);
@@ -146,7 +145,7 @@ export const getWorkerByPhone = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .take(1);
@@ -164,10 +163,9 @@ export const getWorkersModifiedSince = query({
     since: v.number(),
   },
   handler: async (ctx, args) => {
-    // Skip auth check in dev mode
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) { throw new Error("Unauthenticated"); }
-    // if (args.ownerId !== identity.subject) { return []; }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
 
     // Include ALL workers (including deleted) so app can sync deletions
     const workers = await ctx.db

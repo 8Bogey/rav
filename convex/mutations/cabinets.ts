@@ -6,6 +6,7 @@
 
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { validatePermission, Permission } from "../auth/rbac";
 
 export const saveCabinet = mutation({
   args: {
@@ -27,14 +28,23 @@ export const saveCabinet = mutation({
     cloudId: v.optional(v.string()),
     deletedLocally: v.optional(v.boolean()),
     permissionsMask: v.optional(v.string()),
-    isDeleted: v.boolean(),
+    inTrash: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
   },
   handler: async (ctx, args) => {
-    // Accept any authenticated user or demo mode
-    // In dev mode, we allow any ownerId that matches the pattern
-    const identitySubject = args.ownerId; // Trust the ownerId from the client for now
+    // Server-side auth: get real identity
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    const identitySubject = identity.subject;
+
+    // RBAC validation
+    await validatePermission(ctx, identitySubject, Permission.cabinetsWrite);
+
+    if (args.totalSubscribers < 0) throw new Error("Total subscribers cannot be negative");
+    if (args.currentSubscribers < 0) throw new Error("Current subscribers cannot be negative");
+    if (args.delayedSubscribers < 0) throw new Error("Delayed subscribers cannot be negative");
+    if (args.collectedAmount < 0) throw new Error("Collected amount cannot be negative");
 
     const now = Date.now();
     
@@ -120,7 +130,13 @@ export const deleteCabinet = mutation({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
-    const identitySubject = args.ownerId;
+    // Server-side auth: get real identity
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    const identitySubject = identity.subject;
+
+    // RBAC validation
+    await validatePermission(ctx, identitySubject, Permission.cabinetsDelete);
 
     // Resolve the document ID: explicit id > cloudId lookup > error
     let documentId: any = null;
@@ -176,7 +192,7 @@ export const deleteCabinet = mutation({
 
     // Soft Delete
     await ctx.db.patch(documentId, {
-      isDeleted: true,
+      inTrash: true,
       version: args.version,
       updatedAt: Date.now(),
     });

@@ -12,15 +12,14 @@ export const getActiveCabinets = query({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Skip auth check in dev mode - trust the ownerId from the client
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) { throw new Error("Unauthenticated"); }
-    // if (args.ownerId !== identity.subject) { return []; }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
 
     return await ctx.db
       .query("cabinets")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .collect();
   },
 });
@@ -48,7 +47,7 @@ export const getCabinetsPaginated = query({
     let query = ctx.db
       .query("cabinets")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false));
+      .filter((q) => q.neq(q.field("inTrash"), true));
 
     if (cursor) {
       const doc = await ctx.db.get(cursor as any);
@@ -77,15 +76,14 @@ export const getCabinetById = query({
     convexId: v.optional(v.string()), // Alternative: explicit cloudId
   },
   handler: async (ctx, args) => {
-    // Allow unauthenticated access in dev mode - trust ownerId from client
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) {
-    //   throw new Error("Unauthenticated");
-    // }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
 
-    // if (args.ownerId !== identity.subject) {
-    //   return null;
-    // }
+    if (args.ownerId !== identity.subject) {
+      return null;
+    }
 
     // Try to resolve the document ID
     let documentId = args.id ?? args.convexId;
@@ -98,7 +96,7 @@ export const getCabinetById = query({
     if (documentId.startsWith('cabinets/')) {
       // It's a Convex document ID
       const cabinet = await ctx.db.get(documentId as any);
-      if (!cabinet || cabinet.isDeleted || cabinet.ownerId !== args.ownerId) {
+      if (!cabinet || cabinet.inTrash || cabinet.ownerId !== args.ownerId) {
         return null;
       }
       return cabinet;
@@ -109,7 +107,7 @@ export const getCabinetById = query({
         .withIndex("by_cloudId", (q) => q.eq("cloudId", documentId!))
         .first();
       
-      if (!cabinet || cabinet.isDeleted || cabinet.ownerId !== args.ownerId) {
+      if (!cabinet || cabinet.inTrash || cabinet.ownerId !== args.ownerId) {
         return null;
       }
       return cabinet;
@@ -139,7 +137,7 @@ export const getCabinetByLetter = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .take(1);
@@ -170,7 +168,7 @@ export const getCabinetByName = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("ownerId"), args.ownerId),
-          q.eq(q.field("isDeleted"), false)
+          q.neq(q.field("inTrash"), true)
         )
       )
       .take(1);
@@ -188,11 +186,9 @@ export const getCabinetsModifiedSince = query({
     since: v.number(),
   },
   handler: async (ctx, args) => {
-    // Skip auth check in dev mode - trust the ownerId from the client
-    // In production, uncomment the following:
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!identity) { throw new Error("Unauthenticated"); }
-    // if (args.ownerId !== identity.subject) { return []; }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
 
     // Include ALL cabinets (including deleted) so app can sync deletions
     const cabinets = await ctx.db

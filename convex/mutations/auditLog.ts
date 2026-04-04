@@ -6,6 +6,7 @@
 
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { validatePermission, Permission } from "../auth/rbac";
 
 export const saveAuditLog = mutation({
   args: {
@@ -25,13 +26,23 @@ export const saveAuditLog = mutation({
     cloudId: v.optional(v.string()),
     deletedLocally: v.optional(v.boolean()),
     permissionsMask: v.optional(v.string()),
-    isDeleted: v.boolean(),
+    inTrash: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
   },
   handler: async (ctx, args) => {
-    // Accept any ownerId from the client (dev mode)
-    const identitySubject = args.ownerId;
+    // Server-side auth: get real identity, never trust client-provided ownerId
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    const identitySubject = identity.subject;
+
+    // RBAC validation
+    await validatePermission(ctx, identitySubject, Permission.auditRead);
+
+    // If client provided ownerId, validate it matches auth identity
+    if (args.ownerId !== identitySubject) {
+      throw new Error("Unauthorized");
+    }
 
     const now = Date.now();
 
@@ -85,7 +96,18 @@ export const deleteAuditLog = mutation({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
-    const identitySubject = args.ownerId;
+    // Server-side auth: get real identity, never trust client-provided ownerId
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    const identitySubject = identity.subject;
+
+    // RBAC validation
+    await validatePermission(ctx, identitySubject, Permission.auditRead);
+
+    // If client provided ownerId, validate it matches auth identity
+    if (args.ownerId !== identitySubject) {
+      throw new Error("Unauthorized");
+    }
 
     // Resolve the document ID: explicit id > cloudId lookup > error
     let documentId = args.id;
@@ -125,7 +147,7 @@ export const deleteAuditLog = mutation({
 
     // Soft Delete
     await ctx.db.patch(documentId, {
-      isDeleted: true,
+      inTrash: true,
       version: args.version,
       updatedAt: Date.now(),
     });

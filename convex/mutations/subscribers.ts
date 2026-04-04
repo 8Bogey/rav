@@ -3,14 +3,16 @@
  * 
  * Handles create, update, and soft-delete operations for subscribers.
  * All operations enforce:
- * - Authentication
+ * - Authentication (server-side identity, never trust client ownerId)
  * - Tenant isolation (ownerId)
  * - LWW conflict resolution (version check)
  * - Soft deletes only
+ * - Referential integrity (cabinet must exist and belong to same owner)
  */
 
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { validatePermission, Permission } from "../auth/rbac";
 
 export const saveSubscriber = mutation({
   args: {
@@ -23,12 +25,12 @@ export const saveSubscriber = mutation({
     ownerId: v.string(),
     name: v.string(),
     code: v.string(),
-    cabinet: v.string(),
+    cabinet: v.id("cabinets"),
     phone: v.string(),
-    status: v.number(),
+    status: v.union(v.literal("inactive"), v.literal("active"), v.literal("suspended"), v.literal("disconnected")),
     startDate: v.number(),
     accumulatedDebt: v.number(),
-    tags: v.nullable(v.string()), // Stored as comma-separated or JSON
+    tags: v.optional(v.array(v.string())),
     notes: v.nullable(v.string()), // Allow null for notes
     lastModified: v.optional(v.number()),
     lastSyncedAt: v.optional(v.number()),
@@ -37,16 +39,37 @@ export const saveSubscriber = mutation({
     cloudId: v.optional(v.string()),
     deletedLocally: v.optional(v.boolean()),
     permissionsMask: v.optional(v.string()),
-    isDeleted: v.boolean(),
+    inTrash: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
   },
   handler: async (ctx, args) => {
-    // Accept any authenticated user or demo mode
-    // In dev mode, we allow any ownerId that matches the pattern
-    const identitySubject = args.ownerId; // Trust the ownerId from the client for now
+    // Server-side auth: get real identity, never trust client-provided ownerId
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    const identitySubject = identity.subject;
+
+    // RBAC validation
+    await validatePermission(ctx, identitySubject, Permission.subscribersWrite);
+
+    // If client provided ownerId, validate it matches auth identity
+    if (args.ownerId !== identitySubject) {
+      throw new Error("Unauthorized");
+    }
 
     const now = Date.now();
+    
+    // Validate numeric fields
+    if (args.accumulatedDebt < 0) throw new Error("Debt cannot be negative");
+    
+    // Validate cabinet reference exists and belongs to same owner
+    const cabinetDoc = await ctx.db.get(args.cabinet);
+    if (!cabinetDoc) {
+      throw new Error("Referenced cabinet does not exist");
+    }
+    if (cabinetDoc.ownerId !== identitySubject) {
+      throw new Error("Referenced cabinet does not belong to this owner");
+    }
     
     // Determine the Convex document ID to use
     // Priority: explicit id > cloudId lookup via index > create new
@@ -135,8 +158,18 @@ export const deleteSubscriber = mutation({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Accept any ownerId from the client (dev mode)
-    const identitySubject = args.ownerId;
+    // Server-side auth: get real identity, never trust client-provided ownerId
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    const identitySubject = identity.subject;
+
+    // RBAC validation
+    await validatePermission(ctx, identitySubject, Permission.subscribersDelete);
+
+    // If client provided ownerId, validate it matches auth identity
+    if (args.ownerId !== identitySubject) {
+      throw new Error("Unauthorized");
+    }
 
     // Resolve the document ID: explicit id > cloudId lookup > error
     let documentId: any = null;
@@ -192,9 +225,9 @@ export const deleteSubscriber = mutation({
       };
     }
 
-    // Soft Delete: Set isDeleted = true instead of actual DELETE
+    // Soft Delete: Set inTrash = true instead of actual DELETE
     await ctx.db.patch(documentId, {
-      isDeleted: true,
+      inTrash: true,
       version: args.version,
       updatedAt: Date.now(),
     });
@@ -212,12 +245,12 @@ export const bulkSaveSubscribers = mutation({
       ownerId: v.string(),
       name: v.string(),
       code: v.string(),
-      cabinet: v.string(),
+      cabinet: v.id("cabinets"),
       phone: v.string(),
-      status: v.number(),
+      status: v.union(v.literal("inactive"), v.literal("active"), v.literal("suspended"), v.literal("disconnected")),
       startDate: v.number(),
       accumulatedDebt: v.number(),
-      tags: v.nullable(v.string()),
+      tags: v.optional(v.array(v.string())),
       notes: v.nullable(v.string()), // Allow null for notes
       lastModified: v.optional(v.number()),
       lastSyncedAt: v.optional(v.number()),
@@ -226,7 +259,7 @@ export const bulkSaveSubscribers = mutation({
       cloudId: v.optional(v.string()),
       deletedLocally: v.optional(v.boolean()),
       permissionsMask: v.optional(v.string()),
-      isDeleted: v.boolean(),
+      inTrash: v.boolean(),
       updatedAt: v.number(),
       createdAt: v.number(),
     })),
@@ -243,6 +276,22 @@ export const bulkSaveSubscribers = mutation({
     for (const subscriber of args.subscribers) {
       if (subscriber.ownerId !== identity.subject) {
         results.push({ success: false, error: "Unauthorized" });
+        continue;
+      }
+
+      // Validate cabinet reference exists and belongs to same owner
+      try {
+        const cabinetDoc = await ctx.db.get(subscriber.cabinet);
+        if (!cabinetDoc) {
+          results.push({ success: false, error: "Referenced cabinet does not exist" });
+          continue;
+        }
+        if (cabinetDoc.ownerId !== identity.subject) {
+          results.push({ success: false, error: "Referenced cabinet does not belong to this owner" });
+          continue;
+        }
+      } catch {
+        results.push({ success: false, error: "Invalid cabinet reference" });
         continue;
       }
 
@@ -276,7 +325,7 @@ export const bulkSaveSubscribers = mutation({
         }
       } else {
         const { id, ...data } = subscriber;
-        const newId = await ctx.db.insert("subscribers", { ...data, createdAt: now, updatedAt: now, version: 0 });
+        const newId = await ctx.db.insert("subscribers", { ...data, createdAt: now, updatedAt: now, version: 1 });
         results.push({ success: true, id: newId });
       }
     }

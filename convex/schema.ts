@@ -24,12 +24,12 @@ export default defineSchema({
     // Domain Data
     name: v.string(),
     code: v.string(), // Unique subscriber code
-    cabinet: v.string(),
+    cabinet: v.id("cabinets"),
     phone: v.string(),
-    status: v.number(), // 0: inactive, 1: active, 2: suspended, 3: disconnected
+    status: v.union(v.literal("inactive"), v.literal("active"), v.literal("suspended"), v.literal("disconnected")),
     startDate: v.number(), // Unix timestamp
     accumulatedDebt: v.number(),
-    tags: v.nullable(v.string()), // Stored as comma-separated or JSON
+    tags: v.optional(v.array(v.string())),
     notes: v.nullable(v.string()), // Allow null for notes
     
     // Entity identification
@@ -41,7 +41,6 @@ export default defineSchema({
     
     // Convex sync metadata
     version: v.number(), // LWW conflict resolution
-    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(), // Unix timestamp
     createdAt: v.number(), // Unix timestamp
   })
@@ -50,7 +49,10 @@ export default defineSchema({
     .index("by_cabinet", ["cabinet"])
     .index("by_status", ["status"])
     .index("by_cloudId", ["cloudId"]) // For efficient Convex ID lookup
-    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]), // Multi-tenant safe lookup
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]) // Multi-tenant safe lookup
+    .index("by_ownerId_cabinet", ["ownerId", "cabinet"])
+    .index("by_ownerId_status", ["ownerId", "status"])
+    .index("by_ownerId_code", ["ownerId", "code"]),
 
   // ============================================================
   // CABINETS - Generator cabinets/zones
@@ -77,7 +79,6 @@ export default defineSchema({
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
@@ -95,11 +96,11 @@ export default defineSchema({
     ownerId: v.string(),
     
     // Domain Data
-    subscriberId: v.string(), // UUID reference to subscriber
+    subscriberId: v.id("subscribers"), // Reference to subscriber
     amount: v.number(),
-    worker: v.string(), // Worker who collected the payment
+    worker: v.id("workers"), // Worker who collected the payment
     date: v.number(), // Unix timestamp
-    cabinet: v.string(),
+    cabinet: v.id("cabinets"),
     
     // Entity identification
     cloudId: v.optional(v.string()),
@@ -110,7 +111,6 @@ export default defineSchema({
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
@@ -120,7 +120,11 @@ export default defineSchema({
     .index("by_worker", ["worker"])
     .index("by_cabinet", ["cabinet"])
     .index("by_cloudId", ["cloudId"])
-    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"])
+    .index("by_ownerId_subscriberId", ["ownerId", "subscriberId"])
+    .index("by_ownerId_worker", ["ownerId", "worker"])
+    .index("by_ownerId_cabinet", ["ownerId", "cabinet"])
+    .index("by_ownerId_date", ["ownerId", "date"]),
 
   // ============================================================
   // WORKERS - Staff/collectors with roles and permissions
@@ -145,7 +149,6 @@ export default defineSchema({
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
@@ -153,7 +156,9 @@ export default defineSchema({
     .index("by_name", ["name"])
     .index("by_phone", ["phone"])
     .index("by_cloudId", ["cloudId"])
-    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"])
+    .index("by_ownerId_name", ["ownerId", "name"])
+    .index("by_ownerId_phone", ["ownerId", "phone"]),
 
   // ============================================================
   // AUDIT_LOG - Financial compliance audit trail
@@ -179,7 +184,6 @@ export default defineSchema({
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
@@ -189,7 +193,11 @@ export default defineSchema({
     .index("by_action", ["action"])
     .index("by_timestamp", ["timestamp"])
     .index("by_cloudId", ["cloudId"])
-    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"])
+    .index("by_ownerId_user", ["ownerId", "user"])
+    .index("by_ownerId_action", ["ownerId", "action"])
+    .index("by_ownerId_target", ["ownerId", "target"])
+    .index("by_ownerId_timestamp", ["ownerId", "timestamp"]),
 
   // ============================================================
   // GENERATOR_SETTINGS - Per-tenant singleton settings
@@ -204,17 +212,21 @@ export default defineSchema({
     address: v.string(),
     logoPath: v.optional(v.string()),
     
+    // Entity identification
+    cloudId: v.optional(v.string()),
+    
     // Trash state machine
     inTrash: v.optional(v.boolean()),
     trashMovedAt: v.optional(v.number()),
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
-    .index("by_ownerId", ["ownerId"]),
+    .index("by_ownerId", ["ownerId"])
+    .index("by_cloudId", ["cloudId"])
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
 
   // ============================================================
   // WHATSAPP_TEMPLATES - Message templates for WhatsApp bridge
@@ -226,7 +238,7 @@ export default defineSchema({
     // Domain Data
     title: v.string(),
     content: v.string(),
-    isActive: v.number(), // 0 or 1
+    isActive: v.boolean(),
     
     // Entity identification
     cloudId: v.optional(v.string()),
@@ -237,14 +249,14 @@ export default defineSchema({
     
     // Convex sync metadata
     version: v.number(),
-    isDeleted: v.optional(v.boolean()), // Legacy: use inTrash instead
     updatedAt: v.number(),
     createdAt: v.number(),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_isActive", ["isActive"])
     .index("by_cloudId", ["cloudId"])
-    .index("by_ownerId_cloudId", ["ownerId", "cloudId"]),
+    .index("by_ownerId_cloudId", ["ownerId", "cloudId"])
+    .index("by_ownerId_isActive", ["ownerId", "isActive"]),
 
   // ============================================================
   // EVENT_LOG - Append-only event log for event-sourced sync
@@ -270,7 +282,8 @@ export default defineSchema({
     .index("by_ownerId", ["ownerId"])
     .index("by_entityType_entityId", ["entityType", "entityId"])
     .index("by_occurredAt", ["occurredAt"])
-    .index("by_ownerId_occurredAt", ["ownerId", "occurredAt"]),
+    .index("by_ownerId_occurredAt", ["ownerId", "occurredAt"])
+    .index("by_ownerId_entityType_entityId", ["ownerId", "entityType", "entityId"]),
 
   // ============================================================
   // TRASH - Bin for soft-deleted items before permanent deletion

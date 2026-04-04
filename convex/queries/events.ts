@@ -2,6 +2,7 @@
  * Event Queries for Convex
  * 
  * Queries for retrieving events from the event log for down-sync.
+ * All queries enforce authentication and tenant isolation.
  */
 
 import { query } from "../_generated/server";
@@ -17,6 +18,10 @@ export const getEventsSince = query({
     since: v.number(), // Unix timestamp
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
+
     return await ctx.db
       .query("eventLog")
       .withIndex("by_ownerId_occurredAt", (q) => 
@@ -37,6 +42,10 @@ export const getEventsForEntity = query({
     entityId: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return []; }
+
     return await ctx.db
       .query("eventLog")
       .withIndex("by_entityType_entityId", (q) => 
@@ -57,6 +66,10 @@ export const getLatestEventForEntity = query({
     entityId: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return null; }
+
     const events = await ctx.db
       .query("eventLog")
       .withIndex("by_entityType_entityId", (q) => 
@@ -82,6 +95,10 @@ export const getEventCount = query({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    if (args.ownerId !== identity.subject) { return { count: 0 }; }
+
     const events = await ctx.db
       .query("eventLog")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))

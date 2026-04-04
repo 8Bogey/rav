@@ -6,6 +6,7 @@
 
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { validatePermission, Permission } from "../auth/rbac";
 
 export const savePayment = mutation({
   args: {
@@ -13,11 +14,11 @@ export const savePayment = mutation({
     convexId: v.optional(v.string()), // Client's local ID or Convex mapping
     version: v.number(),
     ownerId: v.string(),
-    subscriberId: v.string(),
+    subscriberId: v.id("subscribers"),
     amount: v.number(),
-    worker: v.string(),
+    worker: v.id("workers"),
     date: v.number(),
-    cabinet: v.string(),
+    cabinet: v.id("cabinets"),
     lastModified: v.optional(v.number()),
     lastSyncedAt: v.optional(v.number()),
     syncStatus: v.optional(v.string()),
@@ -25,16 +26,49 @@ export const savePayment = mutation({
     cloudId: v.optional(v.string()),
     deletedLocally: v.optional(v.boolean()),
     permissionsMask: v.optional(v.string()),
-    isDeleted: v.boolean(),
+    inTrash: v.boolean(),
     updatedAt: v.number(),
     createdAt: v.number(),
   },
   handler: async (ctx, args) => {
-    // Accept any authenticated user or demo mode
-    // In dev mode, we allow any ownerId that matches the pattern
-    const identitySubject = args.ownerId; // Trust the ownerId from the client for now
+    // Server-side auth: get real identity
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    const identitySubject = identity.subject;
+
+    // RBAC validation
+    await validatePermission(ctx, identitySubject, Permission.paymentsWrite);
+
+    if (args.amount <= 0) throw new Error("Payment amount must be positive");
 
     const now = Date.now();
+    
+    // Validate subscriber reference exists and belongs to same owner
+    const subscriberDoc = await ctx.db.get(args.subscriberId);
+    if (!subscriberDoc) {
+      throw new Error("Referenced subscriber does not exist");
+    }
+    if (subscriberDoc.ownerId !== identitySubject) {
+      throw new Error("Referenced subscriber does not belong to this owner");
+    }
+
+    // Validate worker reference exists and belongs to same owner
+    const workerDoc = await ctx.db.get(args.worker);
+    if (!workerDoc) {
+      throw new Error("Referenced worker does not exist");
+    }
+    if (workerDoc.ownerId !== identitySubject) {
+      throw new Error("Referenced worker does not belong to this owner");
+    }
+
+    // Validate cabinet reference exists and belongs to same owner
+    const cabinetDoc = await ctx.db.get(args.cabinet);
+    if (!cabinetDoc) {
+      throw new Error("Referenced cabinet does not exist");
+    }
+    if (cabinetDoc.ownerId !== identitySubject) {
+      throw new Error("Referenced cabinet does not belong to this owner");
+    }
     
     // Determine Convex document ID
     // Priority: explicit id > cloudId lookup via index > create new
@@ -118,7 +152,13 @@ export const deletePayment = mutation({
     ownerId: v.string(),
   },
   handler: async (ctx, args) => {
-    const identitySubject = args.ownerId;
+    // Server-side auth: get real identity
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) { throw new Error("Unauthenticated"); }
+    const identitySubject = identity.subject;
+
+    // RBAC validation
+    await validatePermission(ctx, identitySubject, Permission.paymentsDelete);
 
     // Resolve the document ID: explicit id > cloudId lookup > error
     let documentId: any = null;
@@ -174,7 +214,7 @@ export const deletePayment = mutation({
 
     // Soft Delete
     await ctx.db.patch(documentId, {
-      isDeleted: true,
+      inTrash: true,
       version: args.version,
       updatedAt: Date.now(),
     });

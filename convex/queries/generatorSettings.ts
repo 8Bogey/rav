@@ -23,7 +23,7 @@ export const getGeneratorSettings = query({
     const results = await ctx.db
       .query("generatorSettings")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .take(1);
 
     return results.length > 0 ? results[0] : null;
@@ -47,7 +47,7 @@ export const getGeneratorSettingsById = query({
     }
 
     const settings = await ctx.db.get(args.id);
-    if (!settings || settings.isDeleted || settings.ownerId !== args.ownerId) {
+    if (!settings || settings.inTrash || settings.ownerId !== args.ownerId) {
       return null;
     }
 
