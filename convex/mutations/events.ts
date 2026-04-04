@@ -8,8 +8,26 @@
  * strict tenant isolation. No query can access another owner's data.
  */
 
-import { mutation } from "../_generated/server";
+import { mutation, MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
+
+type EventType =
+  | 'ENTITY_CREATED'
+  | 'ENTITY_UPDATED'
+  | 'ENTITY_MOVED_TO_TRASH'
+  | 'ENTITY_RESTORED_FROM_TRASH'
+  | 'ENTITY_PERMANENTLY_DELETED';
+
+interface SyncEvent {
+  ownerId: string;
+  eventType: EventType;
+  entityType: string;
+  entityId: string;
+  payload: string;
+  version: number;
+  occurredAt: number;
+  recordedBy: string;
+}
 
 /**
  * Record an event in the event log.
@@ -27,6 +45,13 @@ export const recordEvent = mutation({
     recordedBy: v.string(), // Device/client identifier
   },
   handler: async (ctx, args) => {
+    // Validate payload is valid JSON
+    try {
+      JSON.parse(args.payload);
+    } catch {
+      throw new Error("Invalid JSON in payload");
+    }
+
     const now = Date.now();
     
     // Append event to event log (always succeeds - append only)
@@ -46,7 +71,7 @@ export const recordEvent = mutation({
  * Internal helper - applies an event to the appropriate state table.
  * This function routes events to their specific handlers based on event type.
  */
-async function applyEvent(ctx: any, event: any) {
+async function applyEvent(ctx: MutationCtx, event: SyncEvent) {
   switch (event.eventType) {
     case 'ENTITY_CREATED':
       await handleCreateEvent(ctx, event);
@@ -75,7 +100,7 @@ async function applyEvent(ctx: any, event: any) {
  * 
  * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
-async function handleCreateEvent(ctx: any, event: any) {
+async function handleCreateEvent(ctx: MutationCtx, event: SyncEvent) {
   const { entityType, entityId, payload, ownerId, version } = event;
   const data = JSON.parse(payload);
   
@@ -113,7 +138,7 @@ async function handleCreateEvent(ctx: any, event: any) {
  * 
  * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
-async function handleUpdateEvent(ctx: any, event: any) {
+async function handleUpdateEvent(ctx: MutationCtx, event: SyncEvent) {
   const { entityType, entityId, payload, ownerId, version } = event;
   const data = JSON.parse(payload);
   
@@ -146,7 +171,7 @@ async function handleUpdateEvent(ctx: any, event: any) {
  * 
  * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
-async function handleTrashEvent(ctx: any, event: any) {
+async function handleTrashEvent(ctx: MutationCtx, event: SyncEvent) {
   const { entityType, entityId, ownerId, version } = event;
   
   // Find the document scoped to owner
@@ -179,7 +204,7 @@ async function handleTrashEvent(ctx: any, event: any) {
  * 
  * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
-async function handleRestoreEvent(ctx: any, event: any) {
+async function handleRestoreEvent(ctx: MutationCtx, event: SyncEvent) {
   const { entityType, entityId, ownerId, version } = event;
   
   // Find the document scoped to owner
@@ -212,7 +237,7 @@ async function handleRestoreEvent(ctx: any, event: any) {
  * 
  * Multi-tenancy: Queries with ownerId to prevent cross-tenant access.
  */
-async function handlePermanentDeleteEvent(ctx: any, event: any) {
+async function handlePermanentDeleteEvent(ctx: MutationCtx, event: SyncEvent) {
   const { entityType, entityId, ownerId } = event;
   
   // Find the document scoped to owner

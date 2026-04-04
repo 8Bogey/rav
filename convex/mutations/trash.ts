@@ -40,14 +40,13 @@ export const moveToTrash = mutation({
     // Mark entity as in trash
     const entity = await ctx.db
       .query(args.entityType)
-      .withIndex("by_cloudId", (q) => q.eq("cloudId", args.entityId))
+      .withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", args.ownerId).eq("cloudId", args.entityId))
       .first();
 
     if (entity) {
       await ctx.db.patch(entity._id, {
         inTrash: true,
         trashMovedAt: now,
-        isDeleted: true,
       });
     }
 
@@ -86,14 +85,13 @@ export const restoreFromTrash = mutation({
     // Restore entity
     const entity = await ctx.db
       .query(args.entityType)
-      .withIndex("by_cloudId", (q) => q.eq("cloudId", args.entityId))
+      .withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", args.ownerId).eq("cloudId", args.entityId))
       .first();
 
     if (entity) {
       await ctx.db.patch(entity._id, {
         inTrash: false,
         trashMovedAt: undefined,
-        isDeleted: false,
       });
     }
 
@@ -130,7 +128,7 @@ export const permanentlyDelete = mutation({
     // Delete the entity
     const entity = await ctx.db
       .query(args.entityType)
-      .withIndex("by_cloudId", (q) => q.eq("cloudId", args.entityId))
+      .withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", args.ownerId).eq("cloudId", args.entityId))
       .first();
 
     if (entity) {
@@ -159,7 +157,7 @@ export const emptyTrash = mutation({
       // Delete the entity if it exists
       const entity = await ctx.db
         .query(item.entityType)
-        .withIndex("by_cloudId", (q) => q.eq("cloudId", item.entityId))
+        .withIndex("by_ownerId_cloudId", (q) => q.eq("ownerId", args.ownerId).eq("cloudId", item.entityId))
         .first();
 
       if (entity) {

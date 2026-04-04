@@ -141,7 +141,7 @@ export async function filterByRole(
     return ctx.db
       .query(tableName)
       .withIndex("by_ownerId", (q: any) => q.eq("ownerId", ownerId))
-      .filter((q: any) => q.eq(q.field("isDeleted"), false));
+      .filter((q: any) => q.neq(q.field("inTrash"), true));
   }
 
   // Workers need additional filtering based on assignment
@@ -149,7 +149,7 @@ export async function filterByRole(
   return ctx.db
     .query(tableName)
     .withIndex("by_ownerId", (q: any) => q.eq("ownerId", ownerId))
-    .filter((q: any) => q.eq(q.field("isDeleted"), false));
+    .filter((q: any) => q.neq(q.field("inTrash"), true));
 }
 
 /**

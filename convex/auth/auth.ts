@@ -113,7 +113,7 @@ export const listUsers = query({
     const workers = await ctx.db
       .query("workers")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", identity.subject))
-      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .filter((q) => q.neq(q.field("inTrash"), true))
       .collect();
 
     return workers.map((w) => ({
@@ -151,7 +151,7 @@ export const createUser = mutation({
       permissions: JSON.stringify(args.permissions),
       todayCollected: 0,
       monthTotal: 0,
-      isDeleted: false,
+      inTrash: false,
       version: 0,
       updatedAt: Date.now(),
       createdAt: Date.now(),
@@ -220,7 +220,7 @@ export const deleteUser = mutation({
 
     // Soft delete
     await ctx.db.patch(args.workerId, {
-      isDeleted: true,
+      inTrash: true,
       version: worker.version + 1,
       updatedAt: Date.now(),
     });
