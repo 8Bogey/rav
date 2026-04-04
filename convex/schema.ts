@@ -24,9 +24,9 @@ export default defineSchema({
     // Domain Data
     name: v.string(),
     code: v.string(), // Unique subscriber code
-    cabinet: v.id("cabinets"),
+    cabinet: v.union(v.id("cabinets"), v.string()), // Legacy data may be string letter
     phone: v.string(),
-    status: v.union(v.literal("inactive"), v.literal("active"), v.literal("suspended"), v.literal("disconnected")),
+    status: v.union(v.literal("inactive"), v.literal("active"), v.literal("suspended"), v.literal("disconnected"), v.number()), // Legacy data may be numeric
     startDate: v.number(), // Unix timestamp
     accumulatedDebt: v.number(),
     tags: v.optional(v.array(v.string())),
@@ -76,6 +76,7 @@ export default defineSchema({
     // Trash state machine
     inTrash: v.optional(v.boolean()),
     trashMovedAt: v.optional(v.number()),
+    isDeleted: v.optional(v.boolean()), // Legacy field - migrate to inTrash
     
     // Convex sync metadata
     version: v.number(),
