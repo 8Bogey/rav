@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
-import '../../../core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 
 /// State for payments
 class PaymentsState {
@@ -47,7 +47,7 @@ class PaymentsState {
 }
 
 /// Notifier for managing payments state
-/// 
+///
 /// This notifier now uses PaymentsService instead of directly accessing DAOs
 /// to provide a consistent service layer for all database operations.
 class PaymentsNotifier extends StateNotifier<PaymentsState> {
@@ -135,9 +135,9 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
         cabinet: cabinet,
         date: date ?? DateTime.now(),
         version: 1,
-        isDeleted: false,
+        inTrash: false,
       );
-      
+
       final id = await _service.addPayment(payment, ownerId: _ownerId);
 
       await loadPayments();
@@ -177,7 +177,8 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
 
   /// Get payments by subscriber ID
   Future<List<Payment>> getPaymentsBySubscriberId(String subscriberId) async {
-    return await _service.getPaymentsBySubscriberId(subscriberId, ownerId: _ownerId);
+    return await _service.getPaymentsBySubscriberId(subscriberId,
+        ownerId: _ownerId);
   }
 }
 
@@ -200,7 +201,8 @@ final paymentsBySubscriberProvider =
     FutureProvider.family<List<Payment>, String>((ref, subscriberId) async {
   final service = ref.watch(paymentsServiceProvider);
   final ownerId = ref.watch(currentUserIdProvider) ?? '';
-  return await service.getPaymentsBySubscriberId(subscriberId, ownerId: ownerId);
+  return await service.getPaymentsBySubscriberId(subscriberId,
+      ownerId: ownerId);
 });
 
 /// Provider for total payments amount
@@ -213,6 +215,7 @@ final totalPaymentsProvider = Provider<double>((ref) {
 final monthlyPaymentsProvider = Provider.family<double, String>((ref, month) {
   final payments = ref.watch(paymentsProvider).payments;
   return payments
-      .where((p) => '${p.date.year}-${p.date.month.toString().padLeft(2, '0')}' == month)
+      .where((p) =>
+          '${p.date.year}-${p.date.month.toString().padLeft(2, '0')}' == month)
       .fold(0.0, (double sum, p) => sum + p.amount);
 });

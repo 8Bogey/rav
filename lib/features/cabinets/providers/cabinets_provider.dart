@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/database/database_provider.dart';
+import '../../../core/database/database_provider.dart'
+    hide currentUserIdProvider;
 import '../../../core/database/app_database.dart';
 import '../../../core/services/cabinets_service.dart';
 import '../../../core/services/service_providers.dart';
-import '../../../core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 
 /// State for cabinets list
 class CabinetsState {
@@ -36,7 +37,7 @@ class CabinetsState {
 }
 
 /// Notifier for managing cabinets state
-/// 
+///
 /// This notifier now uses CabinetsService instead of directly accessing DAOs
 /// to provide a consistent service layer for all database operations.
 class CabinetsNotifier extends StateNotifier<CabinetsState> {
@@ -111,9 +112,9 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
         delayedSubscribers: delayedSubscribers,
         completionDate: completionDate,
         version: 1,
-        isDeleted: false,
+        inTrash: false,
       );
-      
+
       final id = await _service.addCabinet(cabinet, ownerId: _ownerId);
 
       await loadCabinets();
@@ -160,7 +161,9 @@ class CabinetsNotifier extends StateNotifier<CabinetsState> {
   Future<Cabinet?> getCabinetByLetter(String letter) async {
     final cabinets = await _service.getAllCabinets(ownerId: _ownerId);
     try {
-      return cabinets.firstWhere((c) => (c.letter?.toUpperCase() ?? c.name.toUpperCase()) == letter.toUpperCase());
+      return cabinets.firstWhere((c) =>
+          (c.letter?.toUpperCase() ?? c.name.toUpperCase()) ==
+          letter.toUpperCase());
     } catch (e) {
       return null;
     }

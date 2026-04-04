@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
-import '../../../core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 
 /// Audit action types
 enum AuditAction {
@@ -121,7 +121,7 @@ class AuditLogState {
 }
 
 /// Notifier for managing audit log state
-/// 
+///
 /// This notifier now uses AuditLogService instead of directly accessing DAOs
 /// to provide a consistent service layer for all database operations.
 class AuditLogNotifier extends StateNotifier<AuditLogState> {
@@ -223,9 +223,9 @@ class AuditLogNotifier extends StateNotifier<AuditLogState> {
         type: type ?? 'user',
         timestamp: DateTime.now(),
         version: 1,
-        isDeleted: false,
+        inTrash: false,
       );
-      
+
       final id = await _service.addAuditLogEntry(entry);
 
       // Refresh the list

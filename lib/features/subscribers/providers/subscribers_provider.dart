@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show WidgetsBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
-import 'package:mawlid_al_dhaki/core/auth/auth_provider.dart';
-import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart' as demo_auth;
+import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 
 /// State for subscribers list
 class SubscribersState {
@@ -12,7 +10,7 @@ class SubscribersState {
   final bool isLoading;
   final String? error;
   final String searchQuery;
-  final int? statusFilter; // null = all, 0-3 = specific status
+  final String? statusFilter; // null = all, 'active', 'inactive', etc.
   final String? cabinetFilter; // null = all cabinets
 
   const SubscribersState({
@@ -29,7 +27,7 @@ class SubscribersState {
     bool? isLoading,
     String? error,
     String? searchQuery,
-    int? statusFilter,
+    String? statusFilter,
     String? cabinetFilter,
     bool clearError = false,
     bool clearStatusFilter = false,
@@ -49,7 +47,7 @@ class SubscribersState {
 }
 
 /// Notifier for managing subscribers state
-/// 
+///
 /// This notifier now uses SubscribersService instead of directly accessing DAOs
 /// to provide a consistent service layer for all database operations.
 class SubscribersNotifier extends StateNotifier<SubscribersState> {
@@ -58,26 +56,12 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
 
   SubscribersNotifier(this._ref) : super(const SubscribersState()) {
     _service = _ref.read(subscribersServiceProvider);
-    debugPrint('[SubscribersNotifier] Initialized, waiting for auth state');
-    
-    // Check if user is already authenticated on init - load immediately if so
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = _ref.read(demo_auth.authProvider);
-      debugPrint('[SubscribersNotifier] Initial auth check: isAuthenticated=${authState.isAuthenticated}, userId=${authState.userId}');
-      if (authState.isAuthenticated && authState.userId != null) {
-        debugPrint('[SubscribersNotifier] User already authenticated, loading subscribers immediately');
-        loadSubscribers();
-      }
-    });
-    
-    // Listen for auth state changes and reload when user becomes authenticated
-    _ref.listen<demo_auth.AuthState>(demo_auth.authProvider, (previous, next) {
-      debugPrint('[SubscribersNotifier] Auth state changed: isAuthenticated=${next.isAuthenticated}, userId=${next.userId}');
+
+    // Listen for auth state changes
+    _ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isAuthenticated && next.userId != null) {
-        debugPrint('[SubscribersNotifier] User authenticated, loading subscribers');
         loadSubscribers();
       } else if (!next.isAuthenticated) {
-        debugPrint('[SubscribersNotifier] User logged out, clearing subscribers');
         state = const SubscribersState(subscribers: []);
       }
     });
@@ -137,7 +121,7 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
   }
 
   /// Filter subscribers by status
-  Future<void> filterByStatus(int? status) async {
+  Future<void> filterByStatus(String? status) async {
     state = state.copyWith(isLoading: true, clearError: true);
     final ownerId = _ref.read(currentUserIdProvider) ?? '';
 
@@ -150,7 +134,8 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
 
       // Apply cabinet filter if set
       if (state.cabinetFilter != null) {
-        subscribers = subscribers.where((s) => s.cabinet == state.cabinetFilter).toList();
+        subscribers =
+            subscribers.where((s) => s.cabinet == state.cabinetFilter).toList();
       }
 
       state = state.copyWith(
@@ -181,7 +166,8 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
 
       // Apply status filter if set
       if (state.statusFilter != null) {
-        subscribers = subscribers.where((s) => s.status == state.statusFilter).toList();
+        subscribers =
+            subscribers.where((s) => s.status == state.statusFilter).toList();
       }
 
       state = state.copyWith(
@@ -227,7 +213,7 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
     required String code,
     required String cabinet,
     required String phone,
-    required int status,
+    required String status,
     required DateTime startDate,
     double accumulatedDebt = 0,
     String? tags,
@@ -248,9 +234,9 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
         tags: tags,
         notes: notes,
         version: 1,
-        isDeleted: false,
+        inTrash: false,
       );
-      
+
       final id = await _service.addSubscriber(subscriber, ownerId: ownerId);
 
       // Refresh the list
@@ -319,12 +305,12 @@ final subscriberByIdProvider =
 });
 
 /// Provider for subscribers count by status
-final subscribersCountProvider = FutureProvider<Map<int, int>>((ref) async {
+final subscribersCountProvider = FutureProvider<Map<String, int>>((ref) async {
   final service = ref.watch(subscribersServiceProvider);
   final ownerId = ref.read(currentUserIdProvider) ?? '';
   final subscribers = await service.getAllSubscribers(ownerId: ownerId);
 
-  final counts = <int, int>{};
+  final counts = <String, int>{};
   for (var subscriber in subscribers) {
     counts[subscriber.status] = (counts[subscriber.status] ?? 0) + 1;
   }

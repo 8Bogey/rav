@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
-import '../../../core/auth/auth_provider.dart';
+import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 
 /// Worker permissions model
 class WorkerPermissions {
@@ -90,7 +90,7 @@ class WorkersState {
 }
 
 /// Notifier for managing workers state
-/// 
+///
 /// This notifier now uses WorkersService instead of directly accessing DAOs
 /// to provide a consistent service layer for all database operations.
 class WorkersNotifier extends StateNotifier<WorkersState> {
@@ -141,9 +141,9 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
         todayCollected: todayCollected,
         monthTotal: monthTotal,
         version: 1,
-        isDeleted: false,
+        inTrash: false,
       );
-      
+
       final id = await _service.addWorker(worker, ownerId: _ownerId);
 
       await loadWorkers();
