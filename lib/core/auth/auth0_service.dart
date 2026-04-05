@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform, Process, HttpServer, InternetAddress, HttpRequest;
+import 'dart:io'
+    show Platform, Process, HttpServer, InternetAddress, HttpRequest;
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +11,7 @@ import 'dart:math';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 
 /// Auth0 Configuration
-/// 
+///
 /// These values come from Auth0 dashboard.
 /// - Domain: dev-cqkioj1eiksobor3.us.auth0.com
 /// - Client ID: DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB
@@ -18,13 +19,13 @@ import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 class Auth0Config {
   static const String domain = 'dev-cqkioj1eiksobor3.us.auth0.com';
   static const String clientId = 'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB';
-  
+
   // Convex deployment URL as audience (must match Convex deployment)
   static const String audience = 'https://hearty-meadowlark-390.convex.cloud';
-  
+
   // Callback URL for Native app
   static const String redirectUri = 'http://127.0.0.1:5173/callback';
-  
+
   // Auth0 URLs
   static const String tokenUrl = 'https://$domain/oauth/token';
   static const String loginUrl = 'https://$domain/authorize';
@@ -33,9 +34,11 @@ class Auth0Config {
 /// Generate random string for PKCE (only unreserved characters)
 String _generateRandomString(int length) {
   // Use only unreserved characters: A-Z, a-z, 0-9, -, _, ., ~
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   final random = Random.secure();
-  return List.generate(length, (_) => chars[random.nextInt(chars.length)]).join();
+  return List.generate(length, (_) => chars[random.nextInt(chars.length)])
+      .join();
 }
 
 /// Generate code verifier for PKCE (43-128 characters, only unreserved)
@@ -48,53 +51,54 @@ String _generateCodeChallenge(String codeVerifier) {
   final bytes = utf8.encode(codeVerifier);
   final digest = sha256.convert(bytes);
   // Use base64Url encoding without padding, then make URL safe
-  return base64Url.encode(digest.bytes)
+  return base64Url
+      .encode(digest.bytes)
       .replaceAll('+', '-')
       .replaceAll('/', '_')
       .replaceAll('=', '');
 }
 
 /// Auth0 Service for handling authentication
-/// 
+///
 /// Uses PKCE flow with local callback server for desktop apps.
 class Auth0Service {
   static Auth0Service? _instance;
   HttpServer? _callbackServer;
   String? _codeVerifier;
   Completer<String?>? _authCodeCompleter;
-  
+
   String? _accessToken;
   String? _idToken;
   String? _userId;
-  
+
   Auth0Service._();
-  
+
   static Auth0Service get instance {
     _instance ??= Auth0Service._();
     return _instance!;
   }
-  
+
   /// Initialize Auth0 service
   Future<void> initialize() async {
     debugPrint('[Auth0Service] Initialized with PKCE flow');
   }
-  
+
   /// Check if user is logged in
   bool get isAuthenticated => _accessToken != null;
-  
+
   /// Get current user ID (from Auth0 subject)
   String? get userId => _userId;
-  
+
   /// Get the JWT token for Convex authentication
   String? get accessToken => _accessToken;
-  
+
   /// Login with Auth0 using PKCE flow
   Future<Auth0Result> login() async {
     try {
       // Generate PKCE values
       _codeVerifier = _generateCodeVerifier();
       final codeChallenge = _generateCodeChallenge(_codeVerifier!);
-      
+
       // Build the authorization URL with PKCE
       final Map<String, String> queryParams = {
         'response_type': 'code',
@@ -106,17 +110,18 @@ class Auth0Service {
         'code_challenge_method': 'S256',
         'state': _generateRandomString(32),
       };
-      
+
       final authUrl = Uri.parse(Auth0Config.loginUrl).replace(
         queryParameters: queryParams,
       );
-      
-      debugPrint('[Auth0Service] Starting PKCE flow, callback: ${Auth0Config.redirectUri}');
-      
+
+      debugPrint(
+          '[Auth0Service] Starting PKCE flow, callback: ${Auth0Config.redirectUri}');
+
       // Start local callback server
       final server = await _startCallbackServer();
       _callbackServer = server;
-      
+
       // Open browser for login
       if (await canLaunchUrl(authUrl)) {
         await launchUrl(authUrl);
@@ -128,13 +133,13 @@ class Auth0Service {
       } else if (Platform.isMacOS) {
         await Process.run('open', [authUrl.toString()]);
       }
-      
+
       // Wait for callback with timeout
       final authCode = await _waitForCallback(timeoutSeconds: 120);
-      
+
       // Stop server
       await _stopCallbackServer();
-      
+
       if (authCode == null) {
         return Auth0Result(
           success: false,
@@ -142,10 +147,9 @@ class Auth0Service {
           fallbackToDemo: true,
         );
       }
-      
+
       // Exchange code for tokens
       return await _exchangeCodeForTokens(authCode);
-      
     } catch (e) {
       debugPrint('[Auth0Service] Login error: $e');
       await _stopCallbackServer();
@@ -156,7 +160,7 @@ class Auth0Service {
       );
     }
   }
-  
+
   /// Start local server to receive callback
   Future<HttpServer> _startCallbackServer() async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 5173);
@@ -164,25 +168,25 @@ class Auth0Service {
     debugPrint('[Auth0Service] Callback server started on port 5173');
     return server;
   }
-  
+
   /// Handle incoming callback request
   void _handleCallbackRequest(HttpRequest request) async {
     final uri = request.uri;
     debugPrint('[Auth0Service] Received callback: ${uri.query}');
-    
+
     final code = uri.queryParameters['code'];
     final error = uri.queryParameters['error'];
-    
+
     if (code != null) {
       _authCodeCompleter?.complete(code);
     } else if (error != null) {
       _authCodeCompleter?.completeError(Exception(error));
     }
-    
+
     // Send response to close the window
     request.response.headers.set('Content-Type', 'text/html; charset=utf-8');
     request.response.headers.set('Content-Length', '400');
-    
+
     const htmlContent = '''
 <!DOCTYPE html>
 <html>
@@ -238,15 +242,15 @@ class Auth0Service {
 </body>
 </html>
 ''';
-    
+
     request.response.write(htmlContent);
     await request.response.close();
   }
-  
+
   /// Wait for authorization code
   Future<String?> _waitForCallback({int timeoutSeconds = 120}) async {
     _authCodeCompleter = Completer<String?>();
-    
+
     try {
       return await _authCodeCompleter!.future.timeout(
         Duration(seconds: timeoutSeconds),
@@ -260,7 +264,7 @@ class Auth0Service {
       return null;
     }
   }
-  
+
   /// Stop callback server
   Future<void> _stopCallbackServer() async {
     if (_callbackServer != null) {
@@ -269,12 +273,12 @@ class Auth0Service {
       debugPrint('[Auth0Service] Callback server stopped');
     }
   }
-  
+
   /// Exchange authorization code for tokens
   Future<Auth0Result> _exchangeCodeForTokens(String code) async {
     try {
       debugPrint('[Auth0Service] Exchanging code for tokens...');
-      
+
       // Make HTTP POST to Auth0 token endpoint
       final response = await http.post(
         Uri.parse(Auth0Config.tokenUrl),
@@ -289,49 +293,55 @@ class Auth0Service {
           'code_verifier': _codeVerifier,
         },
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _accessToken = data['access_token'];
         _idToken = data['id_token'];
-        
+
         // Extract user ID from ID token (JWT subject claim)
         if (_idToken != null) {
           _userId = _extractSubjectFromIdToken(_idToken!);
         }
-        
+
         // Save tokens to local storage
         await _saveTokens();
-        
+
         // Set the auth token in Convex config for API calls
         if (_accessToken != null) {
           try {
             // Import and set auth token in Convex config
             await _setConvexAuthToken(_accessToken!);
           } catch (e) {
-            debugPrint('[Auth0Service] Warning: Failed to set Convex auth token: $e');
+            debugPrint(
+                '[Auth0Service] Warning: Failed to set Convex auth token: $e');
           }
         }
-        
-        debugPrint('[Auth0Service] Token exchange successful, userId: $_userId');
-        
+
+        debugPrint(
+            '[Auth0Service] Token exchange successful, userId: $_userId');
+
         return Auth0Result(
           success: true,
           userId: _userId,
           accessToken: _accessToken,
         );
       } else {
-        debugPrint('[Auth0Service] Token exchange failed: ${response.statusCode} ${response.body}');
-        
+        debugPrint(
+            '[Auth0Service] Token exchange failed: ${response.statusCode} ${response.body}');
+
         // Return actual error instead of silently falling back to demo mode
         String errorMessage;
         try {
           final errorData = jsonDecode(response.body);
-          errorMessage = errorData['error_description'] ?? errorData['error'] ?? 'Token exchange failed';
+          errorMessage = errorData['error_description'] ??
+              errorData['error'] ??
+              'Token exchange failed';
         } catch (_) {
-          errorMessage = 'Token exchange failed with status ${response.statusCode}';
+          errorMessage =
+              'Token exchange failed with status ${response.statusCode}';
         }
-        
+
         return Auth0Result(
           success: false,
           error: errorMessage,
@@ -340,7 +350,7 @@ class Auth0Service {
       }
     } catch (e) {
       debugPrint('[Auth0Service] Token exchange error: $e');
-      
+
       // Return actual error - don't silently create fake tokens
       return Auth0Result(
         success: false,
@@ -349,14 +359,14 @@ class Auth0Service {
       );
     }
   }
-  
+
   /// Extract subject claim from JWT ID token
   String? _extractSubjectFromIdToken(String idToken) {
     try {
       // JWT format: header.payload.signature
       final parts = idToken.split('.');
       if (parts.length < 2) return null;
-      
+
       // Decode the payload (base64url)
       final payload = parts[1];
       // Add padding if needed
@@ -364,7 +374,7 @@ class Auth0Service {
       final paddedPayload = payload + ('=' * paddedLength);
       final decoded = utf8.decode(base64Url.decode(paddedPayload));
       final payloadJson = jsonDecode(decoded);
-      
+
       // Return the subject claim
       return payloadJson['sub'];
     } catch (e) {
@@ -372,14 +382,14 @@ class Auth0Service {
       return null;
     }
   }
-  
+
   /// Set token directly (for testing)
   Future<void> setToken(String token, String? userId) async {
     _accessToken = token;
     _userId = userId ?? 'manual-${DateTime.now().millisecondsSinceEpoch}';
     await _saveTokens();
   }
-  
+
   /// Logout from Auth0
   Future<void> logout() async {
     try {
@@ -387,7 +397,7 @@ class Auth0Service {
       final logoutUrl = 'https://${Auth0Config.domain}/v2/logout?'
           'client_id=${Auth0Config.clientId}&'
           'returnTo=${Auth0Config.redirectUri}';
-      
+
       try {
         final uri = Uri.parse(logoutUrl);
         if (await canLaunchUrl(uri)) {
@@ -398,47 +408,59 @@ class Auth0Service {
       } catch (_) {
         // Ignore errors
       }
-      
+
       _accessToken = null;
       _idToken = null;
       _userId = null;
-      
+
       await _clearTokens();
-      
+
       debugPrint('[Auth0Service] Logged out');
     } catch (e) {
       debugPrint('[Auth0Service] Logout error: $e');
     }
   }
-  
+
   /// Check for existing session and restore tokens
   Future<bool> checkExistingSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedToken = prefs.getString('auth0_access_token');
       final savedUserId = prefs.getString('auth0_user_id');
-      
-      if (savedToken != null && savedUserId != null) {
-        _accessToken = savedToken;
-        _userId = savedUserId;
-        
-        // Also set the Convex auth token for API calls
-        try {
-          await _setConvexAuthToken(_accessToken!);
-        } catch (e) {
-          debugPrint('[Auth0Service] Warning: Failed to set Convex auth token on session restore: $e');
-        }
-        
-        debugPrint('[Auth0Service] Restored session for user: $_userId');
-        return true;
+
+      // Validate tokens are not empty or corrupted
+      if (savedToken == null ||
+          savedToken.trim().isEmpty ||
+          savedUserId == null ||
+          savedUserId.trim().isEmpty) {
+        return false;
       }
+
+      _accessToken = savedToken;
+      _userId = savedUserId;
+
+      // Also set the Convex auth token for API calls
+      try {
+        await _setConvexAuthToken(_accessToken!);
+      } catch (e) {
+        debugPrint(
+            '[Auth0Service] Warning: Failed to set Convex auth token on session restore: $e');
+      }
+
+      debugPrint('[Auth0Service] Restored session for user: $_userId');
+      return true;
     } catch (e) {
-      debugPrint('[Auth0Service] Session restore error: $e');
+      // Clear corrupted data to prevent spam
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('auth0_access_token');
+        await prefs.remove('auth0_user_id');
+      } catch (_) {}
     }
-    
+
     return false;
   }
-  
+
   /// Save tokens to local storage
   Future<void> _saveTokens() async {
     try {
@@ -453,7 +475,7 @@ class Auth0Service {
       debugPrint('[Auth0Service] Token save error: $e');
     }
   }
-  
+
   /// Clear tokens from local storage
   Future<void> _clearTokens() async {
     try {
@@ -464,7 +486,7 @@ class Auth0Service {
       debugPrint('[Auth0Service] Token clear error: $e');
     }
   }
-  
+
   /// Set Convex auth token after successful authentication
   Future<void> _setConvexAuthToken(String token) async {
     try {
@@ -485,7 +507,7 @@ class Auth0Result {
   final String? error;
   final bool fallbackToDemo;
   final bool isDemoMode;
-  
+
   Auth0Result({
     required this.success,
     this.userId,
