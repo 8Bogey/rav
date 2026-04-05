@@ -116,7 +116,7 @@ class _PaymentRegistrationDialogState
         // Mark as completed
         final updatedSubscriber = widget.subscriber!.copyWith(
           accumulatedDebt: 0,
-          status: 1, // Active
+          status: 'active', // Active
         );
         await ref
             .read(subscribersProvider.notifier)
