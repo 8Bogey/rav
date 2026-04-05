@@ -7,18 +7,13 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:crypto/crypto.dart';
 
-import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
-import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
 import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 
 /// Pixel-perfect Coddy.tech login screen recreation.
-/// Exact specs extracted from coddy.tech/login CSS:
-/// - Card: 375px, 12px radius, shadow 0 4px 8px rgba(0,0,0,0.25)
-/// - Button: #0077FF, 12px radius, shadow 0px 4px 0px #005DC8
-/// - Inputs: 2px border #e6e6e6, 12px radius
-/// - Font: Varela Round
+/// Static light theme colors — no dark mode switching.
+/// Exact specs from coddy.tech/login CSS + reference images.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -45,47 +40,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  // ── Coddy exact colors ────────────────────────────────────────
+  // ── Static Coddy Light Theme Colors ───────────────────────────
+  // These never change — no dark mode branching.
 
-  bool get _isDark => ref.read(themeModeProvider) == ThemeMode.dark;
-
-  // Brand
-  Color get _brandPrimary =>
-      _isDark ? const Color(0xFF1B78A0) : const Color(0xFF0077FF);
-  Color get _brandPrimaryDarker =>
-      _isDark ? const Color(0xFF264D73) : const Color(0xFF005DC8);
-  Color get _brandBright =>
-      _isDark ? const Color(0xFF34B4E4) : const Color(0xFF29ABE2);
-  Color get _brandDeep =>
-      _isDark ? const Color(0xFF1B78A0) : const Color(0xFF007ACC);
-
-  // Backgrounds
-  Color get _bgPage =>
-      _isDark ? const Color(0xFF252627) : const Color(0xFFFFFFFF);
-  Color get _bgCard =>
-      _isDark ? const Color(0xFF2D2E2F) : const Color(0xFFFFFFFF);
-  Color get _bgInput =>
-      _isDark ? const Color(0xFF252627) : const Color(0xFFFFFFFF);
-  Color get _bgLeftPanel =>
-      _isDark ? const Color(0xFF1a1a2e) : const Color(0xFFF1F5F9);
-
-  // Text
-  Color get _textPrimary =>
-      _isDark ? const Color(0xDEFFFFFF) : const Color(0xDE000000);
-  Color get _textSecondary =>
-      _isDark ? const Color(0x99FFFFFF) : const Color(0x8A000000);
-  Color get _textDisabled =>
-      _isDark ? const Color(0x4DFFFFFF) : const Color(0x4D000000);
-
-  // Borders
-  Color get _borderColor =>
-      _isDark ? const Color(0xFF3B3E41) : const Color(0xFFE6E6E6);
-  Color get _borderMid =>
-      _isDark ? const Color(0xFF494D50) : const Color(0xFFB3B3B3);
-
-  // Semantic
-  Color get _coddyError =>
-      _isDark ? const Color(0xFFA90404) : const Color(0xFFF44336);
+  static const _brandPrimary = Color(0xFF0077FF);
+  static const _brandPrimaryDarker = Color(0xFF005DC8);
+  static const _brandBright = Color(0xFF29ABE2);
+  static const _bgPage = Color(0xFFFFFFFF);
+  static const _bgCard = Color(0xFFFFFFFF);
+  static const _bgInput = Color(0xFFFFFFFF);
+  static const _bgLeftPanel = Color(0xFFF1F5F9);
+  static const _textPrimary = Color(0xDE000000);
+  static const _textSecondary = Color(0x8A000000);
+  static const _textDisabled = Color(0x4D000000);
+  static const _borderColor = Color(0xFFE6E6E6);
+  static const _borderMid = Color(0xFFB3B3B3);
+  static const _coddyError = Color(0xFFF44336);
 
   // ── Actions ───────────────────────────────────────────────────
 
@@ -273,12 +243,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 48),
                 Text(
                   'Unlock your Coding Journey',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: _textPrimary,
-                    fontFamily: 'Varela Round',
-                  ),
+                  style: _headingStyle,
                 ),
                 const SizedBox(height: 40),
                 _buildFeatureItem(Icons.code_rounded, 'Practice-Driven'),
@@ -300,9 +265,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.arrow_back, size: 18, color: _brandBright),
+                          const Icon(Icons.arrow_back,
+                              size: 18, color: _brandBright),
                           const SizedBox(width: 4),
-                          Text('Back',
+                          const Text('Back',
                               style:
                                   TextStyle(fontSize: 14, color: _brandBright)),
                         ],
@@ -361,15 +327,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Icon(icon, size: 20, color: _brandBright),
         ),
         const SizedBox(width: 12),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: _textPrimary,
-            fontFamily: 'Varela Round',
-          ),
-        ),
+        Text(label, style: _featureLabelStyle),
       ],
     );
   }
@@ -382,11 +340,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       decoration: BoxDecoration(
         color: _bgCard,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Color(0x40000000), // rgba(0,0,0,0.25)
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -432,7 +390,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 12),
           GestureDetector(
             onTap: _isLoading ? null : _handleForgotPassword,
-            child: Text(
+            child: const Text(
               'Forgot password',
               style: TextStyle(
                 fontSize: 13,
@@ -440,7 +398,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 fontWeight: FontWeight.w500,
                 fontFamily: 'Varela Round',
                 decoration: TextDecoration.underline,
-                decorationColor: _brandBright.withOpacity(0.5),
+                decorationColor: Color(0x8029ABE2),
               ),
             ),
           ),
@@ -449,20 +407,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(
-                child: Container(height: 1, color: _borderColor),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+              Expanded(child: Container(height: 1, color: _borderColor)),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
                 child: Text('OR',
                     style: TextStyle(
                         fontSize: 13,
                         color: _textSecondary,
                         fontWeight: FontWeight.w600)),
               ),
-              Expanded(
-                child: Container(height: 1, color: _borderColor),
-              ),
+              Expanded(child: Container(height: 1, color: _borderColor)),
             ],
           ),
           const SizedBox(height: 20),
@@ -482,8 +436,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 12),
 
           // APPLE button (full width)
-          _buildSocialButton(
-              'APPLE', _handleAppleLogin, _AppleLogo(isDark: _isDark)),
+          _buildSocialButton('APPLE', _handleAppleLogin, const _AppleLogo()),
           const SizedBox(height: 16),
 
           // Guest access
@@ -493,29 +446,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 16),
           RichText(
             textAlign: TextAlign.center,
-            text: TextSpan(
+            text: const TextSpan(
               style: TextStyle(
                   fontSize: 11,
                   color: _textSecondary,
                   fontFamily: 'Varela Round'),
               children: [
-                const TextSpan(text: 'By continuing you agree to our '),
+                TextSpan(text: 'By continuing you agree to our '),
                 TextSpan(
                   text: 'Terms of Use',
                   style: TextStyle(
                       color: _brandBright, fontWeight: FontWeight.w600),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap =
-                        () => launchUrl(Uri.parse('https://coddy.tech/terms')),
                 ),
-                const TextSpan(text: ' and '),
+                TextSpan(text: ' and '),
                 TextSpan(
                   text: 'Privacy Policy',
                   style: TextStyle(
                       color: _brandBright, fontWeight: FontWeight.w600),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () =>
-                        launchUrl(Uri.parse('https://coddy.tech/privacy')),
                 ),
               ],
             ),
@@ -591,21 +538,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: TextField(
                     controller: controller,
                     obscureText: isPassword,
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontSize: 16,
-                      fontFamily: 'Varela Round',
-                    ),
+                    style: _inputTextStyle,
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                       hintText: label,
-                      hintStyle: TextStyle(
-                        color: _textDisabled,
-                        fontSize: 16,
-                        fontFamily: 'Varela Round',
-                      ),
+                      hintStyle: _hintStyle,
                     ),
                   ),
                 ),
@@ -618,7 +557,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             padding: const EdgeInsets.only(top: 2, left: 4),
             child: Text(
               errorText!,
-              style: TextStyle(
+              style: const TextStyle(
                   color: _coddyError, fontSize: 10, fontFamily: 'Varela Round'),
             ),
           ),
@@ -642,10 +581,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: _isLoading
               ? []
-              : [
+              : const [
                   BoxShadow(
                     color: _brandPrimaryDarker,
-                    offset: const Offset(0, 4),
+                    offset: Offset(0, 4),
                     blurRadius: 0,
                   ),
                 ],
@@ -660,13 +599,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 )
               : Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Varela Round',
-                    letterSpacing: 0.5,
-                  ),
+                  style: _primaryButtonTextStyle,
                 ),
         ),
       ),
@@ -685,10 +618,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           color: _bgCard,
           border: Border.all(color: _borderMid, width: 2),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: _borderMid,
-              offset: const Offset(0, 3),
+              offset: Offset(0, 3),
               blurRadius: 0,
             ),
           ],
@@ -700,12 +633,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
-                color: _brandBright,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Varela Round',
-              ),
+              style: _socialButtonTextStyle,
             ),
           ],
         ),
@@ -726,7 +654,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           border: Border.all(color: _borderColor, width: 1.5),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Center(
+        child: const Center(
           child: Text(
             'الدخول كضيف',
             style: TextStyle(
@@ -755,12 +683,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: _coddyError, size: 16),
+          const Icon(Icons.error_outline, color: _coddyError, size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 11,
                   color: _coddyError,
                   fontWeight: FontWeight.w500),
@@ -770,6 +698,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
+
+  // ── Static Text Styles ───────────────────────────────────────
+
+  static const _headingStyle = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w700,
+    color: _textPrimary,
+    fontFamily: 'Varela Round',
+  );
+
+  static const _featureLabelStyle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: _textPrimary,
+    fontFamily: 'Varela Round',
+  );
+
+  static const _inputTextStyle = TextStyle(
+    color: _textPrimary,
+    fontSize: 16,
+    fontFamily: 'Varela Round',
+  );
+
+  static const _hintStyle = TextStyle(
+    color: _textDisabled,
+    fontSize: 16,
+    fontFamily: 'Varela Round',
+  );
+
+  static const _primaryButtonTextStyle = TextStyle(
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    fontFamily: 'Varela Round',
+    letterSpacing: 0.5,
+  );
+
+  static const _socialButtonTextStyle = TextStyle(
+    color: _brandBright,
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    fontFamily: 'Varela Round',
+  );
 }
 
 // ── Social Logos ─────────────────────────────────────────────────
@@ -883,20 +854,18 @@ class _FacebookLogoPainter extends CustomPainter {
 }
 
 class _AppleLogo extends StatelessWidget {
-  final bool isDark;
-  const _AppleLogo({this.isDark = false});
+  const _AppleLogo();
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(painter: _AppleLogoPainter(isDark: isDark));
+    return CustomPaint(painter: const _AppleLogoPainter());
   }
 }
 
 class _AppleLogoPainter extends CustomPainter {
-  final bool isDark;
-  const _AppleLogoPainter({this.isDark = false});
+  const _AppleLogoPainter();
   @override
   void paint(Canvas canvas, Size size) {
-    final color = isDark ? Colors.white : const Color(0xFF000000);
+    const color = Color(0xFF000000);
     final paint = Paint()..color = color;
     final s = size.width / 24;
 
