@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
+import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -32,6 +33,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
       }
     } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleGuestLogin() async {
+    ref.read(authProvider.notifier).clearError();
+    setState(() => _isLoading = true);
+    try {
+      // Set a local session without Auth0
+      final guestId = 'guest-${DateTime.now().millisecondsSinceEpoch}';
+      await AppConvexConfig.setAuth('guest-token');
+      ref.read(authProvider.notifier).state = AuthState(
+        isAuthenticated: true,
+        userId: guestId,
+        accessToken: 'guest-token',
+        role: UserRole.admin,
+        isLoading: false,
+      );
+      if (mounted) context.go('/dashboard');
+    } catch (e) {
+      debugPrint('Guest login error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -117,7 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'اضغط الزر أدناه لتسجيل الدخول',
+                        'اختر طريقة الدخول',
                         style: TextStyle(fontSize: 13, color: bodyColor),
                       ),
                       const SizedBox(height: 24),
@@ -149,17 +171,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
 
-                      // Login button
+                      // Auth0 login button
                       SizedBox(
                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton.icon(
                           onPressed: _isLoading ? null : _handleLogin,
-                          icon: const Icon(Icons.login, size: 18),
+                          icon: _isLoading
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.textOnGold),
+                                )
+                              : const Icon(Icons.login, size: 18),
                           label: Text(
-                            _isLoading
-                                ? 'جاري تسجيل الدخول...'
-                                : 'تسجيل الدخول',
+                            _isLoading ? 'جاري...' : 'تسجيل الدخول عبر Auth0',
                             style: const TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w600),
                           ),
@@ -167,9 +195,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             backgroundColor: AppColors.gold,
                             foregroundColor: AppColors.textOnGold,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                                borderRadius: BorderRadius.circular(10)),
                             elevation: 0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Guest access
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : _handleGuestLogin,
+                          child: const Text('الدخول كضيف',
+                              style: TextStyle(fontSize: 13)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: bodyColor,
+                            side: BorderSide(color: bodyColor.withOpacity(0.3)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
                       ),

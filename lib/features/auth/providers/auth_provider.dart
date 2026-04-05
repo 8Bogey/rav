@@ -94,26 +94,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<bool> loginWithAuth0() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _auth0.login();
-      final token = _auth0.accessToken;
-      final userId = _auth0.userId;
+      final result = await _auth0.login();
 
-      if (token != null && userId != null) {
-        await AppConvexConfig.setAuth(token);
-        state = AuthState(
-          isAuthenticated: true,
-          userId: userId,
-          accessToken: token,
-          role: UserRole.admin,
-          isLoading: false,
-        );
-        debugPrint('[AuthNotifier] Auth0 login successful: $userId');
-        return true;
+      if (result.success) {
+        final token = _auth0.accessToken;
+        final userId = _auth0.userId;
+
+        if (token != null && userId != null) {
+          await AppConvexConfig.setAuth(token);
+          state = AuthState(
+            isAuthenticated: true,
+            userId: userId,
+            accessToken: token,
+            role: UserRole.admin,
+            isLoading: false,
+          );
+          debugPrint('[AuthNotifier] Auth0 login successful: $userId');
+          return true;
+        }
       }
 
-      state = const AuthState(
+      // Login failed — surface the error
+      state = AuthState(
         isLoading: false,
-        errorMessage: 'Login failed: no token received',
+        errorMessage: result.error ?? 'Login failed: no token received',
       );
       return false;
     } catch (e, st) {
