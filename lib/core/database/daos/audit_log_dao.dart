@@ -132,6 +132,20 @@ class AuditLogDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
 
+  // Get paginated audit log entries - uses composite index (by_ownerId_inTrash)
+  Future<List<AuditLogEntry>> getPaginatedAuditLogEntries({
+    required String ownerId,
+    int limit = 50,
+    int offset = 0,
+  }) {
+    if (ownerId.isEmpty) return Future.value([]);
+    return (select(auditLogTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.inTrash.equals(false))
+          ..orderBy([(t) => OrderingTerm.desc(t.timestamp)])
+          ..limit(limit, offset: offset))
+        .get();
+  }
+
   // Count audit log entries - REQUIRES ownerId
   Future<int> countAuditLogEntries(
       {required String ownerId, DateTime? startDate, DateTime? endDate}) async {

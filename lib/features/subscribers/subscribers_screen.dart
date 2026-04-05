@@ -249,12 +249,17 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
                     // Table rows
                     Expanded(
                       child: ListView.builder(
-                        itemCount: subscribersState.subscribers.length,
+                        itemCount: subscribersState.subscribers.length +
+                            (subscribersState.hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
-                          final subscriber =
-                              subscribersState.subscribers[index];
-                          return _buildSubscriberRow(subscriber, index,
-                              isDarkMode: isDarkMode);
+                          if (index < subscribersState.subscribers.length) {
+                            final subscriber =
+                                subscribersState.subscribers[index];
+                            return _buildSubscriberRow(subscriber, index,
+                                isDarkMode: isDarkMode);
+                          }
+                          // Load more button
+                          return _buildLoadMoreButton(context, ref, isDarkMode);
                         },
                       ),
                     ),
@@ -545,6 +550,34 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
                     : AppColors.textSecondary,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton(
+      BuildContext context, WidgetRef ref, bool isDarkMode) {
+    final subscribersState = ref.watch(subscribersProvider);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: subscribersState.isLoading
+            ? const CircularProgressIndicator()
+            : ElevatedButton.icon(
+                onPressed: () {
+                  ref.read(subscribersProvider.notifier).loadMore();
+                },
+                icon: const Icon(Icons.arrow_downward, size: 18),
+                label: const Text('تحميل المزيد'),
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  backgroundColor: isDarkMode
+                      ? AppColors.darkBgSurfaceAlt
+                      : AppColors.bgSurfaceAlt,
+                  foregroundColor:
+                      isDarkMode ? AppColors.darkTextBody : AppColors.textBody,
+                ),
+              ),
       ),
     );
   }

@@ -12,6 +12,9 @@ class SubscribersState {
   final String searchQuery;
   final String? statusFilter; // null = all, 'active', 'inactive', etc.
   final String? cabinetFilter; // null = all cabinets
+  final bool hasMore;
+  final int offset;
+  static const int pageSize = 50;
 
   const SubscribersState({
     this.subscribers = const [],
@@ -20,6 +23,8 @@ class SubscribersState {
     this.searchQuery = '',
     this.statusFilter,
     this.cabinetFilter,
+    this.hasMore = true,
+    this.offset = 0,
   });
 
   SubscribersState copyWith({
@@ -29,6 +34,8 @@ class SubscribersState {
     String? searchQuery,
     String? statusFilter,
     String? cabinetFilter,
+    bool? hasMore,
+    int? offset,
     bool clearError = false,
     bool clearStatusFilter = false,
     bool clearCabinetFilter = false,
@@ -42,6 +49,8 @@ class SubscribersState {
           clearStatusFilter ? null : (statusFilter ?? this.statusFilter),
       cabinetFilter:
           clearCabinetFilter ? null : (cabinetFilter ?? this.cabinetFilter),
+      hasMore: hasMore ?? this.hasMore,
+      offset: offset ?? this.offset,
     );
   }
 }
@@ -69,21 +78,49 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
 
   /// Load all subscribers from database
   Future<void> loadSubscribers() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, clearError: true, offset: 0);
     final ownerId = _ref.read(currentUserIdProvider) ?? '';
 
     try {
-      final subscribers = await _service.getAllSubscribers(ownerId: ownerId);
+      final subscribers = await _service.getPaginatedSubscribers(
+        ownerId: ownerId,
+        limit: SubscribersState.pageSize,
+        offset: 0,
+      );
 
       state = state.copyWith(
         subscribers: subscribers,
         isLoading: false,
+        offset: subscribers.length,
+        hasMore: subscribers.length >= SubscribersState.pageSize,
       );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'فشل تحميل المشتركين: $e',
       );
+    }
+  }
+
+  /// Load more subscribers (pagination)
+  Future<void> loadMore() async {
+    if (state.isLoading || !state.hasMore) return;
+    state = state.copyWith(isLoading: true);
+    final ownerId = _ref.read(currentUserIdProvider) ?? '';
+    try {
+      final newSubscribers = await _service.getPaginatedSubscribers(
+        ownerId: ownerId,
+        limit: SubscribersState.pageSize,
+        offset: state.offset,
+      );
+      state = state.copyWith(
+        subscribers: [...state.subscribers, ...newSubscribers],
+        offset: state.offset + newSubscribers.length,
+        hasMore: newSubscribers.length >= SubscribersState.pageSize,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 

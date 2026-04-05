@@ -19,6 +19,24 @@ class SubscribersService extends BaseService {
     return _dao.getAllSubscribers(ownerId: ownerId);
   }
 
+  // Get paginated subscribers
+  Future<List<Subscriber>> getPaginatedSubscribers({
+    required String ownerId,
+    int limit = 50,
+    int offset = 0,
+  }) {
+    return _dao.getPaginatedSubscribers(
+      ownerId: ownerId,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  // Count subscribers
+  Future<int> countSubscribers({required String ownerId}) {
+    return _dao.countSubscribers(ownerId: ownerId);
+  }
+
   // Get subscriber by ID
   Future<Subscriber?> getSubscriberById(String id, {required String ownerId}) {
     return _dao.getSubscriberById(id, ownerId: ownerId);

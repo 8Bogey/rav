@@ -147,6 +147,20 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  // Get paginated subscribers - uses composite index (by_ownerId_inTrash)
+  Future<List<Subscriber>> getPaginatedSubscribers({
+    required String ownerId,
+    int limit = 50,
+    int offset = 0,
+  }) {
+    if (ownerId.isEmpty) return Future.value([]);
+    return (select(subscribersTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.inTrash.equals(false))
+          ..orderBy([(t) => OrderingTerm.asc(t.name)])
+          ..limit(limit, offset: offset))
+        .get();
+  }
+
   // Count active subscribers - REQUIRES ownerId
   Future<int> countActiveSubscribers({required String ownerId}) async {
     if (ownerId.isEmpty) return 0;
@@ -155,6 +169,19 @@ class SubscribersDao extends DatabaseAccessor<AppDatabase>
       ..addColumns([subscribersTable.id.count()])
       ..where(subscribersTable.ownerId.equals(ownerId))
       ..where(subscribersTable.status.equals('active'))
+      ..where(subscribersTable.inTrash.equals(false));
+
+    final result = await query.getSingle();
+    return result.read(subscribersTable.id.count()) ?? 0;
+  }
+
+  // Count all active subscribers (non-trashed) - REQUIRES ownerId
+  Future<int> countSubscribers({required String ownerId}) async {
+    if (ownerId.isEmpty) return 0;
+
+    final query = selectOnly(subscribersTable)
+      ..addColumns([subscribersTable.id.count()])
+      ..where(subscribersTable.ownerId.equals(ownerId))
       ..where(subscribersTable.inTrash.equals(false));
 
     final result = await query.getSingle();

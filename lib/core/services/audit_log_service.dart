@@ -22,6 +22,23 @@ class AuditLogService extends BaseService {
     return _dao.getAllAuditLogEntries(ownerId: ownerId);
   }
 
+  // Get paginated audit log entries
+  Future<List<AuditLogEntry>> getPaginatedAuditLogEntries({
+    int limit = 50,
+    int offset = 0,
+  }) {
+    return _dao.getPaginatedAuditLogEntries(
+      ownerId: ownerId,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  // Count audit log entries
+  Future<int> countAuditLogEntries() {
+    return _dao.countAuditLogEntries(ownerId: ownerId);
+  }
+
   // Get audit log entry by ID
   Future<AuditLogEntry?> getAuditLogEntryById(String id) {
     return _dao.getAuditLogEntryById(id, ownerId: ownerId);

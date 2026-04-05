@@ -88,6 +88,9 @@ class AuditLogState {
   final DateTime? filterEndDate;
   final String? filterAction;
   final String? filterUser;
+  final bool hasMore;
+  final int offset;
+  static const int pageSize = 50;
 
   const AuditLogState({
     this.entries = const [],
@@ -97,6 +100,8 @@ class AuditLogState {
     this.filterEndDate,
     this.filterAction,
     this.filterUser,
+    this.hasMore = true,
+    this.offset = 0,
   });
 
   AuditLogState copyWith({
@@ -107,6 +112,8 @@ class AuditLogState {
     DateTime? filterEndDate,
     String? filterAction,
     String? filterUser,
+    bool? hasMore,
+    int? offset,
     bool clearError = false,
     bool clearFilters = false,
   }) {
@@ -120,6 +127,8 @@ class AuditLogState {
           clearFilters ? null : (filterEndDate ?? this.filterEndDate),
       filterAction: clearFilters ? null : (filterAction ?? this.filterAction),
       filterUser: clearFilters ? null : (filterUser ?? this.filterUser),
+      hasMore: hasMore ?? this.hasMore,
+      offset: offset ?? this.offset,
     );
   }
 }
@@ -141,10 +150,13 @@ class AuditLogNotifier extends StateNotifier<AuditLogState> {
 
   /// Load all audit log entries from database
   Future<void> loadAuditLog() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, clearError: true, offset: 0);
 
     try {
-      var entries = await _service.getAllAuditLogEntries();
+      var entries = await _service.getPaginatedAuditLogEntries(
+        limit: AuditLogState.pageSize,
+        offset: 0,
+      );
 
       // Apply filters
       if (state.filterStartDate != null) {
@@ -174,12 +186,34 @@ class AuditLogNotifier extends StateNotifier<AuditLogState> {
       state = state.copyWith(
         entries: entries,
         isLoading: false,
+        offset: entries.length,
+        hasMore: entries.length >= AuditLogState.pageSize,
       );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'فشل تحميل سجل التدقيق: $e',
       );
+    }
+  }
+
+  /// Load more audit log entries (pagination)
+  Future<void> loadMore() async {
+    if (state.isLoading || !state.hasMore) return;
+    state = state.copyWith(isLoading: true);
+    try {
+      final newEntries = await _service.getPaginatedAuditLogEntries(
+        limit: AuditLogState.pageSize,
+        offset: state.offset,
+      );
+      state = state.copyWith(
+        entries: [...state.entries, ...newEntries],
+        offset: state.offset + newEntries.length,
+        hasMore: newEntries.length >= AuditLogState.pageSize,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 

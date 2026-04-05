@@ -42,6 +42,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
     final location = GoRouterState.of(context).matchedLocation;
     final activeIndex = _getActiveIndex(location);
 
@@ -220,33 +221,40 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
                   ),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 20,
                         backgroundColor: Colors.white,
-                        child: Icon(
+                        child: const Icon(
                           Icons.person,
                           color: AppColors.primary,
                           size: 24,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'الأدمن',
-                              style: TextStyle(
+                              authState.userId?.substring(
+                                      0,
+                                      authState.userId!.length > 8
+                                          ? 8
+                                          : authState.userId!.length) ??
+                                  'المستخدم',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'مدير النظام',
-                              style: TextStyle(
+                              authState.role == UserRole.admin
+                                  ? 'مدير النظام'
+                                  : 'مجمع',
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
                               ),
@@ -298,7 +306,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
           margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           child: Material(
             color: Colors.transparent,
-              child: InkWell(
+            child: InkWell(
               onTap: () {
                 // Play system sound feedback
                 HapticFeedback.selectionClick();
