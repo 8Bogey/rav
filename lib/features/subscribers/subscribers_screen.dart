@@ -384,37 +384,43 @@ class _SubscribersScreenState extends ConsumerState<SubscribersScreen> {
             const SizedBox(width: 8),
             _buildFilterTab(
               'نشط',
-              subscribersState.statusFilter == 1,
+              subscribersState.statusFilter == 'active',
               isDarkMode: isDarkMode,
               onTap: () {
-                ref.read(subscribersProvider.notifier).filterByStatus(1);
+                ref.read(subscribersProvider.notifier).filterByStatus('active');
               },
             ),
             const SizedBox(width: 8),
             _buildFilterTab(
               'موقوف',
-              subscribersState.statusFilter == 2,
+              subscribersState.statusFilter == 'suspended',
               isDarkMode: isDarkMode,
               onTap: () {
-                ref.read(subscribersProvider.notifier).filterByStatus(2);
+                ref
+                    .read(subscribersProvider.notifier)
+                    .filterByStatus('suspended');
               },
             ),
             const SizedBox(width: 8),
             _buildFilterTab(
               'مقطوع',
-              subscribersState.statusFilter == 3,
+              subscribersState.statusFilter == 'disconnected',
               isDarkMode: isDarkMode,
               onTap: () {
-                ref.read(subscribersProvider.notifier).filterByStatus(3);
+                ref
+                    .read(subscribersProvider.notifier)
+                    .filterByStatus('disconnected');
               },
             ),
             const SizedBox(width: 8),
             _buildFilterTab(
               'غير نشط',
-              subscribersState.statusFilter == 0,
+              subscribersState.statusFilter == 'inactive',
               isDarkMode: isDarkMode,
               onTap: () {
-                ref.read(subscribersProvider.notifier).filterByStatus(0);
+                ref
+                    .read(subscribersProvider.notifier)
+                    .filterByStatus('inactive');
               },
             ),
           ],

@@ -30,7 +30,7 @@ class _SubscriberDialogState extends ConsumerState<SubscriberDialog> {
   final _cabinetController = TextEditingController();
   final _notesController = TextEditingController();
 
-  int _status = 1; // Default: active
+  String _status = 'active'; // Default: active
   DateTime _startDate = DateTime.now();
   double _accumulatedDebt = 0;
   bool _isLoading = false;
@@ -365,13 +365,17 @@ class _SubscriberDialogState extends ConsumerState<SubscriberDialog> {
                           label: 'الحالة',
                           value: _status,
                           items: const [
-                            DropdownMenuItem(value: 0, child: Text('غير نشط')),
-                            DropdownMenuItem(value: 1, child: Text('نشط')),
-                            DropdownMenuItem(value: 2, child: Text('موقوف')),
-                            DropdownMenuItem(value: 3, child: Text('مقطوع')),
+                            DropdownMenuItem(
+                                value: 'inactive', child: Text('غير نشط')),
+                            DropdownMenuItem(
+                                value: 'active', child: Text('نشط')),
+                            DropdownMenuItem(
+                                value: 'suspended', child: Text('موقوف')),
+                            DropdownMenuItem(
+                                value: 'disconnected', child: Text('مقطوع')),
                           ],
                           onChanged: (value) {
-                            setState(() => _status = value ?? 1);
+                            setState(() => _status = value ?? 'active');
                           },
                           isDarkMode: isDarkMode,
                         ).animate().fadeIn(duration: 300.ms, delay: 350.ms),

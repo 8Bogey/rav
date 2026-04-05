@@ -127,6 +127,8 @@ dependencies:
 
   # ── Audio ─────────────────────────────────────────────────────
   audioplayers: ^6.1.0            # ✅ Audio playback for success sounds
+  mcp_dart: ^2.1.0
+  mcp_server: ^1.0.3
 
 dev_dependencies:
   flutter_test:

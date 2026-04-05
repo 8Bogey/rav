@@ -94,38 +94,8 @@ class CabinetsDao extends DatabaseAccessor<AppDatabase>
     return (delete(cabinetsTable)..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  // Get dirty cabinets - REQUIRES ownerId
-  Future<List<Cabinet>> getDirtyCabinets({required String ownerId}) {
-    if (ownerId.isEmpty) return Future.value([]);
-
-    return (select(cabinetsTable)
-          ..where((tbl) => tbl.ownerId.equals(ownerId))
-          ..where((tbl) => tbl.dirtyFlag.equals(true)))
-        .get();
-  }
-
-  // Mark a cabinet record as dirty
-  Future<int> markRecordAsDirty(String id) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(CabinetsTableCompanion(
-      dirtyFlag: const Value(true),
-      updatedAt: Value(DateTime.now()),
-    ));
-  }
-
-  // Clear dirty flag
-  Future<int> clearDirtyFlag(String id) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(const CabinetsTableCompanion(dirtyFlag: Value(false)));
-  }
-
-  // Update last synced timestamp
-  Future<int> updateLastSyncedAt(String id) {
-    return (update(cabinetsTable)..where((tbl) => tbl.id.equals(id)))
-        .write(CabinetsTableCompanion(
-      lastSyncedAt: Value(DateTime.now()),
-    ));
-  }
+  // NOTE: dirtyFlag, lastSyncedAt fields removed from schema.
+  // Sync-related DAO methods have been removed.
 
   // Get cabinet stats (count active subscribers, sum collected)
   Future<Map<String, dynamic>> getCabinetStats(String id,

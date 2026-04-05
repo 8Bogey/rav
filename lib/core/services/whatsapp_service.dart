@@ -15,7 +15,8 @@ class WhatsappService extends BaseService {
   static const _uuid = Uuid();
 
   // Get all WhatsApp templates
-  Future<List<WhatsappTemplateData>> getAllTemplates({required String ownerId}) {
+  Future<List<WhatsappTemplateData>> getAllTemplates(
+      {required String ownerId}) {
     return _dao.getAllTemplates(ownerId: ownerId);
   }
 
@@ -38,13 +39,13 @@ class WhatsappService extends BaseService {
       ownerId: Value(ownerId),
       title: Value(title),
       content: Value(content),
-      isActive: Value(isActive ? 1 : 0),
+      isActive: Value(isActive),
       version: const Value(1),
-      isDeleted: const Value(false),
+      inTrash: const Value(false),
       createdAt: Value(now),
       updatedAt: Value(now),
     );
-    
+
     // Add to outbox for Convex sync
     _outbox.addEntry(
       targetTable: 'whatsappTemplates',
@@ -55,14 +56,14 @@ class WhatsappService extends BaseService {
         'ownerId': ownerId,
         'title': title,
         'content': content,
-        'isActive': isActive ? 1 : 0,
+        'isActive': isActive,
         'version': 1,
-        'isDeleted': false,
+        'inTrash': false,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.addTemplate(companion);
   }
 
@@ -78,7 +79,8 @@ class WhatsappService extends BaseService {
 
   // Get subscribers count
   Future<int> getSubscribersCount({required String ownerId}) async {
-    final subscribers = await database.subscribersDao.getAllSubscribers(ownerId: ownerId);
+    final subscribers =
+        await database.subscribersDao.getAllSubscribers(ownerId: ownerId);
     return subscribers.length;
   }
 
@@ -87,11 +89,11 @@ class WhatsappService extends BaseService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final messagesJson = prefs.getString('whatsapp_messages_log');
-      
+
       if (messagesJson == null) {
         return [];
       }
-      
+
       final List<dynamic> messages = jsonDecode(messagesJson);
       return messages.map((m) => Map<String, dynamic>.from(m)).toList();
     } catch (e) {
@@ -109,17 +111,17 @@ class WhatsappService extends BaseService {
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Get existing messages
       final messagesJson = prefs.getString('whatsapp_messages_log');
       List<Map<String, dynamic>> messages = [];
-      
+
       if (messagesJson != null) {
         messages = (jsonDecode(messagesJson) as List)
             .map((m) => Map<String, dynamic>.from(m))
             .toList();
       }
-      
+
       // Add new message at the beginning
       messages.insert(0, {
         'subscriberName': subscriberName,
@@ -129,12 +131,12 @@ class WhatsappService extends BaseService {
         'errorMessage': errorMessage,
         'time': DateTime.now().toIso8601String(),
       });
-      
+
       // Keep only last 50 messages
       if (messages.length > 50) {
         messages = messages.sublist(0, 50);
       }
-      
+
       await prefs.setString('whatsapp_messages_log', jsonEncode(messages));
     } catch (e) {
       // Silent fail

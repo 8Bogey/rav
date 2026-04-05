@@ -43,7 +43,7 @@ class GeneratorSettingsService extends BaseService {
       address: Value(address),
       logoPath: Value(logoPath),
       version: Value((existing?.version ?? 0) + 1),
-      isDeleted: const Value(false),
+      inTrash: const Value(false),
       createdAt: Value(existing?.createdAt ?? now),
       updatedAt: Value(now),
     );
@@ -63,7 +63,7 @@ class GeneratorSettingsService extends BaseService {
         'address': address,
         'logoPath': logoPath,
         'version': (existing?.version ?? 0) + 1,
-        'isDeleted': false,
+        'inTrash': false,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': (existing?.createdAt ?? now).millisecondsSinceEpoch,
       },
@@ -83,7 +83,7 @@ class GeneratorSettingsService extends BaseService {
     final companion = GeneratorSettingsTableCompanion(
       id: Value(id),
       ownerId: Value(ownerId),
-      isDeleted: const Value(true),
+      inTrash: const Value(true),
       version: Value(newVersion),
       updatedAt: Value(now),
     );

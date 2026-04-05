@@ -14,7 +14,7 @@ class GeneratorSettings {
   final DateTime updatedAt;
   final String? ownerId;
   final int version;
-  final bool isDeleted;
+  final bool inTrash;
 
   GeneratorSettings({
     required this.id,
@@ -26,7 +26,7 @@ class GeneratorSettings {
     required this.updatedAt,
     this.ownerId,
     this.version = 1,
-    this.isDeleted = false,
+    this.inTrash = false,
   });
 
   factory GeneratorSettings.fromDatabase(GeneratorSettingsData data) {
@@ -40,7 +40,7 @@ class GeneratorSettings {
       updatedAt: data.updatedAt,
       ownerId: data.ownerId,
       version: data.version,
-      isDeleted: data.isDeleted,
+      inTrash: data.inTrash,
     );
   }
 
@@ -53,7 +53,7 @@ class GeneratorSettings {
       address: Value(address),
       logoPath: Value(logoPath),
       version: Value(version),
-      isDeleted: Value(isDeleted),
+      inTrash: Value(inTrash),
       updatedAt: Value(DateTime.now()),
       createdAt: Value(createdAt),
     );
@@ -72,8 +72,9 @@ class SettingsService {
   // Get generator settings
   Future<GeneratorSettings?> getGeneratorSettings({String? ownerId}) async {
     try {
-      final results = await database.select(database.generatorSettingsTable).get();
-      
+      final results =
+          await database.select(database.generatorSettingsTable).get();
+
       if (results.isEmpty) {
         // Create default settings if none exist
         final now = DateTime.now();
@@ -87,24 +88,24 @@ class SettingsService {
           updatedAt: now,
           ownerId: ownerId,
           version: 1,
-          isDeleted: false,
+          inTrash: false,
         );
-        
+
         await database.into(database.generatorSettingsTable).insert(
-          GeneratorSettingsTableCompanion.insert(
-            id: defaultSettings.id,
-            ownerId: Value(ownerId),
-            name: defaultSettings.name,
-            phoneNumber: defaultSettings.phoneNumber,
-            address: defaultSettings.address,
-            logoPath: Value(defaultSettings.logoPath),
-            version: const Value(1),
-            isDeleted: const Value(false),
-            createdAt: Value(now),
-            updatedAt: Value(now),
-          ),
-        );
-        
+              GeneratorSettingsTableCompanion.insert(
+                id: defaultSettings.id,
+                ownerId: Value(ownerId),
+                name: defaultSettings.name,
+                phoneNumber: defaultSettings.phoneNumber,
+                address: defaultSettings.address,
+                logoPath: Value(defaultSettings.logoPath),
+                version: const Value(1),
+                inTrash: const Value(false),
+                createdAt: Value(now),
+                updatedAt: Value(now),
+              ),
+            );
+
         // Add to outbox for Convex sync
         if (ownerId != null) {
           _outbox.addEntry(
@@ -119,16 +120,16 @@ class SettingsService {
               'address': defaultSettings.address,
               'logoPath': defaultSettings.logoPath,
               'version': 1,
-              'isDeleted': false,
+              'inTrash': false,
               'updatedAt': now.millisecondsSinceEpoch,
               'createdAt': now.millisecondsSinceEpoch,
             },
           );
         }
-        
+
         return defaultSettings;
       }
-      
+
       final data = results.first;
       return GeneratorSettings.fromDatabase(data);
     } catch (e) {
@@ -144,13 +145,14 @@ class SettingsService {
         updatedAt: now,
         ownerId: ownerId,
         version: 1,
-        isDeleted: false,
+        inTrash: false,
       );
     }
   }
 
   // Update generator settings
-  Future<bool> updateGeneratorSettings(GeneratorSettings settings, {String? ownerId}) async {
+  Future<bool> updateGeneratorSettings(GeneratorSettings settings,
+      {String? ownerId}) async {
     try {
       final now = DateTime.now();
       final updatedSettings = GeneratorSettings(
@@ -163,13 +165,15 @@ class SettingsService {
         updatedAt: now,
         ownerId: settings.ownerId ?? ownerId,
         version: settings.version + 1,
-        isDeleted: false,
+        inTrash: false,
       );
-      
-      await database.into(database.generatorSettingsTable).insertOnConflictUpdate(
-        updatedSettings.toCompanion(),
-      );
-      
+
+      await database
+          .into(database.generatorSettingsTable)
+          .insertOnConflictUpdate(
+            updatedSettings.toCompanion(),
+          );
+
       // Add to outbox for Convex sync
       if (ownerId != null) {
         _outbox.addEntry(
@@ -184,13 +188,13 @@ class SettingsService {
             'address': settings.address,
             'logoPath': settings.logoPath,
             'version': settings.version + 1,
-            'isDeleted': false,
+            'inTrash': false,
             'updatedAt': now.millisecondsSinceEpoch,
             'createdAt': settings.createdAt.millisecondsSinceEpoch,
           },
         );
       }
-      
+
       return true;
     } catch (e) {
       return false;
@@ -244,7 +248,8 @@ class SettingsService {
       return {
         'printerName': prefs.getString('printer_name') ?? 'default',
         'paperSize': prefs.getString('paper_size') ?? 'a4',
-        'documentTitle': prefs.getString('document_title') ?? 'مولد الدين الإسلامي',
+        'documentTitle':
+            prefs.getString('document_title') ?? 'مولد الدين الإسلامي',
         'documentPhone': prefs.getString('document_phone') ?? '07701234567',
       };
     } catch (e) {
@@ -287,7 +292,8 @@ class SettingsService {
         'reminderDays': prefs.getInt('reminder_days') ?? 1,
         'syncNotifications': prefs.getBool('sync_notifications') ?? true,
         'systemAlerts': prefs.getBool('system_alerts') ?? true,
-        'whatsappNotifications': prefs.getBool('whatsapp_notifications') ?? false,
+        'whatsappNotifications':
+            prefs.getBool('whatsapp_notifications') ?? false,
       };
     } catch (e) {
       return {
@@ -311,13 +317,15 @@ class SettingsService {
         await prefs.setInt('reminder_days', settings['reminderDays']);
       }
       if (settings['syncNotifications'] != null) {
-        await prefs.setBool('sync_notifications', settings['syncNotifications']);
+        await prefs.setBool(
+            'sync_notifications', settings['syncNotifications']);
       }
       if (settings['systemAlerts'] != null) {
         await prefs.setBool('system_alerts', settings['systemAlerts']);
       }
       if (settings['whatsappNotifications'] != null) {
-        await prefs.setBool('whatsapp_notifications', settings['whatsappNotifications']);
+        await prefs.setBool(
+            'whatsapp_notifications', settings['whatsappNotifications']);
       }
     } catch (e) {
       // Silent fail
@@ -361,7 +369,8 @@ class SettingsService {
       final prefs = await SharedPreferences.getInstance();
       return {
         'cloudBackupEnabled': prefs.getBool('cloud_backup_enabled') ?? true,
-        'autoBackupFrequency': prefs.getString('auto_backup_frequency') ?? 'daily',
+        'autoBackupFrequency':
+            prefs.getString('auto_backup_frequency') ?? 'daily',
         'lastBackupTime': prefs.getString('last_backup_time'),
       };
     } catch (e) {
@@ -378,10 +387,12 @@ class SettingsService {
     try {
       final prefs = await SharedPreferences.getInstance();
       if (settings['cloudBackupEnabled'] != null) {
-        await prefs.setBool('cloud_backup_enabled', settings['cloudBackupEnabled']);
+        await prefs.setBool(
+            'cloud_backup_enabled', settings['cloudBackupEnabled']);
       }
       if (settings['autoBackupFrequency'] != null) {
-        await prefs.setString('auto_backup_frequency', settings['autoBackupFrequency']);
+        await prefs.setString(
+            'auto_backup_frequency', settings['autoBackupFrequency']);
       }
     } catch (e) {
       // Silent fail
@@ -392,7 +403,8 @@ class SettingsService {
   Future<void> updateLastBackupTime() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('last_backup_time', DateTime.now().toIso8601String());
+      await prefs.setString(
+          'last_backup_time', DateTime.now().toIso8601String());
     } catch (e) {
       // Silent fail
     }
@@ -419,21 +431,22 @@ class SettingsService {
   }
 
   // Change password
-  Future<bool> changePassword(String currentPassword, String newPassword) async {
+  Future<bool> changePassword(
+      String currentPassword, String newPassword) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final storedPassword = prefs.getString('app_password');
-      
+
       if (storedPassword == null) {
         // First time setting password
         await prefs.setString('app_password', newPassword);
         return true;
       }
-      
+
       if (storedPassword != currentPassword) {
         return false; // Wrong current password
       }
-      
+
       await prefs.setString('app_password', newPassword);
       return true;
     } catch (e) {
@@ -482,51 +495,63 @@ class SettingsService {
   Future<String?> createBackup(AppDatabase database) async {
     try {
       // Export database to JSON
-      final subscribers = await database.select(database.subscribersTable).get();
+      final subscribers =
+          await database.select(database.subscribersTable).get();
       final cabinets = await database.select(database.cabinetsTable).get();
       final payments = await database.select(database.paymentsTable).get();
       final workers = await database.select(database.workersTable).get();
-      final generatorSettings = await database.select(database.generatorSettingsTable).get();
-      
+      final generatorSettings =
+          await database.select(database.generatorSettingsTable).get();
+
       final backupData = {
         'version': '1.0.0',
         'createdAt': DateTime.now().toIso8601String(),
-        'subscribers': subscribers.map((s) => {
-          'id': s.id,
-          'name': s.name,
-          'code': s.code,
-          'cabinet': s.cabinet,
-          'phone': s.phone,
-          'status': s.status,
-          'accumulatedDebt': s.accumulatedDebt,
-        }).toList(),
-        'cabinets': cabinets.map((c) => {
-          'id': c.id,
-          'name': c.name,
-          'letter': c.letter,
-          'currentSubscribers': c.currentSubscribers,
-          'totalSubscribers': c.totalSubscribers,
-        }).toList(),
-        'payments': payments.map((p) => {
-          'id': p.id,
-          'subscriberId': p.subscriberId,
-          'amount': p.amount,
-          'date': p.date.toIso8601String(),
-          'worker': p.worker,
-        }).toList(),
-        'workers': workers.map((w) => {
-          'id': w.id,
-          'name': w.name,
-          'phone': w.phone,
-        }).toList(),
-        'generatorSettings': generatorSettings.map((g) => {
-          'id': g.id,
-          'name': g.name,
-          'phoneNumber': g.phoneNumber,
-          'address': g.address,
-        }).toList(),
+        'subscribers': subscribers
+            .map((s) => {
+                  'id': s.id,
+                  'name': s.name,
+                  'code': s.code,
+                  'cabinet': s.cabinet,
+                  'phone': s.phone,
+                  'status': s.status,
+                  'accumulatedDebt': s.accumulatedDebt,
+                })
+            .toList(),
+        'cabinets': cabinets
+            .map((c) => {
+                  'id': c.id,
+                  'name': c.name,
+                  'letter': c.letter,
+                  'currentSubscribers': c.currentSubscribers,
+                  'totalSubscribers': c.totalSubscribers,
+                })
+            .toList(),
+        'payments': payments
+            .map((p) => {
+                  'id': p.id,
+                  'subscriberId': p.subscriberId,
+                  'amount': p.amount,
+                  'date': p.date.toIso8601String(),
+                  'worker': p.worker,
+                })
+            .toList(),
+        'workers': workers
+            .map((w) => {
+                  'id': w.id,
+                  'name': w.name,
+                  'phone': w.phone,
+                })
+            .toList(),
+        'generatorSettings': generatorSettings
+            .map((g) => {
+                  'id': g.id,
+                  'name': g.name,
+                  'phoneNumber': g.phoneNumber,
+                  'address': g.address,
+                })
+            .toList(),
       };
-      
+
       return backupData.toString();
     } catch (e) {
       return null;

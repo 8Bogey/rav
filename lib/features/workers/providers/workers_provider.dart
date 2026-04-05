@@ -2,66 +2,8 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/service_providers.dart';
+import '../../../core/models/worker_permissions.dart';
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
-
-/// Worker permissions model
-class WorkerPermissions {
-  final bool collection;
-  final bool addSubscriber;
-  final bool editData;
-  final bool viewReports;
-  final bool manageWorkers;
-  final bool settings;
-
-  const WorkerPermissions({
-    this.collection = false,
-    this.addSubscriber = false,
-    this.editData = false,
-    this.viewReports = false,
-    this.manageWorkers = false,
-    this.settings = false,
-  });
-
-  factory WorkerPermissions.fromJson(Map<String, dynamic> json) {
-    return WorkerPermissions(
-      collection: json['collection'] ?? false,
-      addSubscriber: json['addSubscriber'] ?? false,
-      editData: json['editData'] ?? false,
-      viewReports: json['viewReports'] ?? false,
-      manageWorkers: json['manageWorkers'] ?? false,
-      settings: json['settings'] ?? false,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'collection': collection,
-        'addSubscriber': addSubscriber,
-        'editData': editData,
-        'viewReports': viewReports,
-        'manageWorkers': manageWorkers,
-        'settings': settings,
-      };
-
-  String toJsonString() => jsonEncode(toJson());
-
-  WorkerPermissions copyWith({
-    bool? collection,
-    bool? addSubscriber,
-    bool? editData,
-    bool? viewReports,
-    bool? manageWorkers,
-    bool? settings,
-  }) {
-    return WorkerPermissions(
-      collection: collection ?? this.collection,
-      addSubscriber: addSubscriber ?? this.addSubscriber,
-      editData: editData ?? this.editData,
-      viewReports: viewReports ?? this.viewReports,
-      manageWorkers: manageWorkers ?? this.manageWorkers,
-      settings: settings ?? this.settings,
-    );
-  }
-}
 
 /// State for workers list
 class WorkersState {
@@ -132,6 +74,7 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
     double monthTotal = 0,
   }) async {
     try {
+      final now = DateTime.now();
       final worker = Worker(
         id: '',
         ownerId: _ownerId,
@@ -142,9 +85,16 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
         monthTotal: monthTotal,
         version: 1,
         inTrash: false,
+        trashMovedAt: null,
+        updatedAt: now,
+        createdAt: now,
       );
 
-      final id = await _service.addWorker(worker, ownerId: _ownerId);
+      final id = await _service.addWorker(
+        worker,
+        ownerId: _ownerId,
+        workerPermissions: WorkerPermissions.collector(),
+      );
 
       await loadWorkers();
       return id;
@@ -172,7 +122,7 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
       final worker = await getWorkerById(workerId);
       if (worker != null) {
         await updateWorker(worker.copyWith(
-          permissions: permissions.toJsonString(),
+          permissions: jsonEncode(permissions.toJson()),
         ));
       }
     } catch (e) {

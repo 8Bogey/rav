@@ -7,8 +7,9 @@ import 'package:mawlid_al_dhaki/core/database/app_database.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
 import 'package:mawlid_al_dhaki/core/theme/theme_provider.dart';
+import 'package:mawlid_al_dhaki/core/models/worker_permissions.dart';
 import 'package:mawlid_al_dhaki/features/workers/providers/workers_provider.dart'
-    show WorkerPermissions, workersProvider;
+    show workersProvider;
 import 'package:mawlid_al_dhaki/shared/widgets/common/screen_header.dart';
 import 'package:mawlid_al_dhaki/shared/widgets/common/error_state_widget.dart';
 import 'package:mawlid_al_dhaki/shared/widgets/common/empty_state_widget.dart';
@@ -415,12 +416,13 @@ class WorkersScreen extends ConsumerWidget {
     }
 
     // Create local state for permissions
-    bool canCollect = currentPermissions.collection;
-    bool canAddSubscriber = currentPermissions.addSubscriber;
-    bool canEditData = currentPermissions.editData;
-    bool canViewReports = currentPermissions.viewReports;
-    bool canManageWorkers = currentPermissions.manageWorkers;
-    bool canSettings = currentPermissions.settings;
+    bool canViewSubscribers = currentPermissions.canViewSubscribers;
+    bool canEditSubscribers = currentPermissions.canEditSubscribers;
+    bool canDeleteSubscribers = currentPermissions.canDeleteSubscribers;
+    bool canViewPayments = currentPermissions.canViewPayments;
+    bool canRecordPayments = currentPermissions.canRecordPayments;
+    bool canDeletePayments = currentPermissions.canDeletePayments;
+    bool canManageSettings = currentPermissions.canManageSettings;
 
     showDialog(
       context: context,
@@ -441,39 +443,48 @@ class WorkersScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildPermissionCheckbox(
-                  'تحصيل',
-                  canCollect,
-                  (value) => setState(() => canCollect = value ?? false),
+                  'عرض المشتركين',
+                  canViewSubscribers,
+                  (value) =>
+                      setState(() => canViewSubscribers = value ?? false),
                   isDarkMode,
                 ),
                 _buildPermissionCheckbox(
-                  'إضافة مشترك',
-                  canAddSubscriber,
-                  (value) => setState(() => canAddSubscriber = value ?? false),
+                  'تعديل المشتركين',
+                  canEditSubscribers,
+                  (value) =>
+                      setState(() => canEditSubscribers = value ?? false),
                   isDarkMode,
                 ),
                 _buildPermissionCheckbox(
-                  'تعديل بيانات',
-                  canEditData,
-                  (value) => setState(() => canEditData = value ?? false),
+                  'حذف المشتركين',
+                  canDeleteSubscribers,
+                  (value) =>
+                      setState(() => canDeleteSubscribers = value ?? false),
                   isDarkMode,
                 ),
                 _buildPermissionCheckbox(
-                  'عرض التقارير',
-                  canViewReports,
-                  (value) => setState(() => canViewReports = value ?? false),
+                  'عرض المدفوعات',
+                  canViewPayments,
+                  (value) => setState(() => canViewPayments = value ?? false),
                   isDarkMode,
                 ),
                 _buildPermissionCheckbox(
-                  'إدارة العمال',
-                  canManageWorkers,
-                  (value) => setState(() => canManageWorkers = value ?? false),
+                  'تسجيل مدفوعات',
+                  canRecordPayments,
+                  (value) => setState(() => canRecordPayments = value ?? false),
+                  isDarkMode,
+                ),
+                _buildPermissionCheckbox(
+                  'حذف مدفوعات',
+                  canDeletePayments,
+                  (value) => setState(() => canDeletePayments = value ?? false),
                   isDarkMode,
                 ),
                 _buildPermissionCheckbox(
                   'الإعدادات',
-                  canSettings,
-                  (value) => setState(() => canSettings = value ?? false),
+                  canManageSettings,
+                  (value) => setState(() => canManageSettings = value ?? false),
                   isDarkMode,
                 ),
               ],
@@ -493,12 +504,13 @@ class WorkersScreen extends ConsumerWidget {
             ElevatedButton(
               onPressed: () async {
                 final newPermissions = WorkerPermissions(
-                  collection: canCollect,
-                  addSubscriber: canAddSubscriber,
-                  editData: canEditData,
-                  viewReports: canViewReports,
-                  manageWorkers: canManageWorkers,
-                  settings: canSettings,
+                  canViewSubscribers: canViewSubscribers,
+                  canEditSubscribers: canEditSubscribers,
+                  canDeleteSubscribers: canDeleteSubscribers,
+                  canViewPayments: canViewPayments,
+                  canRecordPayments: canRecordPayments,
+                  canDeletePayments: canDeletePayments,
+                  canManageSettings: canManageSettings,
                 );
 
                 await ref.read(workersProvider.notifier).updatePermissions(
