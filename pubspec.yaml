@@ -10,9 +10,18 @@ environment:
 flutter:
   uses-material-design: true
   fonts:
-    - family: VarelaRound
+    - family: BalooBhaijaan2
       fonts:
-        - asset: assets/fonts/VarelaRound-Regular.woff2
+        - asset: assets/fonts/BalooBhaijaan2-Regular.woff2
+          weight: 400
+        - asset: assets/fonts/BalooBhaijaan2-Regular.woff2
+          weight: 500
+        - asset: assets/fonts/BalooBhaijaan2-Regular.woff2
+          weight: 600
+        - asset: assets/fonts/BalooBhaijaan2-Regular.woff2
+          weight: 700
+        - asset: assets/fonts/BalooBhaijaan2-Regular.woff2
+          weight: 800
 
 dependencies:
   flutter:
