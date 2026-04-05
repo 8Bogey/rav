@@ -61,4 +61,32 @@ class AppColors {
   static const Color darkTextHead = Color(0xFFF0F6FC);
   static const Color darkTextBody = Color(0xFFCDD9E5);
   static const Color darkTextMuted = Color(0xFF768390);
+
+  // ═══════════════════════════════════════════════════════════════
+  // CODDY.TECH STOCK COLORS (Single Theme - No Dark/Light Mode)
+  // Extracted from cody.png - coddy.tech login page
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── Primary Colors ─────────────────────────────────────────────
+  static const Color coddyStockPrimary = Color(0xFF1B78A0); // Teal button
+  static const Color coddyStockPrimaryDarker = Color(0xFF145A78); // Button shadow
+  static const Color coddyStockLink = Color(0xFF34B4E4); // Links, accents
+
+  // ── Background Colors ──────────────────────────────────────────
+  static const Color coddyStockBgPage = Color(0xFF252627); // Page background
+  static const Color coddyStockBgCard = Color(0xFF2D2E2F); // Card background
+  static const Color coddyStockBgInput = Color(0xFF252627); // Input background
+
+  // ── Text Colors ────────────────────────────────────────────────
+  static const Color coddyStockTextPrimary = Color(0xDEFFFFFF); // 87% white
+  static const Color coddyStockTextSecondary = Color(0x99FFFFFF); // 60% white
+  static const Color coddyStockTextDisabled = Color(0x4DFFFFFF); // 30% white
+
+  // ── Border Colors ──────────────────────────────────────────────
+  static const Color coddyStockBorder = Color(0xFF3B3E41); // Input borders
+  static const Color coddyStockBorderMid = Color(0xFF494D50); // Button borders
+
+  // ── Semantic Colors ────────────────────────────────────────────
+  static const Color coddyStockError = Color(0xFFA90404); // Error states
+  static const Color coddyStockSuccess = Color(0xFF00AB72); // Success states
 }

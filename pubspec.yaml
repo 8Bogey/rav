@@ -56,6 +56,7 @@ dependencies:
   # supabase_flutter: ^2.8.0       # ❌ REMOVED - using Convex instead
   # convex_flutter: ^3.0.1         # ❌ VERSION ISSUE - using http instead
   http: ^1.2.0                     # ✅ Direct HTTP calls to Convex
+  crypto: ^3.0.3                   # ✅ SHA256 for PKCE code challenge
   auth0_flutter: ^2.0.0          # ✅ Auth0 authentication
 
   # ── Icons & SVG ───────────────────────────────────────────────
