@@ -11,7 +11,8 @@ class AuditLogService extends BaseService {
   final String ownerId; // Add ownerId field
   static const uuid = Uuid(); // UUID generator
 
-  AuditLogService(AppDatabase database, {required this.ownerId}) : super(database) {
+  AuditLogService(AppDatabase database, {required this.ownerId})
+      : super(database) {
     _dao = AuditLogDao(database);
     _outbox = OutboxService(database);
   }
@@ -41,11 +42,11 @@ class AuditLogService extends BaseService {
       type: Value(entry.type),
       timestamp: Value(entry.timestamp),
       version: const Value(1),
-      isDeleted: const Value(false),
+      inTrash: const Value(false),
       createdAt: Value(now),
       updatedAt: Value(now),
     );
-    
+
     // Add to outbox for Convex sync
     _outbox.addEntry(
       targetTable: 'auditLog',
@@ -61,38 +62,25 @@ class AuditLogService extends BaseService {
         'type': entry.type,
         'timestamp': entry.timestamp.millisecondsSinceEpoch,
         'version': 1,
-        'isDeleted': false,
+        'inTrash': false,
         'updatedAt': now.millisecondsSinceEpoch,
         'createdAt': now.millisecondsSinceEpoch,
       },
     );
-    
+
     return _dao.addAuditLogEntry(companion);
   }
 
   // Update an audit log entry
   Future<bool> updateAuditLogEntry(AuditLogEntry entry) {
-    final companion = entry.toCompanion(false).copyWith(ownerId: Value(ownerId)); // Add ownerId
+    final companion = entry
+        .toCompanion(false)
+        .copyWith(ownerId: Value(ownerId)); // Add ownerId
     return _dao.updateAuditLogEntry(companion);
   }
 
   // Delete an audit log entry (soft delete)
   Future<int> deleteAuditLogEntry(String id) {
     return _dao.deleteAuditLogEntry(id);
-  }
-
-  // Get dirty audit log entries (those with dirtyFlag = true)
-  Future<List<AuditLogEntry>> getDirtyAuditLogEntries() {
-    return _dao.getDirtyAuditLogEntries(ownerId: ownerId);
-  }
-  
-  // Mark record as dirty
-  Future<int> markRecordAsDirty(String id) {
-    return _dao.markRecordAsDirty(id);
-  }
-  
-  // Clear dirty flag
-  Future<int> clearDirtyFlag(String id) {
-    return _dao.clearDirtyFlag(id);
   }
 }

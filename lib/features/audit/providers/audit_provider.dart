@@ -1,5 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/database/database_provider.dart'
+    hide currentUserIdProvider;
+import '../../../core/database/daos/audit_log_dao.dart';
 import '../../../core/services/service_providers.dart';
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
 
@@ -245,18 +249,17 @@ class AuditLogNotifier extends StateNotifier<AuditLogState> {
     return entries.take(count).toList();
   }
 
-  /// Delete old audit log entries (cleanup)
+  /// Delete old audit log entries (cleanup) — single bulk query, not N+1
   Future<void> deleteOldEntries({int daysOld = 90}) async {
     try {
-      final entries = await _service.getAllAuditLogEntries();
       final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
+      final database = _ref.read(databaseProvider);
+      final dao = AuditLogDao(database);
+      final deleted =
+          await dao.deleteEntriesOlderThan(cutoffDate, ownerId: _ownerId);
 
-      for (var entry in entries) {
-        if (entry.timestamp.isBefore(cutoffDate)) {
-          await _service.deleteAuditLogEntry(entry.id);
-        }
-      }
-
+      debugPrint(
+          '[AuditLog] Deleted $deleted old entries (older than $daysOld days)');
       await loadAuditLog();
     } catch (e) {
       state = state.copyWith(error: 'فشل حذف السجلات القديمة: $e');

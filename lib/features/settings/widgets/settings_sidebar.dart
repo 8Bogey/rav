@@ -3,13 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_colors.dart';
 import 'package:mawlid_al_dhaki/core/theme/app_typography.dart';
-import 'package:mawlid_al_dhaki/features/settings/settings_screen.dart';
+import 'package:mawlid_al_dhaki/features/settings/settings_state.dart';
 
-class SettingsSidebar extends StatelessWidget {
-  const SettingsSidebar({super.key, required this.isDarkMode, required this.ref});
+class SettingsSidebar extends ConsumerWidget {
+  const SettingsSidebar({super.key, required this.isDarkMode});
 
   final bool isDarkMode;
-  final WidgetRef ref;
 
   void _playSectionChangeSound() {
     try {
@@ -18,7 +17,7 @@ class SettingsSidebar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final selectedSection = ref.watch(settingsSectionProvider);
 
     return Container(
@@ -52,7 +51,8 @@ class SettingsSidebar extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(8),
               children: [
-                _buildMenuItem('معلومات المولد', selectedSection == 'معلومات المولد',
+                _buildMenuItem(
+                    'معلومات المولد', selectedSection == 'معلومات المولد',
                     isDarkMode: isDarkMode,
                     onTap: () => ref
                         .read(settingsSectionProvider.notifier)
@@ -93,7 +93,8 @@ class SettingsSidebar extends StatelessWidget {
                     onTap: () => ref
                         .read(settingsSectionProvider.notifier)
                         .state = 'الترخيص'),
-                _buildMenuItem('سلة المحذوفات', selectedSection == 'سلة المحذوفات',
+                _buildMenuItem(
+                    'سلة المحذوفات', selectedSection == 'سلة المحذوفات',
                     isDarkMode: isDarkMode,
                     onTap: () => ref
                         .read(settingsSectionProvider.notifier)

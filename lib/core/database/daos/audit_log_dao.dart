@@ -121,6 +121,17 @@ class AuditLogDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  // Bulk delete entries older than cutoff date (single query, not N+1)
+  Future<int> deleteEntriesOlderThan(DateTime cutoff,
+      {required String ownerId}) {
+    if (ownerId.isEmpty) return Future.value(0);
+    return (delete(auditLogTable)
+          ..where((t) =>
+              t.ownerId.equals(ownerId) &
+              t.timestamp.isSmallerThanValue(cutoff)))
+        .go();
+  }
+
   // Count audit log entries - REQUIRES ownerId
   Future<int> countAuditLogEntries(
       {required String ownerId, DateTime? startDate, DateTime? endDate}) async {
