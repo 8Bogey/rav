@@ -9,31 +9,10 @@ environment:
 
 flutter:
   uses-material-design: true
-  # Assets will be added as needed
-  # Currently no custom assets required
-  # fonts:
-  #   - family: Cairo
-  #     fonts:
-  #       - asset: assets/fonts/Cairo-Regular.ttf
-  #         weight: 400
-  #       - asset: assets/fonts/Cairo-Medium.ttf
-  #         weight: 500
-  #       - asset: assets/fonts/Cairo-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Cairo-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/Cairo-ExtraBold.ttf
-  #         weight: 800
-  #   - family: Nunito
-  #     fonts:
-  #       - asset: assets/fonts/Nunito-Regular.ttf
-  #         weight: 400
-  #       - asset: assets/fonts/Nunito-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Nunito-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/Nunito-ExtraBold.ttf
-  #         weight: 800
+  fonts:
+    - family: VarelaRound
+      fonts:
+        - asset: assets/fonts/VarelaRound-Regular.woff2
 
 dependencies:
   flutter:
