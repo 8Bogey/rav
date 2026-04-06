@@ -31,7 +31,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
 
-  // Focus tracking via listeners (NOT setState in onFocusChange)
   bool _emailFocused = false;
   bool _passwordFocused = false;
   String? _emailError;
@@ -40,7 +39,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Use listeners instead of Focus widget wrapping — avoids focus loss on rebuild
     _emailFocusNode.addListener(() {
       if (mounted) setState(() => _emailFocused = _emailFocusNode.hasFocus);
     });
@@ -60,7 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // CODDY DARK THEME — ألوان ثابتة
+  // CODDY DARK THEME
   // ═══════════════════════════════════════════════════════════════
 
   static const _brandBright = Color(0xFF34B4E4);
@@ -79,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   static const _font = 'BalooBhaijaan2';
 
   // ═══════════════════════════════════════════════════════════════
-  // وظائف الأزرار — كل زر مربوط بوظيفة حقيقية مع تغذية راجعة
+  // وظائف الأزرار
   // ═══════════════════════════════════════════════════════════════
 
   Future<void> _handleLogin() async {
@@ -117,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('تعذر فتح صفحة التسجيل. تأكد من اتصال الإنترنت.'),
+              content: Text('تعذر فتح صفحة التسجيل'),
               backgroundColor: _coddyError),
         );
       }
@@ -181,8 +179,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text(
-                  'تعذر فتح تسجيل الدخول عبر Google. تأكد من اتصال الإنترنت.'),
+              content: Text('تعذر فتح تسجيل الدخول عبر Google'),
               backgroundColor: _coddyError),
         );
       }
@@ -298,7 +295,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildDesktopLayout(AuthState authState) {
     return Row(
       children: [
-        // ── النصف الأيسر: بطاقات عرض الميزات ─────────────────────
         Expanded(
           flex: 1,
           child: Container(
@@ -347,7 +343,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
-        // ── النصف الأيمن: بطاقة تسجيل الدخول ─────────────────────
         Expanded(
           flex: 1,
           child: SingleChildScrollView(
@@ -434,7 +429,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // الشعار
           Container(
             width: 64,
             height: 64,
@@ -448,11 +442,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Text('المولد الذكي', style: _cardTitleStyle),
           const SizedBox(height: 24),
 
-          // التبويبات
           _buildTabs(),
           const SizedBox(height: 24),
 
-          // رسالة الخطأ
           if (authState.errorMessage != null)
             _buildErrorBanner(authState.errorMessage!),
 
@@ -488,35 +480,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           // نسيت كلمة المرور
           Align(
             alignment: Alignment.centerRight,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _isLoading ? null : _handleForgotPassword,
-                borderRadius: BorderRadius.circular(4),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                  child: const Text(
-                    'نسيت كلمة المرور؟',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: _brandBright,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: _font,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Color(0x8034B4E4),
-                    ),
+            child: GestureDetector(
+              onTap: _isLoading ? null : _handleForgotPassword,
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: Text(
+                  'نسيت كلمة المرور؟',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _brandBright,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: _font,
+                    decoration: TextDecoration.underline,
+                    decorationColor: Color(0x8034B4E4),
                   ),
                 ),
               ),
             ),
           ),
 
-          // زر الدخول
           const SizedBox(height: 20),
           _buildPrimaryButton(),
 
-          // فاصل أو
           const SizedBox(height: 20),
           Row(
             children: [
@@ -535,14 +521,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
           const SizedBox(height: 20),
 
-          // زر Google
           _buildSocialButton('GOOGLE', _handleGoogleLogin, const _GoogleLogo()),
           const SizedBox(height: 16),
 
-          // الدخول كضيف
           _buildGuestButton(),
 
-          // الشروط
           const SizedBox(height: 16),
           RichText(
             textAlign: TextAlign.center,
@@ -584,21 +567,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildTab(String label, bool isSelected) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => setState(() => _isRegisterMode = label == 'إنشاء حساب'),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 18,
-              fontFamily: _font,
-              color: isSelected ? _brandBright : _textSecondary,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-            ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _isRegisterMode = label == 'إنشاء حساب'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 18,
+            fontFamily: _font,
+            color: isSelected ? _brandBright : _textSecondary,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
           ),
         ),
       ),
@@ -606,7 +586,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // حقول الإدخال — FIX: FocusNode listener instead of Focus widget
+  // حقول الإدخال — بسيط ومباشر
   // ═══════════════════════════════════════════════════════════════
 
   Widget _buildInput({
@@ -659,26 +639,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     hintText: label,
                     hintStyle: _hintStyle,
                     suffixIcon: showPasswordToggle
-                        ? Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: onTogglePassword,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(
-                                  isPassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                  size: 20,
-                                  color: _textSecondary,
-                                ),
-                              ),
+                        ? IconButton(
+                            icon: Icon(
+                              isPassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              size: 20,
+                              color: _textSecondary,
                             ),
+                            onPressed: onTogglePassword,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           )
                         : null,
-                    suffixIconConstraints:
-                        const BoxConstraints(maxWidth: 32, maxHeight: 32),
                   ),
                 ),
               ),
@@ -702,38 +675,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Widget _buildPrimaryButton() {
     final label = _isRegisterMode ? 'إنشاء حساب' : 'تسجيل الدخول';
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _isLoading
-            ? null
-            : () => _isRegisterMode ? _handleRegister() : _handleLogin(),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
-          decoration: BoxDecoration(
-            color: _isLoading ? _brandPrimary.withOpacity(0.6) : _brandPrimary,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: _isLoading
-                ? []
-                : const [
-                    BoxShadow(
-                        color: _brandPrimaryDarker,
-                        offset: Offset(0, 4),
-                        blurRadius: 0)
-                  ],
-          ),
-          child: Center(
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2.5, color: Colors.white),
-                  )
-                : Text(label, style: _primaryButtonTextStyle),
-          ),
+    return GestureDetector(
+      onTap: _isLoading
+          ? null
+          : () => _isRegisterMode ? _handleRegister() : _handleLogin(),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+        decoration: BoxDecoration(
+          color: _isLoading ? _brandPrimary.withOpacity(0.6) : _brandPrimary,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: _isLoading
+              ? []
+              : const [
+                  BoxShadow(
+                      color: _brandPrimaryDarker,
+                      offset: Offset(0, 4),
+                      blurRadius: 0)
+                ],
+        ),
+        child: Center(
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2.5, color: Colors.white),
+                )
+              : Text(label, style: _primaryButtonTextStyle),
         ),
       ),
     );
@@ -744,30 +714,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   // ═══════════════════════════════════════════════════════════════
 
   Widget _buildSocialButton(String label, VoidCallback onTap, Widget logo) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _isLoading ? null : onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          height: 44,
-          decoration: BoxDecoration(
-            color: _bgCard,
-            border: Border.all(color: _borderMid, width: 2),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: const [
-              BoxShadow(color: _borderMid, offset: Offset(0, 3), blurRadius: 0)
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(width: 20, height: 20, child: logo),
-              const SizedBox(width: 8),
-              Text(label, style: _socialButtonTextStyle),
-            ],
-          ),
+    return GestureDetector(
+      onTap: _isLoading ? null : onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: double.infinity,
+        height: 44,
+        decoration: BoxDecoration(
+          color: _bgCard,
+          border: Border.all(color: _borderMid, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(color: _borderMid, offset: Offset(0, 3), blurRadius: 0)
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(width: 20, height: 20, child: logo),
+            const SizedBox(width: 8),
+            Text(label, style: _socialButtonTextStyle),
+          ],
         ),
       ),
     );
@@ -778,27 +745,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   // ═══════════════════════════════════════════════════════════════
 
   Widget _buildGuestButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _isLoading ? null : _handleGuestLogin,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          height: 44,
-          decoration: BoxDecoration(
-            color: _bgCard,
-            border: Border.all(color: _borderColor, width: 1.5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(
-            child: Text('الدخول كضيف',
-                style: TextStyle(
-                    color: _textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: _font)),
-          ),
+    return GestureDetector(
+      onTap: _isLoading ? null : _handleGuestLogin,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: double.infinity,
+        height: 44,
+        decoration: BoxDecoration(
+          color: _bgCard,
+          border: Border.all(color: _borderColor, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(
+          child: Text('الدخول كضيف',
+              style: TextStyle(
+                  color: _textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: _font)),
         ),
       ),
     );

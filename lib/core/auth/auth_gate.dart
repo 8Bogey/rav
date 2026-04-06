@@ -6,18 +6,36 @@ import 'package:mawlid_al_dhaki/core/database/database_provider.dart';
 
 /// Widget that initializes auth and starts sync when ready.
 /// Place this as the root of your app after ProviderScope.
-class AuthGate extends ConsumerWidget {
+class AuthGate extends ConsumerStatefulWidget {
   final Widget child;
   const AuthGate({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends ConsumerState<AuthGate> {
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize auth exactly once
+    Future.microtask(() {
+      if (mounted && !_initialized) {
+        _initialized = true;
+        ref.read(authProvider.notifier).initialize();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Initialize auth on first build
+    // Start sync when auth becomes ready
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (previous?.isAuthenticated == false && next.isAuthenticated) {
-        // Auth just became ready — start sync
         final database = ref.read(databaseProvider);
         final syncProcessor = ConvexSyncProcessor(database);
         syncProcessor.start();
@@ -25,12 +43,6 @@ class AuthGate extends ConsumerWidget {
       }
     });
 
-    // Run initialization
-    if (!authState.isLoading && !authState.isAuthenticated) {
-      // Trigger initialization once
-      Future.microtask(() => ref.read(authProvider.notifier).initialize());
-    }
-
-    return child;
+    return widget.child;
   }
 }
