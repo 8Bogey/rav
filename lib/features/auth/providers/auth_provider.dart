@@ -1,8 +1,69 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io' show HttpServer, InternetAddress;
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:auth0_flutter/auth0_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
 import 'package:mawlid_al_dhaki/core/services/secure_storage_service.dart';
+import 'package:desktop_webview_window/desktop_webview_window.dart';
+import 'dart:math';
+
+/// Auth0 Configuration
+class Auth0Config {
+  static const String domain = 'dev-cqkioj1eiksobor3.us.auth0.com';
+  static const String clientId = 'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB';
+  static const String audience = 'https://hearty-meadowlark-390.convex.cloud';
+  static const String redirectUri = 'http://127.0.0.1:8899/callback';
+  static const String tokenUrl = 'https://$domain/oauth/token';
+  static const String loginUrl = 'https://$domain/authorize';
+}
+
+String _generateRandomString(int length) {
+  const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  final random = Random.secure();
+  return List.generate(length, (_) => chars[random.nextInt(chars.length)])
+      .join();
+}
+
+String _generateCodeVerifier() => _generateRandomString(128);
+
+String _generateCodeChallenge(String codeVerifier) {
+  final bytes = utf8.encode(codeVerifier);
+  final digest = sha256.convert(bytes);
+  return base64Url
+      .encode(digest.bytes)
+      .replaceAll('+', '-')
+      .replaceAll('/', '_')
+      .replaceAll('=', '');
+}
+
+/// Result of Auth0 login attempt
+class AuthResult {
+  final bool success;
+  final String? userId;
+  final String? accessToken;
+  final String? error;
+  final String? email;
+  final String? name;
+  final String? picture;
+  final String? role;
+  final List<String> permissions;
+
+  AuthResult({
+    required this.success,
+    this.userId,
+    this.accessToken,
+    this.error,
+    this.email,
+    this.name,
+    this.picture,
+    this.role,
+    this.permissions = const [],
+  });
+}
 
 enum UserRole { admin, worker }
 
@@ -14,7 +75,6 @@ class AuthState {
   final List<String> permissions;
   final bool isLoading;
   final String? errorMessage;
-  // User profile from JWT
   final String? email;
   final String? name;
   final String? picture;
@@ -69,135 +129,355 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  late final Auth0 _auth0;
+  HttpServer? _callbackServer;
+  String? _codeVerifier;
+  Completer<String?>? _authCodeCompleter;
 
-  AuthNotifier()
-      : _auth0 = Auth0(
-          'dev-cqkioj1eiksobor3.us.auth0.com',
-          'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB',
+  AuthNotifier() : super(const AuthState());
+
+  Future<AuthResult> _loginWithAuth0Universal() async {
+    try {
+      // Start local callback server
+      _callbackServer =
+          await HttpServer.bind(InternetAddress.loopbackIPv4, 8899);
+
+      // Generate PKCE
+      _codeVerifier = _generateCodeVerifier();
+      final codeChallenge = _generateCodeChallenge(_codeVerifier!);
+      final dynamicRedirectUri = 'http://127.0.0.1:8899/callback';
+
+      // Build Auth0 Universal Login URL (NOT Google-specific)
+      final authUrl = Uri.parse(Auth0Config.loginUrl).replace(
+        queryParameters: {
+          'response_type': 'code',
+          'client_id': Auth0Config.clientId,
+          'redirect_uri': dynamicRedirectUri,
+          'audience': Auth0Config.audience,
+          'scope': 'openid profile email offline_access',
+          'code_challenge': codeChallenge,
+          'code_challenge_method': 'S256',
+          'state': _generateRandomString(32),
+          'prompt': 'login',
+        },
+      );
+
+      debugPrint('[Auth] Opening Auth0 Universal Login: $authUrl');
+
+      _authCodeCompleter = Completer<String?>();
+
+      // Open WebView
+      final webview = await WebviewWindow.create(
+        configuration: CreateConfiguration(
+          windowWidth: 500,
+          windowHeight: 700,
+          title: 'Login - Smart Gen',
         ),
-        super(const AuthState());
+      );
 
-  /// Login via Auth0 Universal Login (web auth - token comes from Auth0)
+      webview.addOnUrlRequestCallback((url) {
+        final uri = Uri.parse(url);
+        if (uri.host == '127.0.0.1' &&
+            uri.path == '/callback' &&
+            uri.queryParameters.containsKey('code')) {
+          _authCodeCompleter?.complete(uri.queryParameters['code']);
+          webview.close();
+        }
+      });
+
+      webview.launch(authUrl.toString());
+
+      // Wait for auth code
+      final authCode = await _authCodeCompleter!.future.timeout(
+        const Duration(minutes: 5),
+        onTimeout: () => null,
+      );
+
+      await _callbackServer?.close(force: true);
+      _callbackServer = null;
+
+      if (authCode == null) {
+        return AuthResult(success: false, error: 'Login timeout');
+      }
+
+      // Exchange code for tokens
+      return await _exchangeCodeForTokens(
+          authCode, _codeVerifier!, dynamicRedirectUri);
+    } catch (e) {
+      debugPrint('[Auth] Login error: $e');
+      return AuthResult(success: false, error: e.toString());
+    }
+  }
+
+  Future<AuthResult> _exchangeCodeForTokens(
+      String authCode, String codeVerifier, String redirectUri) async {
+    final response = await http.post(
+      Uri.parse(Auth0Config.tokenUrl),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'grant_type': 'authorization_code',
+        'client_id': Auth0Config.clientId,
+        'code': authCode,
+        'code_verifier': codeVerifier,
+        'redirect_uri': redirectUri,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final accessToken = data['access_token'] as String?;
+      final idToken = data['id_token'] as String?;
+
+      if (accessToken == null) {
+        return AuthResult(success: false, error: 'No access token');
+      }
+
+      // Decode ID token
+      String? userId, email, name, picture, role;
+      List<String> permissions = [];
+
+      if (idToken != null) {
+        try {
+          final parts = idToken.split('.');
+          if (parts.length >= 2) {
+            var payload = parts[1];
+            final paddedLength = (4 - payload.length % 4) % 4;
+            payload += '=' * paddedLength;
+            final claims = jsonDecode(utf8.decode(base64Url.decode(payload)))
+                as Map<String, dynamic>;
+            userId = claims['sub'];
+            email = claims['email'];
+            name = claims['name'];
+            picture = claims['picture'];
+            role = claims['https://mawlid-al-dhaki.com/role'] as String? ??
+                claims['role'] as String?;
+            final permsRaw =
+                claims['https://mawlid-al-dhaki.com/permissions'] ??
+                    claims['permissions'];
+            if (permsRaw is List) {
+              permissions = permsRaw.map((e) => e.toString()).toList();
+            }
+          }
+        } catch (e) {
+          debugPrint('[Auth] Failed to decode ID token: $e');
+        }
+      }
+
+      return AuthResult(
+        success: true,
+        userId: userId,
+        accessToken: accessToken,
+        email: email,
+        name: name,
+        picture: picture,
+        role: role,
+        permissions: permissions,
+      );
+    } else {
+      return AuthResult(
+          success: false, error: 'Token exchange failed: ${response.body}');
+    }
+  }
+
+  /// Login via Auth0 Universal Login (opens Auth0 page where user can choose Google or email)
   Future<bool> loginWithAuth0() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final credentials = await _auth0.webAuthentication(scheme: 'http').login(
-            redirectUrl: 'http://127.0.0.1:8899/callback',
-          );
+      final result = await _loginWithAuth0Universal();
 
-      final token = credentials.accessToken;
-      final userId = credentials.user.sub;
-      final email = credentials.user.email;
-      final name = credentials.user.name;
-      final picture = credentials.user.pictureUrl?.toString();
+      if (result.success &&
+          result.accessToken != null &&
+          result.userId != null) {
+        await AppConvexConfig.setAuth(result.accessToken!);
+        await SecureStorageService.instance.setAccessToken(result.accessToken!);
+        await SecureStorageService.instance.setUserId(result.userId!);
 
-      if (token != null && userId != null) {
-        await AppConvexConfig.setAuth(token);
-
-        // Save to secure storage for session restoration
-        await SecureStorageService.instance.setAccessToken(token);
-        await SecureStorageService.instance.setUserId(userId);
-
-        // Upsert user to Convex with JWT claims (with retry)
         await _upsertUserToConvex(
-          userId: userId,
-          email: email,
-          name: name,
-          picture: picture,
-          role: 'worker', // default role
-          permissions: [],
+          userId: result.userId!,
+          email: result.email,
+          name: result.name,
+          picture: result.picture,
+          role: result.role ?? 'worker',
+          permissions: result.permissions,
         );
 
         state = AuthState(
           isAuthenticated: true,
-          userId: userId,
-          accessToken: token,
-          role: UserRole.worker,
-          permissions: [],
+          userId: result.userId,
+          accessToken: result.accessToken,
+          role: _mapRole(result.role),
+          permissions: result.permissions,
           isLoading: false,
-          email: email,
-          name: name,
-          picture: picture,
+          email: result.email,
+          name: result.name,
+          picture: result.picture,
         );
-        debugPrint('[AuthNotifier] Auth0 login successful: $userId');
+        debugPrint('[Auth] Login successful: ${result.userId}');
         return true;
       }
 
-      state = const AuthState(
-          isLoading: false, errorMessage: 'Login failed: no token received');
+      state = AuthState(
+          isLoading: false, errorMessage: result.error ?? 'Login failed');
       return false;
     } catch (e, st) {
-      debugPrint('[AuthNotifier] Auth0 login error: $e\n$st');
-      state = AuthState(
-          isLoading: false, errorMessage: 'Login failed: ${e.toString()}');
+      debugPrint('[Auth] Login error: $e\n$st');
+      state = AuthState(isLoading: false, errorMessage: e.toString());
       return false;
     }
   }
 
-  /// Initialize auth state from existing session
+  /// Initialize auth state
   Future<void> initialize() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      // Check for existing session in secure storage
       final token = await SecureStorageService.instance.getAccessToken();
       final userId = await SecureStorageService.instance.getUserId();
 
       if (token != null && userId != null) {
+        // Validate token with Convex
         await AppConvexConfig.setAuth(token);
 
-        // Try to get user from Convex to resolve role/permissions
-        String? role;
-        List<String> permissions = [];
         try {
           final user = await AppConvexConfig.mutation(
               'mutations/users:getCurrentUser', {});
-          role = user['role'] as String?;
-          final permsRaw = user['permissions'];
-          if (permsRaw is List) {
-            permissions = permsRaw.map((e) => e.toString()).toList();
-          }
-        } catch (e) {
-          debugPrint('[AuthNotifier] Failed to fetch user from Convex: $e');
-        }
+          final role = user['role'] as String?;
+          final permsRaw = user['permissions'] as List?;
+          final permissions = permsRaw?.map((e) => e.toString()).toList() ?? [];
 
-        state = AuthState(
-          isAuthenticated: true,
-          userId: userId,
-          accessToken: token,
-          role: _mapRole(role),
-          permissions: permissions,
-          isLoading: false,
-        );
-        debugPrint('[AuthNotifier] Session restored: $userId, role: $role');
-        return;
+          state = AuthState(
+            isAuthenticated: true,
+            userId: userId,
+            accessToken: token,
+            role: _mapRole(role),
+            permissions: permissions,
+            isLoading: false,
+          );
+          debugPrint('[Auth] Session restored: $userId, role: $role');
+          return;
+        } catch (e) {
+          debugPrint('[Auth] Session validation failed: $e');
+          // Token is invalid - clear it
+          await SecureStorageService.instance.deleteAll();
+        }
       }
       state = const AuthState(isLoading: false);
     } catch (e, st) {
-      debugPrint('[AuthNotifier] Initialize error: $e\n$st');
+      debugPrint('[Auth] Initialize error: $e\n$st');
       state = AuthState(
           isLoading: false, errorMessage: 'Failed to restore session');
     }
   }
 
-  /// Login via Google (uses Universal Login with Google connection)
+  /// Login via Google (still uses Universal Login but focuses on Google)
   Future<bool> loginWithGoogle() async {
-    // For Google, we use Universal Login which opens Auth0's hosted page
-    // where user can click "Continue with Google"
+    // Same as loginWithAuth0 - Universal Login shows Google option
     return loginWithAuth0();
   }
 
-  /// Login via email/password using Auth0 web auth (Universal Login page)
+  /// Login via email/password (for ROPC flow - direct API call)
   Future<bool> loginWithEmailPassword({
     required String email,
     required String password,
   }) async {
-    // For email/password, we also use Universal Login
-    // The user enters credentials on Auth0's hosted page
-    return loginWithAuth0();
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final response = await http.post(
+        Uri.parse(Auth0Config.tokenUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'grant_type': 'password',
+          'username': email,
+          'password': password,
+          'audience': Auth0Config.audience,
+          'scope': 'openid profile email offline_access',
+          'client_id': Auth0Config.clientId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final accessToken = data['access_token'] as String?;
+        final idToken = data['id_token'] as String?;
+
+        if (accessToken == null) {
+          state = const AuthState(
+              isLoading: false, errorMessage: 'No access token');
+          return false;
+        }
+
+        // Decode ID token
+        String? userId, userEmail, userName, picture, role;
+        List<String> permissions = [];
+
+        if (idToken != null) {
+          try {
+            final parts = idToken.split('.');
+            if (parts.length >= 2) {
+              var payload = parts[1];
+              final paddedLength = (4 - payload.length % 4) % 4;
+              payload += '=' * paddedLength;
+              final claims = jsonDecode(utf8.decode(base64Url.decode(payload)))
+                  as Map<String, dynamic>;
+              userId = claims['sub'];
+              userEmail = claims['email'];
+              userName = claims['name'];
+              picture = claims['picture'];
+              role = claims['https://mawlid-al-dhaki.com/role'] as String? ??
+                  claims['role'] as String?;
+              final permsRaw =
+                  claims['https://mawlid-al-dhaki.com/permissions'] ??
+                      claims['permissions'];
+              if (permsRaw is List) {
+                permissions = permsRaw.map((e) => e.toString()).toList();
+              }
+            }
+          } catch (e) {
+            debugPrint('[Auth] Failed to decode ID token: $e');
+          }
+        }
+
+        await AppConvexConfig.setAuth(accessToken);
+        await SecureStorageService.instance.setAccessToken(accessToken);
+        await SecureStorageService.instance.setUserId(userId ?? email);
+
+        await _upsertUserToConvex(
+          userId: userId ?? email,
+          email: userEmail,
+          name: userName,
+          picture: picture,
+          role: role ?? 'worker',
+          permissions: permissions,
+        );
+
+        state = AuthState(
+          isAuthenticated: true,
+          userId: userId ?? email,
+          accessToken: accessToken,
+          role: _mapRole(role),
+          permissions: permissions,
+          isLoading: false,
+          email: userEmail,
+          name: userName,
+          picture: picture,
+        );
+        debugPrint('[Auth] Email/password login successful: $userId');
+        return true;
+      } else {
+        String errorMsg = 'Login failed';
+        try {
+          final errorData = jsonDecode(response.body);
+          errorMsg =
+              errorData['error_description'] ?? errorData['error'] ?? errorMsg;
+        } catch (_) {}
+        state = AuthState(isLoading: false, errorMessage: errorMsg);
+        return false;
+      }
+    } catch (e, st) {
+      debugPrint('[Auth] Email/password login error: $e\n$st');
+      state = AuthState(isLoading: false, errorMessage: e.toString());
+      return false;
+    }
   }
 
-  /// Upsert user to Convex with retry logic
   Future<void> _upsertUserToConvex({
     required String userId,
     String? email,
@@ -217,22 +497,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
           'role': role,
           'permissions': permissions,
         });
-        debugPrint('[AuthNotifier] User upserted to Convex successfully');
+        debugPrint('[Auth] User upserted to Convex successfully');
         return;
       } catch (e) {
         if (attempt < maxRetries) {
           debugPrint(
-              '[AuthNotifier] User upsert attempt ${attempt + 1} failed: $e, retrying...');
+              '[Auth] User upsert attempt ${attempt + 1} failed: $e, retrying...');
           await Future.delayed(Duration(milliseconds: 200 * (attempt + 1)));
         } else {
           debugPrint(
-              '[AuthNotifier] ERROR: Failed to upsert user after ${maxRetries + 1} attempts: $e');
+              '[Auth] ERROR: Failed to upsert user after ${maxRetries + 1} attempts: $e');
         }
       }
     }
   }
 
-  /// Map string role from JWT to UserRole enum
   UserRole _mapRole(String? role) {
     switch (role) {
       case 'admin':
@@ -240,23 +519,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
       case 'worker':
         return UserRole.worker;
       default:
-        debugPrint(
-            '[AuthNotifier] WARNING: Unknown role "$role", defaulting to worker');
         return UserRole.worker;
     }
   }
 
-  /// Logout
   Future<void> logout() async {
     try {
-      await _auth0.webAuthentication(scheme: 'http').logout();
+      await SecureStorageService.instance.deleteAll();
     } catch (e) {
-      debugPrint('[AuthNotifier] Auth0 logout error: $e');
+      debugPrint('[Auth] Logout error: $e');
     }
-    await SecureStorageService.instance.deleteAll();
     await AppConvexConfig.clearAuth();
     state = const AuthState();
-    debugPrint('[AuthNotifier] Logged out');
+    debugPrint('[Auth] Logged out');
   }
 
   void clearError() {
@@ -265,7 +540,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Set auth state directly (for guest login)
   void setAuthState({
     required bool isAuthenticated,
     String? userId,
