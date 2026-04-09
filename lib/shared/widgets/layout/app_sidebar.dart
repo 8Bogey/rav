@@ -296,77 +296,63 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
     required bool isActive,
     required String route,
   }) {
+    final isHovered = _hoveredIndex == index;
+    final bgColor = isActive
+        ? AppColors.gold
+        : isHovered
+            ? AppColors.primaryLight
+            : AppColors.primaryMid;
+
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hoveredIndex = index),
-        onExit: (_) => setState(() => _hoveredIndex = null),
-        child: Container(
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                // Play system sound feedback
-                HapticFeedback.selectionClick();
-                // Navigate using GoRouter
-                context.go(route);
-              },
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            context.go(route);
+          },
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: bgColor,
               borderRadius: BorderRadius.circular(18),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 80),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  // Solid pills (no transparent backgrounds/strokes).
-                  color: isActive
-                      ? AppColors.gold
-                      : _hoveredIndex == index
-                          ? AppColors.primaryLight
-                          : AppColors.primaryMid,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1A000000),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      icon,
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
                       color: Colors.white,
-                      size: 20,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight:
-                              isActive ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    // iOS-like compact active marker
-                    if (isActive)
-                      Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                      ),
-                  ],
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
+                if (isActive)
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
