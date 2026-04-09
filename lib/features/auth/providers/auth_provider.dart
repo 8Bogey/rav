@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mawlid_al_dhaki/core/auth/webview_auth_service.dart';
+import 'package:auth0_flutter/auth0_flutter.dart';
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
+import 'package:mawlid_al_dhaki/core/services/secure_storage_service.dart';
 
 enum UserRole { admin, worker }
 
@@ -68,233 +69,132 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final WebViewAuthService _auth0;
+  late final Auth0 _auth0;
 
-  AuthNotifier(this._auth0) : super(const AuthState());
+  AuthNotifier()
+      : _auth0 = Auth0(
+          'dev-cqkioj1eiksobor3.us.auth0.com',
+          'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB',
+        ),
+        super(const AuthState());
+
+  /// Login via Auth0 Universal Login (web auth - token comes from Auth0)
+  Future<bool> loginWithAuth0() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final credentials = await _auth0.webAuthentication(scheme: 'http').login(
+            redirectUrl: 'http://127.0.0.1:8899/callback',
+          );
+
+      final token = credentials.accessToken;
+      final userId = credentials.user.sub;
+      final email = credentials.user.email;
+      final name = credentials.user.name;
+      final picture = credentials.user.pictureUrl?.toString();
+
+      if (token != null && userId != null) {
+        await AppConvexConfig.setAuth(token);
+
+        // Save to secure storage for session restoration
+        await SecureStorageService.instance.setAccessToken(token);
+        await SecureStorageService.instance.setUserId(userId);
+
+        // Upsert user to Convex with JWT claims (with retry)
+        await _upsertUserToConvex(
+          userId: userId,
+          email: email,
+          name: name,
+          picture: picture,
+          role: 'worker', // default role
+          permissions: [],
+        );
+
+        state = AuthState(
+          isAuthenticated: true,
+          userId: userId,
+          accessToken: token,
+          role: UserRole.worker,
+          permissions: [],
+          isLoading: false,
+          email: email,
+          name: name,
+          picture: picture,
+        );
+        debugPrint('[AuthNotifier] Auth0 login successful: $userId');
+        return true;
+      }
+
+      state = const AuthState(
+          isLoading: false, errorMessage: 'Login failed: no token received');
+      return false;
+    } catch (e, st) {
+      debugPrint('[AuthNotifier] Auth0 login error: $e\n$st');
+      state = AuthState(
+          isLoading: false, errorMessage: 'Login failed: ${e.toString()}');
+      return false;
+    }
+  }
 
   /// Initialize auth state from existing session
   Future<void> initialize() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final hasSession = await _auth0.checkExistingSession();
-      if (hasSession) {
-        final token = _auth0.accessToken;
-        final userId = _auth0.userId;
-        if (token != null && userId != null) {
-          await AppConvexConfig.setAuth(token);
-          // Try to get user from Convex to resolve role/permissions
-          String? role;
-          List<String> permissions = [];
-          try {
-            final user = await AppConvexConfig.mutation(
-              'mutations/users:getCurrentUser',
-              {},
-            );
-            role = user['role'] as String?;
-            final permsRaw = user['permissions'];
-            if (permsRaw is List) {
-              permissions = permsRaw.map((e) => e.toString()).toList();
-            }
-          } catch (e) {
-            debugPrint('[AuthNotifier] Failed to fetch user from Convex: $e');
+      // Check for existing session in secure storage
+      final token = await SecureStorageService.instance.getAccessToken();
+      final userId = await SecureStorageService.instance.getUserId();
+
+      if (token != null && userId != null) {
+        await AppConvexConfig.setAuth(token);
+
+        // Try to get user from Convex to resolve role/permissions
+        String? role;
+        List<String> permissions = [];
+        try {
+          final user = await AppConvexConfig.mutation(
+              'mutations/users:getCurrentUser', {});
+          role = user['role'] as String?;
+          final permsRaw = user['permissions'];
+          if (permsRaw is List) {
+            permissions = permsRaw.map((e) => e.toString()).toList();
           }
-          state = AuthState(
-            isAuthenticated: true,
-            userId: userId,
-            accessToken: token,
-            role: _mapRole(role),
-            permissions: permissions,
-            isLoading: false,
-          );
-          debugPrint('[AuthNotifier] Session restored: $userId, role: $role');
-          return;
+        } catch (e) {
+          debugPrint('[AuthNotifier] Failed to fetch user from Convex: $e');
         }
+
+        state = AuthState(
+          isAuthenticated: true,
+          userId: userId,
+          accessToken: token,
+          role: _mapRole(role),
+          permissions: permissions,
+          isLoading: false,
+        );
+        debugPrint('[AuthNotifier] Session restored: $userId, role: $role');
+        return;
       }
       state = const AuthState(isLoading: false);
     } catch (e, st) {
       debugPrint('[AuthNotifier] Initialize error: $e\n$st');
       state = AuthState(
-        isLoading: false,
-        errorMessage: 'Failed to restore session',
-      );
+          isLoading: false, errorMessage: 'Failed to restore session');
     }
   }
 
-  /// Login via Auth0
-  Future<bool> loginWithAuth0() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final result = await _auth0.login();
-
-      if (result.success) {
-        final token = _auth0.accessToken;
-        final userId = _auth0.userId;
-
-        if (token != null && userId != null) {
-          await AppConvexConfig.setAuth(token);
-
-          // Upsert user to Convex with JWT claims (with retry)
-          await _upsertUserToConvex(
-            userId: userId,
-            email: result.email,
-            name: result.name,
-            picture: result.picture,
-            role: result.role,
-            permissions: result.permissions,
-          );
-
-          // Use role/permissions from JWT, fallback to worker
-          state = AuthState(
-            isAuthenticated: true,
-            userId: userId,
-            accessToken: token,
-            role: _mapRole(result.role),
-            permissions: result.permissions,
-            isLoading: false,
-            email: result.email,
-            name: result.name,
-            picture: result.picture,
-          );
-          debugPrint(
-              '[AuthNotifier] Auth0 login successful: $userId, role: ${result.role}');
-          return true;
-        }
-      }
-
-      // Login failed — surface the error
-      state = AuthState(
-        isLoading: false,
-        errorMessage: result.error ?? 'Login failed: no token received',
-      );
-      return false;
-    } catch (e, st) {
-      debugPrint('[AuthNotifier] Auth0 login error: $e\n$st');
-      state = AuthState(
-        isLoading: false,
-        errorMessage: 'Login failed: ${e.toString()}',
-      );
-      return false;
-    }
+  /// Login via Google (uses Universal Login with Google connection)
+  Future<bool> loginWithGoogle() async {
+    // For Google, we use Universal Login which opens Auth0's hosted page
+    // where user can click "Continue with Google"
+    return loginWithAuth0();
   }
 
-  /// Login via email/password using Auth0 ROPC grant (direct, no WebView).
+  /// Login via email/password using Auth0 web auth (Universal Login page)
   Future<bool> loginWithEmailPassword({
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final result = await _auth0.loginWithROPC(
-        email: email,
-        password: password,
-      );
-
-      if (result.success) {
-        final token = result.accessToken;
-        final userId = result.userId;
-
-        if (token != null && userId != null) {
-          await AppConvexConfig.setAuth(token);
-
-          // Upsert user to Convex with JWT claims (with retry)
-          await _upsertUserToConvex(
-            userId: userId,
-            email: result.email,
-            name: result.name,
-            picture: result.picture,
-            role: result.role,
-            permissions: result.permissions,
-          );
-
-          // Use role/permissions from JWT, fallback to worker
-          state = AuthState(
-            isAuthenticated: true,
-            userId: userId,
-            accessToken: token,
-            role: _mapRole(result.role),
-            permissions: result.permissions,
-            isLoading: false,
-            email: result.email,
-            name: result.name,
-            picture: result.picture,
-          );
-          debugPrint(
-              '[AuthNotifier] Email/password login successful: $userId, role: ${result.role}');
-          return true;
-        }
-      }
-
-      // Login failed — surface the error
-      state = AuthState(
-        isLoading: false,
-        errorMessage: result.error ?? 'Login failed: no token received',
-      );
-      return false;
-    } catch (e, st) {
-      debugPrint('[AuthNotifier] Email/password login error: $e\n$st');
-      state = AuthState(
-        isLoading: false,
-        errorMessage: 'Login failed: ${e.toString()}',
-      );
-      return false;
-    }
-  }
-
-  /// Login via Google using Auth0 WebView flow.
-  Future<bool> loginWithGoogle() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final result = await _auth0.login(connection: 'google-oauth2');
-
-      if (result.success) {
-        final token = _auth0.accessToken;
-        final userId = _auth0.userId;
-
-        if (token != null && userId != null) {
-          await AppConvexConfig.setAuth(token);
-
-          // Upsert user to Convex with JWT claims (with retry)
-          await _upsertUserToConvex(
-            userId: userId,
-            email: result.email,
-            name: result.name,
-            picture: result.picture,
-            role: result.role,
-            permissions: result.permissions,
-          );
-
-          // Use role/permissions from JWT, fallback to worker
-          state = AuthState(
-            isAuthenticated: true,
-            userId: userId,
-            accessToken: token,
-            role: _mapRole(result.role),
-            permissions: result.permissions,
-            isLoading: false,
-            email: result.email,
-            name: result.name,
-            picture: result.picture,
-          );
-          debugPrint(
-              '[AuthNotifier] Google login successful: $userId, role: ${result.role}');
-          return true;
-        }
-      }
-
-      // Login failed — surface the error
-      state = AuthState(
-        isLoading: false,
-        errorMessage: result.error ?? 'Google login failed: no token received',
-      );
-      return false;
-    } catch (e, st) {
-      debugPrint('[AuthNotifier] Google login error: $e\n$st');
-      state = AuthState(
-        isLoading: false,
-        errorMessage: 'Google login failed: ${e.toString()}',
-      );
-      return false;
-    }
+    // For email/password, we also use Universal Login
+    // The user enters credentials on Auth0's hosted page
+    return loginWithAuth0();
   }
 
   /// Upsert user to Convex with retry logic
@@ -341,7 +241,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return UserRole.worker;
       default:
         debugPrint(
-            '[AuthNotifier] WARNING: Unknown role "$role", defaulting to worker (least privilege)');
+            '[AuthNotifier] WARNING: Unknown role "$role", defaulting to worker');
         return UserRole.worker;
     }
   }
@@ -349,10 +249,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Logout
   Future<void> logout() async {
     try {
-      await _auth0.logout();
+      await _auth0.webAuthentication(scheme: 'http').logout();
     } catch (e) {
       debugPrint('[AuthNotifier] Auth0 logout error: $e');
     }
+    await SecureStorageService.instance.deleteAll();
     await AppConvexConfig.clearAuth();
     state = const AuthState();
     debugPrint('[AuthNotifier] Logged out');
@@ -364,8 +265,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Set auth state directly (for guest login and internal use only).
-  /// Prefer loginWithEmailPassword(), loginWithGoogle(), or loginWithAuth0() for normal flows.
+  /// Set auth state directly (for guest login)
   void setAuthState({
     required bool isAuthenticated,
     String? userId,
@@ -373,32 +273,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     UserRole? role,
     List<String>? permissions,
   }) {
-    // Use default admin role if not provided
-    final resolvedRole = role ?? UserRole.admin;
-
     state = AuthState(
       isAuthenticated: isAuthenticated,
       userId: userId,
       accessToken: accessToken,
-      role: resolvedRole,
+      role: role ?? UserRole.admin,
       permissions: permissions ?? [],
       isLoading: false,
       errorMessage: null,
     );
-
-    // If we have an access token, also set it in Convex config
     if (accessToken != null) {
       AppConvexConfig.setAuth(accessToken);
     }
   }
 }
 
-final authServiceProvider =
-    Provider<WebViewAuthService>((ref) => WebViewAuthService.instance);
-
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final auth0 = ref.watch(authServiceProvider);
-  return AuthNotifier(auth0);
+  return AuthNotifier();
 });
 
 final currentUserIdProvider = Provider<String?>((ref) {

@@ -45,7 +45,9 @@ dependencies:
   # convex_flutter: ^3.0.1         # ❌ VERSION ISSUE - using http instead
   http: ^1.2.0                     # ✅ Direct HTTP calls to Convex
   crypto: ^3.0.3                   # ✅ SHA256 for PKCE code challenge
-  auth0_flutter: ^2.0.0          # ✅ Auth0 authentication
+  flutter_secure_storage: ^9.0.0   # ✅ Secure token storage
+  local_auth: ^2.2.0               # ✅ Biometric authentication
+  flutter_custom_tabs: ^2.0.0      # ✅ Custom tab browser for auth flows
 
   # ── Icons & SVG ───────────────────────────────────────────────
   phosphor_flutter: ^2.1.0       # ✅ أيقونات Outlined رفيقة 20px (مطابق Bitepoint)
@@ -84,9 +86,13 @@ dependencies:
   cached_network_image: ^3.3.1   # ✅ تحميل وكاش الصور
   image_picker: ^1.1.2           # ✅ اختيار الصور من الكاميرا/المعرض
 
+  # ── Auth ──────────────────────────────────────────────────────
+  auth0_flutter: ^2.0.0            # ✅ Auth0 web auth (Universal Login - token from Auth0, not Google)
+
   # ── Window Management ─────────────────────────────────────────
   window_manager: ^0.4.2         # ✅ إدارة نافذة Windows
   screen_retriever: ^0.1.9       # ✅ معلومات الشاشة للتمركز
+  desktop_webview_window: ^0.2.2 # ✅ نافذة WebView داخل التطبيق لتسجيل الدخول
 
   # ── Print / PDF ───────────────────────────────────────────────
   pdf: ^3.11.0                   # ✅ توليد PDF للتقارير
