@@ -1,15 +1,14 @@
-import 'dart:convert';
-import 'dart:math' as math;
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:crypto/crypto.dart';
 
 import 'package:mawlid_al_dhaki/features/auth/providers/auth_provider.dart';
-import 'package:mawlid_al_dhaki/core/auth/auth0_service.dart';
+import 'package:mawlid_al_dhaki/core/auth/webview_auth_service.dart'
+    show Auth0Config, WebViewAuthService;
 import 'package:mawlid_al_dhaki/core/convex/convex_config.dart';
+import 'package:mawlid_al_dhaki/core/services/biometric_auth_service.dart';
+import 'package:mawlid_al_dhaki/core/services/secure_storage_service.dart';
 
 /// شاشة تسجيل الدخول — ألوان Coddy الداكنة ثابتة.
 /// الخط: Baloo Bhaijaan 2 (عربي، دائري).
@@ -25,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
   bool _isRegisterMode = false;
   bool _showPassword = false;
+  bool _keepMeSignedIn = false;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -39,6 +39,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _loadKeepMeSignedIn();
     _emailFocusNode.addListener(() {
       if (mounted) setState(() => _emailFocused = _emailFocusNode.hasFocus);
     });
@@ -46,6 +47,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted)
         setState(() => _passwordFocused = _passwordFocusNode.hasFocus);
     });
+  }
+
+  Future<void> _loadKeepMeSignedIn() async {
+    _keepMeSignedIn = await SecureStorageService.instance.isKeepMeSignedIn();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -80,15 +86,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   // وظائف الأزرار
   // ═══════════════════════════════════════════════════════════════
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleEmailPasswordLogin() async {
     if (!_validateForm()) return;
     ref.read(authProvider.notifier).clearError();
     setState(() => _isLoading = true);
     try {
-      final success = await ref.read(authProvider.notifier).loginWithAuth0();
-      if (success && mounted) context.go('/dashboard');
+      final success =
+          await ref.read(authProvider.notifier).loginWithEmailPassword(
+                email: _emailController.text.trim(),
+                password: _passwordController.text,
+              );
+      if (success && mounted) context.go('/syncing');
     } catch (e) {
-      debugPrint('Login error: $e');
+      debugPrint('Email/password login error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -162,33 +172,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleGoogleLogin() async {
+    ref.read(authProvider.notifier).clearError();
     setState(() => _isLoading = true);
-    final codeVerifier = _generateCodeVerifier();
-    final codeChallenge = _generateCodeChallenge(codeVerifier);
-    final url = Uri.parse(
-      'https://${Auth0Config.domain}/authorize?'
-      'response_type=code&client_id=${Auth0Config.clientId}&'
-      'redirect_uri=${Auth0Config.redirectUri}&audience=${Auth0Config.audience}&'
-      'scope=openid profile email&connection=google-oauth2&'
-      'code_challenge=$codeChallenge&code_challenge_method=S256&'
-      'state=${_generateRandomString(32)}',
-    );
     try {
-      final launched =
-          await launchUrl(url, mode: LaunchMode.externalApplication);
-      if (!launched && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('تعذر فتح تسجيل الدخول عبر Google'),
-              backgroundColor: _coddyError),
-        );
-      }
+      final success = await ref.read(authProvider.notifier).loginWithGoogle();
+      if (success && mounted) context.go('/syncing');
     } catch (e) {
+      debugPrint('Google login error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('خطأ: ${e.toString()}'),
-              backgroundColor: _coddyError),
+            content: Text('خطأ: ${e.toString()}'),
+            backgroundColor: _coddyError,
+          ),
         );
       }
     } finally {
@@ -197,19 +193,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleGuestLogin() async {
+    // Show warning dialog about guest data not being backed up
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _bgCard,
+        title: const Text('تسجيل كزائر', style: TextStyle(color: _textPrimary)),
+        content: const Text(
+          'تحذير: بياناتك لن يتم نسخها احتياطياً إلى السحابة.\n\n'
+          'إذا قمت بحذف التطبيق، ستفقد جميع بياناتك.\n\n'
+          'للحفاظ على بياناتك، يُرجى تسجيل الدخول باستخدام حسابك.',
+          style: TextStyle(color: _textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('إلغاء', style: TextStyle(color: _textDisabled)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: _brandPrimary),
+            child: const Text('تسجيل كزائر'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     ref.read(authProvider.notifier).clearError();
     setState(() => _isLoading = true);
     try {
       final guestId = 'guest-${DateTime.now().millisecondsSinceEpoch}';
       await AppConvexConfig.setAuth('guest-token');
-      ref.read(authProvider.notifier).state = AuthState(
-        isAuthenticated: true,
-        userId: guestId,
-        accessToken: 'guest-token',
-        role: UserRole.admin,
-        isLoading: false,
-      );
-      if (mounted) context.go('/dashboard');
+      ref.read(authProvider.notifier).setAuthState(
+            isAuthenticated: true,
+            userId: guestId,
+            accessToken: 'guest-token',
+            role: UserRole.worker,
+          );
+      if (mounted) context.go('/syncing');
     } catch (e) {
       debugPrint('Guest login error: $e');
       if (mounted) {
@@ -220,6 +243,126 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  /// Handle clear all app data (debug feature)
+  Future<void> _handleClearAllData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _bgCard,
+        title: const Text('مسح كل البيانات؟',
+            style: TextStyle(color: _textPrimary)),
+        content: const Text(
+          'سيؤدي هذا إلى:\n• حذف جميع بيانات تسجيل الدخول\n• حذف قاعدة البيانات المحلية\n• إعادة تعيين الإعدادات\n\nهل أنت متأكد؟',
+          style: TextStyle(color: _textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('مسح', style: TextStyle(color: _coddyError)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      // Clear secure storage
+      await SecureStorageService.instance.deleteAll();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم مسح جميع البيانات بنجاح'),
+            backgroundColor: _brandBright,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('خطأ في المسح: $e'),
+            backgroundColor: _coddyError,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handle biometric quick login (for returning users)
+  Future<void> _handleBiometricLogin() async {
+    final biometric = BiometricAuthService.instance;
+
+    // Check if biometric is available and enabled
+    final supported = await biometric.isBiometricSupported();
+    if (!supported) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('المصادقة الحيوية غير مدعومة على هذا الجهاز'),
+              backgroundColor: _coddyError),
+        );
+      }
+      return;
+    }
+
+    final enabled = await biometric.isBiometricEnabled();
+    if (!enabled) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('المصادقة الحيوية غير مُفعلة. فعّلها من الإعدادات.'),
+              backgroundColor: _coddyError),
+        );
+      }
+      return;
+    }
+
+    // Attempt biometric authentication
+    setState(() => _isLoading = true);
+    try {
+      final authenticated = await biometric.authenticate(
+        reason: 'تحقق من هويتك لتسجيل الدخول',
+      );
+
+      if (authenticated) {
+        // Try to restore existing session from secure storage
+        final success =
+            await WebViewAuthService.instance.checkExistingSession();
+        if (success && mounted) {
+          // Restore session and go to dashboard
+          await ref.read(authProvider.notifier).initialize();
+          if (mounted) context.go('/syncing');
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('لا توجد جلسة سابقة. سجّل دخولك أولاً.'),
+                  backgroundColor: _coddyError),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Biometric login error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('خطأ: ${e.toString()}'),
+              backgroundColor: _coddyError),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -242,32 +385,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     });
     return valid;
-  }
-
-  String _generateCodeVerifier() {
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-    final random = math.Random.secure();
-    return List.generate(128, (_) => chars[random.nextInt(chars.length)])
-        .join();
-  }
-
-  String _generateCodeChallenge(String verifier) {
-    final bytes = utf8.encode(verifier);
-    final digest = sha256.convert(bytes);
-    return base64Url
-        .encode(digest.bytes)
-        .replaceAll('+', '-')
-        .replaceAll('/', '_')
-        .replaceAll('=', '');
-  }
-
-  String _generateRandomString(int length) {
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-    final random = math.Random.secure();
-    return List.generate(length, (_) => chars[random.nextInt(chars.length)])
-        .join();
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -474,7 +591,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             isFocused: _passwordFocused,
             onTogglePassword: () =>
                 setState(() => _showPassword = !_showPassword),
-            onSubmitted: (_) => _handleLogin(),
+            onSubmitted: (_) => _handleEmailPasswordLogin(),
           ),
 
           // نسيت كلمة المرور
@@ -500,9 +617,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
 
+          // تذكرني
+          Row(
+            children: [
+              Checkbox(
+                value: _keepMeSignedIn,
+                onChanged: (value) {
+                  setState(() => _keepMeSignedIn = value ?? false);
+                  // Store preference in secure storage
+                  SecureStorageService.instance
+                      .setKeepMeSignedIn(_keepMeSignedIn);
+                },
+                activeColor: _brandPrimary,
+                side: const BorderSide(color: _borderMid),
+              ),
+              const Expanded(
+                child: Text(
+                  'تذكرني',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _textSecondary,
+                    fontFamily: _font,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 20),
           _buildPrimaryButton(),
-
           const SizedBox(height: 20),
           Row(
             children: [
@@ -525,6 +668,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 16),
 
           _buildGuestButton(),
+
+          const SizedBox(height: 8),
+
+          // Debug: Clear all data button
+          GestureDetector(
+            onTap: _handleClearAllData,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: double.infinity,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                border:
+                    Border.all(color: _borderColor.withOpacity(0.5), width: 1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Center(
+                child: Text('مسح كل البيانات',
+                    style: TextStyle(
+                        color: _textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: _font)),
+              ),
+            ),
+          ),
 
           const SizedBox(height: 16),
           RichText(
@@ -678,7 +847,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return GestureDetector(
       onTap: _isLoading
           ? null
-          : () => _isRegisterMode ? _handleRegister() : _handleLogin(),
+          : () =>
+              _isRegisterMode ? _handleRegister() : _handleEmailPasswordLogin(),
       behavior: HitTestBehavior.opaque,
       child: Container(
         width: double.infinity,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'route_names.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/auth/syncing_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/subscribers/subscribers_screen.dart';
 import '../../features/cabinets/cabinets_screen.dart';
@@ -51,7 +52,7 @@ class RoutePermissions {
   static String? getRouteNameFromPath(String path) {
     // Remove leading slash
     final route = path.startsWith('/') ? path.substring(1) : path;
-    
+
     // Map paths to route names
     final pathToName = {
       'dashboard': 'dashboard',
@@ -64,7 +65,7 @@ class RoutePermissions {
       'settings': 'settings',
       'audit': 'audit',
     };
-    
+
     return pathToName[route];
   }
 }
@@ -79,15 +80,20 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final isAuthenticated = authState.isAuthenticated;
       final isLoginRoute = state.matchedLocation == AppRoutes.login;
-      final currentRoute = RoutePermissions.getRouteNameFromPath(state.matchedLocation);
+      final currentRoute =
+          RoutePermissions.getRouteNameFromPath(state.matchedLocation);
 
       // If not authenticated and not on login page, redirect to login
       if (!isAuthenticated && !isLoginRoute) {
         return AppRoutes.login;
       }
 
-      // If authenticated and on login page, redirect to dashboard
+      // If authenticated and on login page, redirect based on session state
       if (isAuthenticated && isLoginRoute) {
+        // If session was just restored (needsSync), go to /syncing to refresh data
+        if (authState.needsSync) {
+          return '/syncing';
+        }
         return AppRoutes.dashboard;
       }
 
@@ -102,9 +108,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
 
         // Check if route requires specific permission
-        final requiredPerms = RoutePermissions.getRequiredPermissions(currentRoute);
+        final requiredPerms =
+            RoutePermissions.getRequiredPermissions(currentRoute);
         if (requiredPerms != null && requiredPerms.isNotEmpty) {
-          final hasAccess = requiredPerms.any((p) => authState.hasPermission(p));
+          final hasAccess =
+              requiredPerms.any((p) => authState.hasPermission(p));
           if (!hasAccess) {
             // Redirect to dashboard if no permission
             return AppRoutes.dashboard;
@@ -120,6 +128,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.login,
         name: AppRoutes.loginName,
         builder: (context, state) => const LoginScreen(),
+      ),
+
+      // Syncing route (no shell)
+      GoRoute(
+        path: '/syncing',
+        name: 'syncing',
+        builder: (context, state) => const SyncingScreen(),
       ),
 
       // Shell route for authenticated screens

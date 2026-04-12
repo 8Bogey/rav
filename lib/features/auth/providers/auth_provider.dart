@@ -10,8 +10,27 @@ import 'package:mawlid_al_dhaki/core/services/secure_storage_service.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'dart:math';
 
+/// Auth Provider Architecture Notes
+/// ================================
+///
+/// This AuthNotifier provides Riverpod state management for authentication.
+///
+/// CURRENT ARCHITECTURE:
+/// - AuthNotifier: Riverpod StateNotifier for UI state
+/// - WebViewAuthService: Singleton for robust PKCE + token handling
+///
+/// MIGRATION PATH (rav-tx6w):
+/// The recommended consolidation approach is:
+/// 1. AuthNotifier should delegate to WebViewAuthService for auth operations
+/// 2. WebViewAuthService handles: PKCE flow, callback server, token refresh
+/// 3. AuthNotifier handles: Riverpod state management, UI updates
+///
+/// Current implementation in this file has some duplicate code with WebViewAuthService.
+/// Future work: Refactor to use WebViewAuthService as singleton engine,
+/// wrapping with Riverpod state management here.
+
 /// Auth0 Configuration
-class Auth0Config {
+class AuthConfig {
   static const String domain = 'dev-cqkioj1eiksobor3.us.auth0.com';
   static const String clientId = 'DqcGcBSR8ETDelWq9SRENnQOZsj7TTSB';
   static const String audience = 'https://hearty-meadowlark-390.convex.cloud';
@@ -45,6 +64,7 @@ class AuthResult {
   final bool success;
   final String? userId;
   final String? accessToken;
+  final String? refreshToken;
   final String? error;
   final String? email;
   final String? name;
@@ -56,6 +76,7 @@ class AuthResult {
     required this.success,
     this.userId,
     this.accessToken,
+    this.refreshToken,
     this.error,
     this.email,
     this.name,
@@ -78,6 +99,7 @@ class AuthState {
   final String? email;
   final String? name;
   final String? picture;
+  final bool needsSync; // True when session restored, to force /syncing screen
 
   const AuthState({
     this.isAuthenticated = false,
@@ -90,6 +112,7 @@ class AuthState {
     this.email,
     this.name,
     this.picture,
+    this.needsSync = false,
   });
 
   AuthState copyWith({
@@ -103,6 +126,7 @@ class AuthState {
     String? email,
     String? name,
     String? picture,
+    bool? needsSync,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
@@ -115,6 +139,7 @@ class AuthState {
       email: email ?? this.email,
       name: name ?? this.name,
       picture: picture ?? this.picture,
+      needsSync: needsSync ?? this.needsSync,
     );
   }
 
@@ -132,8 +157,98 @@ class AuthNotifier extends StateNotifier<AuthState> {
   HttpServer? _callbackServer;
   String? _codeVerifier;
   Completer<String?>? _authCodeCompleter;
+  Timer? _refreshTimer;
 
   AuthNotifier() : super(const AuthState());
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    _callbackServer?.close();
+    super.dispose();
+  }
+
+  /// Start proactive token refresh timer (refresh every 20 hours)
+  void _startRefreshTimer() {
+    _refreshTimer?.cancel();
+    // Refresh proactively 4 hours before expiry (Auth0 tokens last 24h by default)
+    _refreshTimer = Timer.periodic(const Duration(hours: 20), (_) {
+      _refreshAccessToken();
+    });
+    debugPrint('[Auth] Token refresh timer started (20 hour interval)');
+  }
+
+  /// Refresh access token using stored refresh token
+  Future<bool> _refreshAccessToken() async {
+    try {
+      final refreshToken =
+          await SecureStorageService.instance.getRefreshToken();
+      if (refreshToken == null) {
+        debugPrint('[Auth] No refresh token available');
+        return false;
+      }
+
+      debugPrint('[Auth] Refreshing access token...');
+      final response = await http.post(
+        Uri.parse(AuthConfig.tokenUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'grant_type': 'refresh_token',
+          'client_id': AuthConfig.clientId,
+          'refresh_token': refreshToken,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final newAccessToken = data['access_token'] as String?;
+
+        if (newAccessToken != null) {
+          await SecureStorageService.instance.setAccessToken(newAccessToken);
+
+          // Handle refresh token rotation
+          final newRefreshToken = data['refresh_token'] as String?;
+          if (newRefreshToken != null) {
+            await SecureStorageService.instance
+                .setRefreshToken(newRefreshToken);
+          }
+
+          // Update Convex auth
+          await AppConvexConfig.setAuth(newAccessToken);
+
+          // Update state
+          state = state.copyWith(accessToken: newAccessToken);
+          debugPrint('[Auth] Token refresh successful');
+          return true;
+        }
+      }
+
+      debugPrint('[Auth] Token refresh failed: ${response.body}');
+      return false;
+    } catch (e) {
+      debugPrint('[Auth] Token refresh error: $e');
+      return false;
+    }
+  }
+
+  /// Handle 401 errors from Convex by refreshing token and retrying
+  Future<bool> handleAuthError() async {
+    final refreshed = await _refreshAccessToken();
+    if (!refreshed) {
+      // Refresh failed, need to re-authenticate
+      await logout();
+    }
+    return refreshed;
+  }
+
+  /// Logout and clear all tokens
+  Future<void> logout() async {
+    _refreshTimer?.cancel();
+    await SecureStorageService.instance.deleteAll();
+    await AppConvexConfig.setAuth('');
+    state = const AuthState();
+    debugPrint('[Auth] Logged out');
+  }
 
   Future<AuthResult> _loginWithAuth0Universal() async {
     try {
@@ -147,12 +262,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final dynamicRedirectUri = 'http://127.0.0.1:8899/callback';
 
       // Build Auth0 Universal Login URL (NOT Google-specific)
-      final authUrl = Uri.parse(Auth0Config.loginUrl).replace(
+      final authUrl = Uri.parse(AuthConfig.loginUrl).replace(
         queryParameters: {
           'response_type': 'code',
-          'client_id': Auth0Config.clientId,
+          'client_id': AuthConfig.clientId,
           'redirect_uri': dynamicRedirectUri,
-          'audience': Auth0Config.audience,
+          'audience': AuthConfig.audience,
           'scope': 'openid profile email offline_access',
           'code_challenge': codeChallenge,
           'code_challenge_method': 'S256',
@@ -211,11 +326,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<AuthResult> _exchangeCodeForTokens(
       String authCode, String codeVerifier, String redirectUri) async {
     final response = await http.post(
-      Uri.parse(Auth0Config.tokenUrl),
+      Uri.parse(AuthConfig.tokenUrl),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: {
         'grant_type': 'authorization_code',
-        'client_id': Auth0Config.clientId,
+        'client_id': AuthConfig.clientId,
         'code': authCode,
         'code_verifier': codeVerifier,
         'redirect_uri': redirectUri,
@@ -226,6 +341,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final data = jsonDecode(response.body);
       final accessToken = data['access_token'] as String?;
       final idToken = data['id_token'] as String?;
+      final refreshToken = data['refresh_token'] as String?;
 
       if (accessToken == null) {
         return AuthResult(success: false, error: 'No access token');
@@ -266,6 +382,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         success: true,
         userId: userId,
         accessToken: accessToken,
+        refreshToken: refreshToken,
         email: email,
         name: name,
         picture: picture,
@@ -291,6 +408,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await SecureStorageService.instance.setAccessToken(result.accessToken!);
         await SecureStorageService.instance.setUserId(result.userId!);
 
+        // Store refresh token if available
+        if (result.refreshToken != null) {
+          await SecureStorageService.instance
+              .setRefreshToken(result.refreshToken!);
+        }
+
         await _upsertUserToConvex(
           userId: result.userId!,
           email: result.email,
@@ -311,6 +434,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           name: result.name,
           picture: result.picture,
         );
+
+        // Start token refresh timer
+        _startRefreshTimer();
+
         debugPrint('[Auth] Login successful: ${result.userId}');
         return true;
       }
@@ -350,7 +477,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
             role: _mapRole(role),
             permissions: permissions,
             isLoading: false,
+            needsSync: true, // Force /syncing screen on session restore
           );
+
+          // Start token refresh timer for restored session
+          _startRefreshTimer();
+
           debugPrint('[Auth] Session restored: $userId, role: $role');
           return;
         } catch (e) {
@@ -374,6 +506,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Login via email/password (for ROPC flow - direct API call)
+  ///
+  /// ⚠️ DEPRECATION NOTICE:
+  /// Resource Owner Password Credentials (ROPC) grant is deprecated by Auth0.
+  /// - Cannot use MFA with ROPC
+  /// - App handles credentials directly (security risk)
+  /// - Will be removed in future Auth0 versions
+  ///
+  /// MIGRATION PATH:
+  /// Use Auth0 Universal Login (loginWithAuth0) instead, which supports:
+  /// - Email/password authentication via secure Auth0-hosted page
+  /// - MFA support
+  /// - Passwordless authentication
+  /// - Social logins (Google, etc.)
+  ///
+  /// This method is kept for backward compatibility during migration.
   Future<bool> loginWithEmailPassword({
     required String email,
     required String password,
@@ -381,15 +528,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final response = await http.post(
-        Uri.parse(Auth0Config.tokenUrl),
+        Uri.parse(AuthConfig.tokenUrl),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'grant_type': 'password',
           'username': email,
           'password': password,
-          'audience': Auth0Config.audience,
+          'audience': AuthConfig.audience,
           'scope': 'openid profile email offline_access',
-          'client_id': Auth0Config.clientId,
+          'client_id': AuthConfig.clientId,
         },
       );
 
@@ -439,6 +586,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await SecureStorageService.instance.setAccessToken(accessToken);
         await SecureStorageService.instance.setUserId(userId ?? email);
 
+        // Store refresh token if available (ROPC may return refresh_token)
+        final refreshToken = data['refresh_token'] as String?;
+        if (refreshToken != null) {
+          await SecureStorageService.instance.setRefreshToken(refreshToken);
+        }
+
         await _upsertUserToConvex(
           userId: userId ?? email,
           email: userEmail,
@@ -459,6 +612,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           name: userName,
           picture: picture,
         );
+
+        // Start token refresh timer
+        _startRefreshTimer();
+
         debugPrint('[Auth] Email/password login successful: $userId');
         return true;
       } else {
@@ -490,7 +647,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     for (int attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         await AppConvexConfig.mutation('mutations/users:upsertUser', {
-          'auth0Id': userId,
           'email': email,
           'name': name,
           'picture': picture,
@@ -521,17 +677,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       default:
         return UserRole.worker;
     }
-  }
-
-  Future<void> logout() async {
-    try {
-      await SecureStorageService.instance.deleteAll();
-    } catch (e) {
-      debugPrint('[Auth] Logout error: $e');
-    }
-    await AppConvexConfig.clearAuth();
-    state = const AuthState();
-    debugPrint('[Auth] Logged out');
   }
 
   void clearError() {

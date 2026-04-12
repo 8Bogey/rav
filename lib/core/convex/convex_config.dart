@@ -142,8 +142,10 @@ class AppConvexConfig {
       'format': 'json',
     };
 
-    // Send auth header whenever we have a non-empty token (real JWT from Auth0)
-    final hasValidJwt = _authToken != null && _authToken!.isNotEmpty;
+    // Send auth header only for real JWT tokens (not guest-token)
+    final hasValidJwt = _authToken != null &&
+        _authToken!.isNotEmpty &&
+        _authToken != 'guest-token';
 
     final response = await http.post(
       url,
@@ -220,8 +222,10 @@ class AppConvexConfig {
       'format': 'json',
     };
 
-    // Send auth header whenever we have a non-empty token (real JWT from Auth0)
-    final hasValidJwt = _authToken != null && _authToken!.isNotEmpty;
+    // Send auth header only for real JWT tokens (not guest-token)
+    final hasValidJwt = _authToken != null &&
+        _authToken!.isNotEmpty &&
+        _authToken != 'guest-token';
 
     debugPrint(
         '[ConvexQuery] Auth: validJWT=$hasValidJwt, token=${_authToken?.substring(0, _authToken != null && _authToken!.length > 10 ? 10 : 0)}');

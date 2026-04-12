@@ -1,4 +1,7 @@
-# Miscellaneous
+# Environment variables (contains secrets - never commit)
+.env
+.env.local
+.env.*
 *.class
 *.log
 *.pyc
