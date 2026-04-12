@@ -453,9 +453,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Initialize auth state
+  /// If keepMeSignedIn is false, clears stored tokens and starts fresh
   Future<void> initialize() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
+      // Check if user wants to stay signed in
+      final keepMeSignedIn =
+          await SecureStorageService.instance.isKeepMeSignedIn();
+
+      if (!keepMeSignedIn) {
+        // User unchecked "Keep Me Signed In" - clear tokens and start fresh
+        debugPrint(
+            '[Auth] Keep Me Signed In is false, clearing stored credentials');
+        await SecureStorageService.instance.deleteAll();
+        state = const AuthState(isLoading: false);
+        return;
+      }
+
       final token = await SecureStorageService.instance.getAccessToken();
       final userId = await SecureStorageService.instance.getUserId();
 
@@ -464,10 +478,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await AppConvexConfig.setAuth(token);
 
         try {
-          final user = await AppConvexConfig.mutation(
-              'mutations/users:getCurrentUser', {});
-          final role = user['role'] as String?;
-          final permsRaw = user['permissions'] as List?;
+          // Use query instead of mutation since we're only reading user data
+          final user = await AppConvexConfig.query('auth:getCurrentUser', {});
+          final role = user?['role'] as String?;
+          final permsRaw = user?['permissions'] as List?;
           final permissions = permsRaw?.map((e) => e.toString()).toList() ?? [];
 
           state = AuthState(

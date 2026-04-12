@@ -669,6 +669,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _buildSocialButton('GOOGLE', _handleGoogleLogin, const _GoogleLogo()),
           const SizedBox(height: 16),
 
+          // Biometric login button (only show if supported and enabled)
+          _buildBiometricButton(),
+
           _buildGuestButton(),
 
           const SizedBox(height: 8),
@@ -948,6 +951,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // المصادقة الحيوية
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Biometric login button - only shows if device supports biometrics and user enabled it
+  Widget _buildBiometricButton() {
+    return FutureBuilder<bool>(
+      future: _checkBiometricAvailable(),
+      builder: (context, snapshot) {
+        // Only show button if biometric is available and enabled
+        if (snapshot.data != true) {
+          return const SizedBox.shrink();
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: GestureDetector(
+            onTap: _isLoading ? null : _handleBiometricLogin,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: double.infinity,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _bgCard,
+                border: Border.all(color: _borderMid, width: 2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.fingerprint,
+                      size: 20, color: _textSecondary),
+                  const SizedBox(width: 8),
+                  const Text('تسجيل الدخول بالبصمة',
+                      style: TextStyle(
+                          color: _textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: _font)),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Check if biometric auth is available and enabled
+  Future<bool> _checkBiometricAvailable() async {
+    final biometric = BiometricAuthService.instance;
+    final supported = await biometric.isBiometricSupported();
+    if (!supported) return false;
+    return await biometric.isBiometricEnabled();
   }
 
   // ═══════════════════════════════════════════════════════════════
