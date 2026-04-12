@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show HttpServer, InternetAddress, HttpRequest;
+import 'dart:io' show HttpServer, InternetAddress, HttpRequest, HttpStatus;
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -124,6 +124,7 @@ class WebViewAuthService {
   int _callbackPort = 8899;
   Completer<String?>? _authCodeCompleter;
   String? _codeVerifier;
+  String? _currentAuthState; // OAuth state for CSRF protection
 
   WebViewAuthService._();
 
@@ -201,6 +202,19 @@ class WebViewAuthService {
 
     final code = uri.queryParameters['code'];
     final error = uri.queryParameters['error'];
+    final receivedState = uri.queryParameters['state'];
+
+    // Validate state to prevent CSRF attacks
+    if (receivedState == null || receivedState != _currentAuthState) {
+      print('[WebViewAuth] State mismatch - possible CSRF attack');
+      request.response.statusCode = HttpStatus.badRequest;
+      request.response.headers.set('Content-Type', 'text/html; charset=utf-8');
+      request.response.write('<h1>Error: Invalid state parameter</h1>');
+      await request.response.close();
+      _authCodeCompleter
+          ?.completeError(Exception('State mismatch - possible CSRF attack'));
+      return;
+    }
 
     if (code != null) {
       _authCodeCompleter?.complete(code);
@@ -271,6 +285,9 @@ class WebViewAuthService {
       _codeVerifier = _generateCodeVerifier();
       final codeChallenge = _generateCodeChallenge(_codeVerifier!);
 
+      // Generate and store state for CSRF protection
+      _currentAuthState = _generateRandomString(32);
+
       // Build authorization URL with dynamic port
       final dynamicRedirectUri = 'http://127.0.0.1:$_callbackPort/callback';
       final Map<String, String> queryParams = {
@@ -281,7 +298,7 @@ class WebViewAuthService {
         'scope': 'openid profile email offline_access',
         'code_challenge': codeChallenge,
         'code_challenge_method': 'S256',
-        'state': _generateRandomString(32),
+        'state': _currentAuthState!,
         'prompt': 'login',
       };
 
@@ -326,6 +343,17 @@ class WebViewAuthService {
         if (uri.host == '127.0.0.1' &&
             uri.path == '/callback' &&
             uri.queryParameters.containsKey('code')) {
+          // Validate state to prevent CSRF attacks
+          final receivedState = uri.queryParameters['state'];
+          if (receivedState == null || receivedState != _currentAuthState) {
+            print(
+                '[WebViewAuth] State mismatch in WebView callback - possible CSRF attack');
+            _authCodeCompleter?.completeError(
+                Exception('State mismatch - possible CSRF attack'));
+            webview.close();
+            return;
+          }
+
           final code = uri.queryParameters['code'];
           final error = uri.queryParameters['error'];
 
@@ -719,6 +747,7 @@ class WebViewAuthService {
     _email = null;
     _name = null;
     _picture = null;
+    _currentAuthState = null;
     _role = null;
     _permissions = [];
   }

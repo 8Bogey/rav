@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -671,47 +673,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           const SizedBox(height: 8),
 
-          // Debug: Clear all data button
-          GestureDetector(
-            onTap: _handleClearAllData,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: double.infinity,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                border:
-                    Border.all(color: _borderColor.withOpacity(0.5), width: 1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Text('مسح كل البيانات',
-                    style: TextStyle(
-                        color: _textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: _font)),
+          // Debug: Clear all data button (only visible in debug mode)
+          if (kDebugMode)
+            GestureDetector(
+              onTap: _handleClearAllData,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: double.infinity,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  border: Border.all(
+                      color: _borderColor.withOpacity(0.5), width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Text('مسح كل البيانات',
+                      style: TextStyle(
+                          color: _textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: _font)),
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 16),
+          if (kDebugMode) const SizedBox(height: 16),
+          if (!kDebugMode) const SizedBox(height: 8),
           RichText(
             textAlign: TextAlign.center,
-            text: const TextSpan(
-              style: TextStyle(
+            text: TextSpan(
+              style: const TextStyle(
                   fontSize: 11, color: _textSecondary, fontFamily: _font),
               children: [
-                TextSpan(text: 'بالمتابعة فإنك توافق على '),
+                const TextSpan(text: 'بالمتابعة فإنك توافق على '),
                 TextSpan(
                     text: 'شروط الاستخدام',
-                    style: TextStyle(
-                        color: _brandBright, fontWeight: FontWeight.w600)),
-                TextSpan(text: ' و'),
+                    style: const TextStyle(
+                        color: _brandBright, fontWeight: FontWeight.w600),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () => launchUrl(
+                          Uri.parse('https://example.com/terms'),
+                          mode: LaunchMode.externalApplication)),
+                const TextSpan(text: ' و'),
                 TextSpan(
                     text: 'سياسة الخصوصية',
-                    style: TextStyle(
-                        color: _brandBright, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(
+                        color: _brandBright, fontWeight: FontWeight.w600),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () => launchUrl(
+                          Uri.parse('https://example.com/privacy'),
+                          mode: LaunchMode.externalApplication)),
               ],
             ),
           ),
